@@ -1,0 +1,23 @@
+{
+  "method": "CIM(M=13)",
+  "N": 1000,
+  "L": 20.000000,
+  "M": 13,
+  "rc": 1.000000,
+  "periodic": false,
+  "seed": 42,
+  "rMin": 0.230000,
+  "rMax": 0.260000,
+  "maxM": 13,
+  "cellSize": 1.538462,
+  "density": 2.500000,
+  "repetitions": 10,
+  "generationTimeNs": 29775723,
+  "meanTimeNs": 1420817.600000,
+  "stdTimeNs": 134075.386658,
+  "meanTimeMs": 1.420818,
+  "stdTimeMs": 0.134075,
+  "neighborPairs": 7857,
+  "verifiedAgainstBruteForce": true,
+  "timesNs": [1625682, 1449780, 1694130, 1420685, 1357456, 1319645, 1324895, 1338130, 1322100, 1355673]
+}
