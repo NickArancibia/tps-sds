@@ -1,7 +1,7 @@
 package ar.edu.itba.sds.io;
 
-import ar.edu.itba.sds.model.NeighborLists;
-import ar.edu.itba.sds.model.Particle;
+import ar.edu.itba.sds.common.model.NeighborLists;
+import ar.edu.itba.sds.common.model.Particle;
 import ar.edu.itba.sds.model.SystemConfig;
 
 import java.io.BufferedWriter;

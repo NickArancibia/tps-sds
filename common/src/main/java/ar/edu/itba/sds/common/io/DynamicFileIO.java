@@ -1,6 +1,6 @@
-package ar.edu.itba.sds.io;
+package ar.edu.itba.sds.common.io;
 
-import ar.edu.itba.sds.model.Particle;
+import ar.edu.itba.sds.common.model.Particle;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -54,6 +54,38 @@ public final class DynamicFileIO {
                     writer.newLine();
                 }
             }
+        }
+    }
+
+    /**
+     * Escritor incremental: agrega un bloque por vez sin retener los frames anteriores en memoria.
+     * Pensado para simulaciones dinámicas largas, donde acumular todos los estados antes de
+     * escribir no escala.
+     */
+    public static final class Writer implements java.io.Closeable {
+
+        private final BufferedWriter writer;
+
+        public Writer(final Path path) throws IOException {
+            Files.createDirectories(path.toAbsolutePath().getParent());
+            this.writer = Files.newBufferedWriter(path);
+        }
+
+        public void writeFrame(final double time, final List<Particle> particles)
+                throws IOException {
+            writer.write(StaticFileIO.format(time));
+            writer.newLine();
+            for (final Particle p : particles) {
+                writer.write("%s %s %s %s".formatted(
+                        StaticFileIO.format(p.x()), StaticFileIO.format(p.y()),
+                        StaticFileIO.format(p.vx()), StaticFileIO.format(p.vy())));
+                writer.newLine();
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            writer.close();
         }
     }
 

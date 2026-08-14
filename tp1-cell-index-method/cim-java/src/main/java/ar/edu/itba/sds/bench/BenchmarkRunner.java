@@ -1,10 +1,10 @@
 package ar.edu.itba.sds.bench;
 
-import ar.edu.itba.sds.cli.CliArgs;
+import ar.edu.itba.sds.common.cli.CliArgs;
 import ar.edu.itba.sds.generator.ParticleGenerator;
-import ar.edu.itba.sds.model.NeighborLists;
-import ar.edu.itba.sds.model.Particle;
-import ar.edu.itba.sds.neighbors.CellIndexMethod;
+import ar.edu.itba.sds.common.model.NeighborLists;
+import ar.edu.itba.sds.common.model.Particle;
+import ar.edu.itba.sds.common.neighbors.CellIndexMethod;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.Locale;
  *
  * <h2>Qué se cronometra</h2>
  *
- * <p>Únicamente {@link ar.edu.itba.sds.neighbors.NeighborFinder#findNeighbors(List)}: la generación
+ * <p>Únicamente {@link ar.edu.itba.sds.common.neighbors.NeighborFinder#findNeighbors(List)}: la generación
  * de partículas queda fuera, y la escritura del CSV ocurre después de todas las mediciones. La
  * construcción de la grilla sí está incluida, porque es parte inseparable del método (en una
  * simulación dinámica hay que rehacerla en cada paso).</p>

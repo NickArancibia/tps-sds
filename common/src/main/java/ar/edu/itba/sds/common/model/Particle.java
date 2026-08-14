@@ -1,4 +1,4 @@
-package ar.edu.itba.sds.model;
+package ar.edu.itba.sds.common.model;
 
 /**
  * Una partícula del sistema.

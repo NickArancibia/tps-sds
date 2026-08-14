@@ -11,10 +11,10 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cim</artifactId>
+    <artifactId>vicsek</artifactId>
     <packaging>jar</packaging>
 
-    <name>SdS TP1 - Cell Index Method</name>
+    <name>SdS TP2 - Autómata Off-Lattice: Bandadas (Vicsek / Votante)</name>
 
     <dependencies>
         <dependency>
@@ -25,7 +25,7 @@
     </dependencies>
 
     <build>
-        <finalName>cim</finalName>
+        <finalName>vicsek</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -40,7 +40,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>ar.edu.itba.sds.Main</mainClass>
+                                    <mainClass>ar.edu.itba.sds.tp2.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

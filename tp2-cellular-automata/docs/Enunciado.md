@@ -67,6 +67,22 @@ En el modelo estándar de Vicsek, cada partícula calcula el promedio de las dir
 
 ---
 
+### Aclaraciones
+
+**1) Presentación — introducción:**
+En la diapositiva de introducción al trabajo **no** debe haber un sistema real que haya inspirado el modelo, ni una explicación extensa del mismo. Sí deben estar las **ecuaciones del modelo**, pero sin perder tiempo explicándolas. **Lo más importante son los resultados.**
+
+**2) Variante propuesta (modelo de votante):**
+En vez de promediar las velocidades de mis vecinos, tomo **uno solo de mis vecinos al azar**, le copio la dirección y a **esa dirección copiada** le sumo el ruido.
+* En el votante **solo se puede elegir un vecino** y la partícula **no puede copiarse a sí misma**.
+* En el modelo estándar, al promediar, **sí se considera la propia velocidad**.
+* **Sin vecinos** (con o sin promedio) solo se considera el ruido: la partícula conserva su dirección y se le suma $\Delta\theta$.
+
+**3) Actualización sincrónica:**
+Las actualizaciones son **sincrónicas**. Si tengo las partículas 1 y 2, y cada una se actualiza en función de la otra en un tiempo $t$, actualizo la 1 en función de los valores de la 2 en $t-1$ y la 2 en función de los valores de la 1 en $t-1$. **No se actualiza una primero y después la otra en función de los valores ya actualizados.**
+
+---
+
 ### Referencias
 * **[1]** Vicsek, T., Czirók, A., Ben-Jacob, E., Cohen, I., & Shochet, O. (1995). Novel type of phase transition in a system of self-driven particles. *Physical review letters*, 75(6), 1226.
 * **[2]** Loscar, E. S., Baglietto, G., & Vazquez, F. (2021). Noisy multistate voter model for flocking in finite dimensions. *Physical Review E*, 104(3), 034111.

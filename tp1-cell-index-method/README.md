@@ -10,9 +10,12 @@ El contexto completo del trabajo práctico está en [AGENTS.md](AGENTS.md).
 
 ## Compilar
 
+El proyecto es un módulo del multi-módulo Maven de la raíz del repo y depende de la librería
+compartida `common` (que contiene el CIM, el modelo de partículas y el IO de archivos).
+
 ```bash
-cd cim-java
-mvn package          # genera cim-java/target/cim.jar
+# Desde la raíz del repositorio (compila common + todos los TPs)
+mvn package          # genera tp1-cell-index-method/cim-java/target/cim.jar
 ```
 
 ## Correr una simulación

@@ -1,6 +1,6 @@
-package ar.edu.itba.sds.io;
+package ar.edu.itba.sds.common.io;
 
-import ar.edu.itba.sds.model.Particle;
+import ar.edu.itba.sds.common.model.Particle;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -72,7 +72,7 @@ public final class StaticFileIO {
         return new StaticData(n, l, radii, colors);
     }
 
-    static List<String> readMeaningfulLines(final Path path) throws IOException {
+    public static List<String> readMeaningfulLines(final Path path) throws IOException {
         final List<String> result = new ArrayList<>();
         for (final String line : Files.readAllLines(path)) {
             if (!line.isBlank() && !line.trim().startsWith("#")) {
@@ -82,7 +82,7 @@ public final class StaticFileIO {
         return result;
     }
 
-    static String format(final double value) {
+    public static String format(final double value) {
         return String.format(Locale.US, "%.6f", value);
     }
 }

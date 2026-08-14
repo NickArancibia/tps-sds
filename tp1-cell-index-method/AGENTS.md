@@ -117,29 +117,36 @@ recalculan vecinos ni regeneran partículas.
 **Estado actual:** los cuatro puntos están implementados, verificados y documentados. Lo que queda
 es la presentación en vivo (punto 2, en clase) y armar las slides a partir de `docs/informe.md`.
 
+> **Nota (2026-08, TP2):** las clases reutilizables (CIM, fuerza bruta, `Particle`,
+> `NeighborLists`, IO de archivos estático/dinámico y `CliArgs`) se movieron a la librería
+> compartida **`common/`** de la raíz del repo, bajo los paquetes `ar.edu.itba.sds.common.*`.
+> Este módulo depende de ella vía Maven multi-módulo (compilar con `mvn package` desde la raíz).
+
 ```
-SdS-TP1/
+tps-sds/
+├── pom.xml                      # agregador Maven: common + TPs
+├── common/                      # librería compartida entre TPs
+│   └── src/main/java/ar/edu/itba/sds/common/
+│       ├── cli/CliArgs.java           # parseo de --flags
+│       ├── model/Particle.java        # id, x, y, r, vx, vy
+│       ├── model/NeighborLists.java   # resultado con arrays primitivos (sin boxing)
+│       ├── neighbors/NeighborFinder.java  # interfaz común
+│       ├── neighbors/CellIndexMethod.java # CIM (con y sin PBC)
+│       ├── neighbors/BruteForce.java      # O(N²), baseline de validación
+│       ├── io/StaticFileIO.java       # lectura/escritura del archivo estático
+│       └── io/DynamicFileIO.java      # lectura/escritura del archivo dinámico
+├── tp1-cell-index-method/
 ├── AGENTS.md                    # este archivo
 ├── README.md                    # instrucciones de uso para humanos
-├── cim-java/                    # motor de simulación
+├── cim-java/                    # motor de simulación (módulo Maven, depende de common)
 │   ├── pom.xml
 │   └── src/main/java/ar/edu/itba/sds/
 │       ├── Main.java                  # CLI: parsea args, orquesta, escribe outputs
-│       ├── cli/
-│       │   └── CliArgs.java           # parseo de --flags, compartido por los dos ejecutables
 │       ├── model/
-│       │   ├── Particle.java          # id, x, y, r, (vx, vy para el futuro)
-│       │   ├── NeighborLists.java     # resultado con arrays primitivos (sin boxing)
 │       │   └── SystemConfig.java      # N, L, M, rc, pbc, seed, rMin, rMax
 │       ├── generator/
 │       │   └── ParticleGenerator.java # generación aleatoria sin solapamiento
-│       ├── neighbors/
-│       │   ├── NeighborFinder.java    # interfaz común
-│       │   ├── CellIndexMethod.java   # CIM (con y sin PBC)
-│       │   └── BruteForce.java        # O(N²), baseline de validación
 │       ├── io/
-│       │   ├── StaticFileIO.java      # lectura/escritura del archivo estático
-│       │   ├── DynamicFileIO.java     # lectura/escritura del archivo dinámico
 │       │   └── OutputWriter.java      # archivo de vecinos + metadatos
 │       └── bench/
 │           └── BenchmarkRunner.java   # barridos de M y de N → CSV
@@ -361,7 +368,7 @@ Ver [README.md](README.md) para la lista completa de flags. Lo esencial:
 
 ```bash
 # Motor
-cd cim-java && mvn -q package && cd ..
+mvn -q package -f ../pom.xml   # multi-módulo: compila common + TPs desde la raíz
 
 # Punto 1: generar sistema + calcular vecinos + escribir outputs (con verificación)
 java -jar cim-java/target/cim.jar --N 1000 --M 13 --rc 1.0 --seed 42 --reps 10 --verify \

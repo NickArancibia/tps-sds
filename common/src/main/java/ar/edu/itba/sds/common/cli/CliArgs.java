@@ -1,4 +1,4 @@
-package ar.edu.itba.sds.cli;
+package ar.edu.itba.sds.common.cli;
 
 import java.util.ArrayList;
 import java.util.HashMap;

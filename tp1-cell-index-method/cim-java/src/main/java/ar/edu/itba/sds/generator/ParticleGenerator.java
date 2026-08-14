@@ -1,6 +1,6 @@
 package ar.edu.itba.sds.generator;
 
-import ar.edu.itba.sds.model.Particle;
+import ar.edu.itba.sds.common.model.Particle;
 import ar.edu.itba.sds.model.SystemConfig;
 
 import java.util.ArrayList;

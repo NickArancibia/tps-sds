@@ -1,15 +1,15 @@
 package ar.edu.itba.sds;
 
-import ar.edu.itba.sds.cli.CliArgs;
+import ar.edu.itba.sds.common.cli.CliArgs;
 import ar.edu.itba.sds.generator.ParticleGenerator;
-import ar.edu.itba.sds.io.DynamicFileIO;
+import ar.edu.itba.sds.common.io.DynamicFileIO;
 import ar.edu.itba.sds.io.OutputWriter;
-import ar.edu.itba.sds.io.StaticFileIO;
-import ar.edu.itba.sds.model.NeighborLists;
-import ar.edu.itba.sds.model.Particle;
+import ar.edu.itba.sds.common.io.StaticFileIO;
+import ar.edu.itba.sds.common.model.NeighborLists;
+import ar.edu.itba.sds.common.model.Particle;
 import ar.edu.itba.sds.model.SystemConfig;
-import ar.edu.itba.sds.neighbors.BruteForce;
-import ar.edu.itba.sds.neighbors.CellIndexMethod;
+import ar.edu.itba.sds.common.neighbors.BruteForce;
+import ar.edu.itba.sds.common.neighbors.CellIndexMethod;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -41,7 +41,7 @@ public record SystemConfig(int n, double l, int m, double rc, boolean periodic, 
     /**
      * Máximo M admisible por el método para este sistema.
      *
-     * <p>Ver {@link ar.edu.itba.sds.neighbors.CellIndexMethod} para la justificación del criterio
+     * <p>Ver {@link ar.edu.itba.sds.common.neighbors.CellIndexMethod} para la justificación del criterio
      * {@code L/M > rc + 2*rMax}.</p>
      */
     public int maxM() {
