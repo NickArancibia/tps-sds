@@ -545,3 +545,6 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/latex,python,maven,java,visualstudiocode
+
+# Output de simulaciones (no se entrega)
+output/
