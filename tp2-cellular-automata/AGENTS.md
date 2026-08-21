@@ -61,10 +61,14 @@ Compilar desde la raíz del repo: `mvn package` → `vicsek-java/target/vicsek.j
 
 - [x] Motor de simulación (Vicsek + votante) con CIM de `common`, validado: η bajo → v_a≈1,
       η alto → v_a≈0, S<1 con densidades bajas.
-- [ ] Post-proceso Python (`analysis/`): animaciones (vectores coloreados por ángulo),
-      evolución temporal de v_a y S con marca de estacionario, curvas v_a(η) y S(η) con barras
-      de error para ρ = 2, 4, 8, v_a vs S, comparación Vicsek vs votante.
-- [ ] Barridos con **seeds distintas** por punto (50–100 realizaciones) para promediar.
+- [x] Barridos completos en `output/` (2 modelos × ρ {2,4,8} × 15 η × 50 seeds, 2000 pasos)
+      + corridas de animación (`output/anim/`, bloques cada 5 pasos) vía `scripts/run_sweeps.sh`.
+- [x] Post-proceso Python (`analysis/`): `aggregate.py` reduce el barrido a `out/summary.csv`
+      (promedio estacionario t ≥ 1000 por seed; media ± desvío muestral sobre 50 seeds);
+      `plot_evolution.py` y `plot_curves.py` generan las figuras en `analysis/figures/`.
+      Hallazgo: con ρ ≥ 2 y r_c = 1 el sistema percola y S ≈ 1 siempre (única variación:
+      mínimo S ≈ 0.96 en ρ = 2 cerca de la transición); las figuras de S van con eje acotado.
+- [ ] Animaciones (videos con vectores coloreados por ángulo) a partir de `output/anim/`.
 - [ ] Punto g: comparar tiempos del CIM con los del TP1 (mismos N).
 - [ ] Presentación + informe.
 
