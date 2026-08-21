@@ -24,16 +24,24 @@ OUTPUT = TP_ROOT / "output"
 FIGURES = TP_ROOT / "analysis" / "figures"
 SUMMARY_CSV = TP_ROOT / "analysis" / "out" / "summary.csv"
 
-#: Primer paso considerado estacionario para promediar observables.
-#: Elegido a ojo sobre las evoluciones temporales (plot_evolution.py): el caso más lento
-#: (votante con η=0) ya está estacionario antes de t = 1000 pasos.
-T_STATIONARY = 1000.0
+#: Fracción inicial de cada corrida descartada como transitorio al promediar observables:
+#: se promedia la última mitad (t >= T/2). Validado sobre las evoluciones temporales
+#: (plot_evolution.py): los casos más lentos (votante con η=0; densidades bajas con η
+#: bajo, que por eso corren 5000 pasos en vez de 2000) ya son estacionarios en su mitad.
+TRANSIENT_FRACTION = 0.5
 
 MODELS = ("vicsek", "voter")
 MODEL_LABEL = {"vicsek": "Vicsek", "voter": "Votante"}
-RHOS = (2, 4, 8)
-RHO_COLOR = {2: "tab:blue", 4: "tab:orange", 8: "tab:green"}
-RHO_MARKER = {2: "o", 4: "s", 8: "^"}
+#: Densidades del barrido como strings (= nombres de directorio `rho<valor>`), de menor a
+#: mayor. Las bajas son 1/(3π), 1/(2π) y 1/π (~0.33, 0.5 y 1 vecino promedio dentro de
+#: r_c); con L = 10 el motor redondea N = round(ρ·L²) = 11, 16, 32, 200, 400, 800.
+RHOS = ("0.1061", "0.1592", "0.3183", "2", "4", "8")
+RHO_LABEL = {"0.1061": "1/3π", "0.1592": "1/2π", "0.3183": "1/π",
+             "2": "2", "4": "4", "8": "8"}
+RHO_COLOR = {"0.1061": "tab:purple", "0.1592": "tab:brown", "0.3183": "tab:red",
+             "2": "tab:blue", "4": "tab:orange", "8": "tab:green"}
+RHO_MARKER = {"0.1061": "v", "0.1592": "D", "0.3183": "P",
+              "2": "o", "4": "s", "8": "^"}
 
 LABEL_ETA = "Amplitud de ruido η (rad)"
 LABEL_VA = "Polarización v_a"
@@ -68,18 +76,18 @@ def load_run_meta(run_dir: Path) -> dict:
         return json.load(fh)
 
 
-def stationary_mean(data: np.ndarray, column: str, t_from: float = T_STATIONARY) -> float:
-    """Promedio temporal de una columna de observables sobre t >= t_from."""
-    mask = data["time"] >= t_from
+def stationary_mean(data: np.ndarray, column: str) -> float:
+    """Promedio temporal de una columna de observables sobre la última mitad de la corrida."""
+    mask = data["time"] >= TRANSIENT_FRACTION * data["time"][-1]
     return float(data[column][mask].mean())
 
 
-def sweep_run_dirs(model: str, rho: int, eta: str):
+def sweep_run_dirs(model: str, rho: str, eta: str):
     """Directorios de corridas (una por seed) del barrido para un punto (model, rho, eta)."""
     return sorted((OUTPUT / "sweep" / model / f"rho{rho}" / f"eta{eta}").glob("s*"))
 
 
-def sweep_etas(model: str, rho: int) -> list[str]:
+def sweep_etas(model: str, rho: str) -> list[str]:
     """Valores de η disponibles en el barrido, como strings (nombres de directorio)."""
     root = OUTPUT / "sweep" / model / f"rho{rho}"
     return sorted((p.name.removeprefix("eta") for p in root.glob("eta*")), key=float)

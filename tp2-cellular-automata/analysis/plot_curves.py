@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from common import (LABEL_ETA, LABEL_S, LABEL_VA, MODEL_LABEL, MODELS, RHO_COLOR,
-                    RHO_MARKER, RHOS, SUMMARY_CSV, save_figure, use_style)
+                    RHO_LABEL, RHO_MARKER, RHOS, SUMMARY_CSV, save_figure, use_style)
 
 
 def load_summary() -> np.ndarray:
@@ -25,8 +25,8 @@ def load_summary() -> np.ndarray:
                          dtype=None)
 
 
-def select(summary, model: str, rho: int) -> np.ndarray:
-    rows = summary[(summary["model"] == model) & (summary["rho"] == rho)]
+def select(summary, model: str, rho: str) -> np.ndarray:
+    rows = summary[(summary["model"] == model) & (summary["rho"] == float(rho))]
     return rows[np.argsort(rows["eta"])]
 
 
@@ -40,7 +40,7 @@ def plot_vs_eta(summary, model: str, column: str, ylabel: str, tag: str,
         rows = select(summary, model, rho)
         ax.errorbar(rows["eta"], rows[f"{column}_mean"], yerr=rows[f"{column}_std"],
                     color=RHO_COLOR[rho], marker=RHO_MARKER[rho], linestyle="-",
-                    linewidth=1.0, label=f"ρ = {rho}")
+                    linewidth=1.0, label=f"ρ = {RHO_LABEL[rho]}")
         lo = min(lo, (rows[f"{column}_mean"] - rows[f"{column}_std"]).min())
     ax.set_xlabel(LABEL_ETA)
     ax.set_ylabel(ylabel)
@@ -54,7 +54,7 @@ def plot_vs_eta(summary, model: str, column: str, ylabel: str, tag: str,
     save_figure(fig, f"{model}_{tag}_vs_eta.png")
 
 
-def plot_model_comparison(summary, rho: int) -> None:
+def plot_model_comparison(summary, rho: str) -> None:
     fig, ax = plt.subplots()
     for model, color, marker in (("vicsek", "tab:blue", "o"), ("voter", "tab:red", "s")):
         rows = select(summary, model, rho)
@@ -64,7 +64,7 @@ def plot_model_comparison(summary, rho: int) -> None:
     ax.set_ylabel(LABEL_VA)
     ax.set_xlim(left=-0.1)
     ax.set_ylim(0, 1.05)
-    ax.legend(title=f"ρ = {rho}")
+    ax.legend(title=f"ρ = {RHO_LABEL[rho]}")
     save_figure(fig, f"comparacion_va_vs_eta_rho{rho}.png")
 
 
@@ -74,10 +74,10 @@ def plot_va_vs_s(summary, model: str) -> None:
         rows = select(summary, model, rho)
         ax.errorbar(rows["s_mean"], rows["va_mean"], xerr=rows["s_std"], yerr=rows["va_std"],
                     color=RHO_COLOR[rho], marker=RHO_MARKER[rho], linestyle="none",
-                    label=f"ρ = {rho}")
+                    label=f"ρ = {RHO_LABEL[rho]}")
     ax.set_xlabel(LABEL_S)
     ax.set_ylabel(LABEL_VA)
-    ax.set_xlim(right=1.005)
+    ax.set_xlim(0, 1.05)
     ax.set_ylim(0, 1.05)
     ax.legend(title=MODEL_LABEL[model])
     save_figure(fig, f"va_vs_s_{model}.png")

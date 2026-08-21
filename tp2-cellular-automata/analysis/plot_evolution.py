@@ -16,48 +16,59 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import (LABEL_S, LABEL_TIME, LABEL_VA, MODEL_LABEL, MODELS, OUTPUT, RHOS,
-                    load_observables, save_figure, use_style)
+from common import (LABEL_S, LABEL_TIME, LABEL_VA, MODEL_LABEL, MODELS, OUTPUT,
+                    RHO_LABEL, RHOS, load_observables, save_figure, use_style)
 
 #: η característicos: sin ruido / ruido bajo / ruido intermedio.
 ETAS = ("0.0", "0.5", "2.0")
 ETA_COLOR = {"0.0": "tab:green", "0.5": "tab:blue", "2.0": "tab:orange"}
 #: Seed del barrido usada para las evoluciones típicas.
 SEED = 1
+#: Densidades bajas (N = 11, 16, 32): las curvas de v_a con ruido fluctúan tanto que las
+#: tres η juntas son ilegibles → dos figuras por densidad, cada ruido contra η = 0.
+LOW_RHOS = ("0.1061", "0.1592", "0.3183")
 
-#: (columna, label, tag, ylim). Para S el eje va acotado: con ρ ≥ 2 el sistema percola y
-#: S vive entre 0.81 y 1 (mínimo global de las curvas: votante ρ=2, η=0.5); la escala
-#: completa [0, 1] aplastaría toda la estructura.
-OBSERVABLES = (("polarization", LABEL_VA, "va", (0.0, 1.05)),
-               ("largest_cluster_fraction", LABEL_S, "s", (0.75, 1.01)))
+#: (columna, label, tag). El eje y de S se acota a los datos cuando todas las curvas viven
+#: cerca de 1 (densidades que percolan): la escala completa [0, 1] aplastaría la estructura.
+OBSERVABLES = (("polarization", LABEL_VA, "va"),
+               ("largest_cluster_fraction", LABEL_S, "s"))
 
 
 def stationary_onset(time, values, window: int = 100, drift_tol: float = 0.12):
     """Comienzo del estacionario de una curva, o None si no se estaciona.
 
     Criterio: la media móvil centrada (ventana `window`) entra por primera vez en la
-    banda μ ± max(2σ, 0.02) del tramo final (últimos 500 pasos). Veto de deriva: si las
-    medias de bloques de 250 pasos del último cuarto difieren en más de `drift_tol`, la
-    curva sigue vagando y no se marca (ej.: votante con η = 0.5, spread 0.15–0.26).
+    banda μ ± max(2σ, 0.02) del último cuarto de la corrida. Veto de deriva: si las
+    medias de 4 bloques de la última mitad difieren en más de `drift_tol`, la curva
+    sigue vagando y no se marca (ej.: votante con η = 0.5, spread 0.15–0.26).
     Umbrales calibrados y validados a ojo sobre cada figura.
     """
-    tail = values[time >= time[-1] - 500.0]
+    duration = time[-1]
+    tail = values[time >= 0.75 * duration]
     mu, sigma = tail.mean(), tail.std()
-    last = values[time >= time[-1] - 1000.0]
+    last = values[time >= 0.5 * duration]
     block_means = [block.mean() for block in np.array_split(last, 4)]
     if max(block_means) - min(block_means) > drift_tol:
         return None
     moving = np.convolve(values, np.ones(window) / window, mode="valid")
     t_moving = time[window // 2:window // 2 + len(moving)]
     inside = np.abs(moving - mu) <= max(2.0 * sigma, 0.02)
-    return float(t_moving[np.flatnonzero(inside)[0]]) if inside.any() else None
+    if not inside.any():
+        return None
+    first = np.flatnonzero(inside)[0]
+    # Estacionaria desde la primera ventana → el estacionario empieza en t = 0 (la ventana
+    # centrada correría la marca artificialmente a t = window/2).
+    return float(time[0]) if first == 0 else float(t_moving[first])
 
 
-def plot_evolution(model: str, rho: int, column: str, ylabel: str, tag: str,
-                   ylim: tuple[float, float]) -> None:
+def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
+                   etas: tuple[str, ...] = ETAS, suffix: str = "") -> None:
     fig, ax = plt.subplots()
-    for eta in ETAS:
-        data = load_observables(OUTPUT / "sweep" / model / f"rho{rho}" / f"eta{eta}" / f"s{SEED}")
+    runs = {eta: load_observables(OUTPUT / "sweep" / model / f"rho{rho}" / f"eta{eta}" / f"s{SEED}")
+            for eta in etas}
+    lo = min(data[column].min() for data in runs.values())
+    ylim = (0.75, 1.01) if lo >= 0.75 else (0.0, 1.05)
+    for eta, data in runs.items():
         ax.plot(data["time"], data[column], color=ETA_COLOR[eta], linewidth=1.2,
                 label=f"η = {eta} rad")
         onset = stationary_onset(data["time"], data[column])
@@ -67,7 +78,10 @@ def plot_evolution(model: str, rho: int, column: str, ylabel: str, tag: str,
             level = data[column][data["time"] >= onset].mean()
             span = ylim[1] - ylim[0]
             half = 0.067 * span
-            ax.plot([onset, onset],
+            # Marca en t=0: corrida un 1% del eje hacia adentro, si no queda negro sobre
+            # negro, invisible encima del borde del gráfico.
+            x = max(onset, 0.01 * data["time"][-1])
+            ax.plot([x, x],
                     [max(level - half, ylim[0] + 0.01 * span),
                      min(level + half, ylim[1] - 0.01 * span)],
                     color="black", linestyle="--", linewidth=1.5)
@@ -75,16 +89,22 @@ def plot_evolution(model: str, rho: int, column: str, ylabel: str, tag: str,
     ax.set_ylabel(ylabel)
     ax.set_xlim(left=0)
     ax.set_ylim(*ylim)
-    ax.legend(title=f"{MODEL_LABEL[model]}, ρ = {rho}", loc="center right")
-    save_figure(fig, f"evolucion_{tag}_{model}_rho{rho}.png")
+    ax.legend(title=f"{MODEL_LABEL[model]}, ρ = {RHO_LABEL[rho]}", loc="center right")
+    save_figure(fig, f"evolucion_{tag}_{model}_rho{rho}{suffix}.png")
 
 
 def main() -> None:
     use_style()
     for model in MODELS:
         for rho in RHOS:
-            for column, ylabel, tag, ylim in OBSERVABLES:
-                plot_evolution(model, rho, column, ylabel, tag, ylim)
+            for column, ylabel, tag in OBSERVABLES:
+                if tag == "va" and rho in LOW_RHOS:
+                    plot_evolution(model, rho, column, ylabel, tag,
+                                   etas=("0.0", "0.5"), suffix="_eta0.5")
+                    plot_evolution(model, rho, column, ylabel, tag,
+                                   etas=("0.0", "2.0"), suffix="_eta2.0")
+                else:
+                    plot_evolution(model, rho, column, ylabel, tag)
 
 
 if __name__ == "__main__":

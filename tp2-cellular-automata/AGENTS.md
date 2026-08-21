@@ -13,7 +13,9 @@ Vicsek [1]) como autómata celular off-lattice, más una variante: el **modelo d
 - Caja cuadrada de lado **L = 10** con **condiciones periódicas de contorno** (siempre).
 - Partículas **puntuales** con rapidez constante `v` (default 0.03) y radio de interacción
   `r_c` (default 1, distancia **entre centros**).
-- Densidades a estudiar: **ρ = N/L² = 2, 4, 8** (N = 200, 400, 800).
+- Densidades a estudiar: **ρ = N/L² = 2, 4, 8** (N = 200, 400, 800) más las bajas
+  **ρ = 1/(3π), 1/(2π), 1/π** (N = round(ρ·L²) = 11, 16, 32; ~0.33, 0.5 y 1 vecino promedio
+  dentro de r_c, debajo de la percolación).
 - Input principal: el **ruido η** (Δθ ~ U[-η/2, η/2]).
 - Observables: **polarización** `v_a = |Σv_i|/(N·v)` y **fracción del cluster más grande** `S`
   (clusters = componentes conexas del grafo de vecindad con `r_c`).
@@ -61,8 +63,9 @@ Compilar desde la raíz del repo: `mvn package` → `vicsek-java/target/vicsek.j
 
 - [x] Motor de simulación (Vicsek + votante) con CIM de `common`, validado: η bajo → v_a≈1,
       η alto → v_a≈0, S<1 con densidades bajas.
-- [x] Barridos completos en `output/` (2 modelos × ρ {2,4,8} × 15 η × 50 seeds, 2000 pasos)
-      + corridas de animación (`output/anim/`, bloques cada 5 pasos) vía `scripts/run_sweeps.sh`.
+- [x] Barridos completos en `output/` (2 modelos × 6 ρ × 15 η × 50 seeds) + corridas de
+      animación (`output/anim/`, bloques cada 5 pasos) vía `scripts/run_sweeps.sh`.
+      Las densidades bajas corren 5000 pasos (se ordenan más lento); el resto 2000.
 - [x] Post-proceso Python (`analysis/`): `aggregate.py` reduce el barrido a `out/summary.csv`
       (promedio estacionario t ≥ 1000 por seed; media ± desvío muestral sobre 50 seeds);
       `plot_evolution.py` y `plot_curves.py` generan las figuras en `analysis/figures/`.
