@@ -23,9 +23,11 @@ Vicsek [1]) como autómata celular off-lattice, más una variante: el **modelo d
 
 - **Vicsek estándar**: θ nuevo = dirección promedio de los vecinos **incluyéndose a sí misma**
   (vía `atan2(⟨sin⟩, ⟨cos⟩)`) + ruido.
-- **Votante**: copia la dirección de **un solo vecino elegido al azar** (nunca a sí misma)
-  + ruido.
-- **Sin vecinos** (ambos modelos): conserva su propia dirección + ruido.
+- **Votante**: copia la dirección de **una partícula elegida al azar entre sí misma y sus
+  vecinos** + ruido. *Decisión del grupo*: el PDF no prohíbe la auto-copia; aclararlo en
+  presentación e informe.
+- **Sin vecinos** (ambos modelos): conserva su propia dirección + ruido (en el votante surge
+  naturalmente al copiarse a sí misma).
 - Posición: `x(t+Δt) = x(t) + v·cos(θ(t+Δt))·Δt` mod L ("forward update").
 
 ## 2. Arquitectura

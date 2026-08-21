@@ -74,7 +74,7 @@ En la diapositiva de introducción al trabajo **no** debe haber un sistema real 
 
 **2) Variante propuesta (modelo de votante):**
 En vez de promediar las velocidades de mis vecinos, tomo **uno solo de mis vecinos al azar**, le copio la dirección y a **esa dirección copiada** le sumo el ruido.
-* En el votante **solo se puede elegir un vecino** y la partícula **no puede copiarse a sí misma**.
+* En el votante **solo se puede elegir una dirección** para copiar. *Nota del grupo*: el PDF no prohíbe la auto-copia, así que la elección se hace al azar **entre la propia partícula y sus vecinos** (decisión a aclarar en presentación e informe).
 * En el modelo estándar, al promediar, **sí se considera la propia velocidad**.
 * **Sin vecinos** (con o sin promedio) solo se considera el ruido: la partícula conserva su dirección y se le suma $\Delta\theta$.
 

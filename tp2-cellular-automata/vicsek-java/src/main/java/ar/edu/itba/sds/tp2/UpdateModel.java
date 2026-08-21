@@ -6,8 +6,9 @@ package ar.edu.itba.sds.tp2;
  * <ul>
  *   <li>{@link #VICSEK}: promedia las direcciones de todos los vecinos <b>incluyéndose a sí
  *       misma</b> y le suma el ruido.</li>
- *   <li>{@link #VOTER}: elige <b>un solo vecino al azar</b> (nunca a sí misma), copia su dirección
- *       y le suma el ruido. Sin vecinos, conserva su propia dirección más el ruido.</li>
+ *   <li>{@link #VOTER}: elige al azar una partícula entre <b>sí misma y sus vecinos</b>, copia su
+ *       dirección y le suma el ruido. Sin vecinos, se copia a sí misma (conserva su dirección)
+ *       más el ruido.</li>
  * </ul>
  */
 public enum UpdateModel {

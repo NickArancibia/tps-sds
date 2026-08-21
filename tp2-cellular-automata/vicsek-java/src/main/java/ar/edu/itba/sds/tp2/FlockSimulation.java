@@ -19,12 +19,13 @@ import java.util.Random;
  *
  * <pre>
  *   Vicsek:  θ_i(t+Δt) = atan2( ⟨sin θ⟩_vecinos∪{i} , ⟨cos θ⟩_vecinos∪{i} ) + Δθ
- *   Votante: θ_i(t+Δt) = θ_j(t) + Δθ,   con j un vecino elegido al azar (j ≠ i)
+ *   Votante: θ_i(t+Δt) = θ_j(t) + Δθ,   con j elegido al azar entre {i} ∪ vecinos
  * </pre>
  *
  * <p>donde Δθ ~ U[-η/2, η/2]. En ambos modelos, una partícula sin vecinos conserva su propia
- * dirección y se le suma el ruido. La actualización es <b>sincrónica</b>: todas las direcciones
- * nuevas se calculan a partir del estado en t y recién después se aplican.</p>
+ * dirección y se le suma el ruido (en el votante surge naturalmente: se copia a sí misma). La
+ * actualización es <b>sincrónica</b>: todas las direcciones nuevas se calculan a partir del estado
+ * en t y recién después se aplican.</p>
  *
  * <p>Las posiciones se actualizan con la dirección ya actualizada ("forward update", el estándar
  * actual del algoritmo de Vicsek):</p>
@@ -110,8 +111,9 @@ public final class FlockSimulation {
                 }
                 base = Math.atan2(sinSum, cosSum);
             } else {
-                // Votante: copia la dirección de un único vecino al azar (nunca la propia).
-                base = around.length == 0 ? theta[i] : theta[around[random.nextInt(around.length)]];
+                // Votante: copia la dirección de una partícula al azar entre sí misma y sus vecinos.
+                final int pick = random.nextInt(around.length + 1);
+                base = pick == around.length ? theta[i] : theta[around[pick]];
             }
             newTheta[i] = base + noise;
         }

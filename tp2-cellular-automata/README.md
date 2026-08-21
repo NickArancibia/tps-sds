@@ -26,7 +26,7 @@ Opciones principales (`--help` lista todas):
 
 | Flag | Descripción | Default |
 |---|---|---|
-| `--model` | `vicsek` (promedia vecinos + sí misma) o `voter` (copia un vecino al azar) | `vicsek` |
+| `--model` | `vicsek` (promedia vecinos + sí misma) o `voter` (copia al azar entre sí misma y vecinos) | `vicsek` |
 | `--rho` | densidad N/L² (define N si no se pasa `--N`) | 4 |
 | `--N` | cantidad de partículas (pisa a `--rho`) | — |
 | `--L` | lado de la caja (PBC siempre activas) | 10 |
