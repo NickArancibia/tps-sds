@@ -1,0 +1,4 @@
+numpy>=1.21
+vispy>=0.14
+imageio-ffmpeg>=0.4.9
+PyQt5>=5.15

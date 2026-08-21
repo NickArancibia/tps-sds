@@ -45,3 +45,13 @@ En `--out` (o `output/<auto>/`):
 - `static.txt` y `dynamic.txt` — formato de cátedra, para animaciones.
 - `observables.csv` — `time,polarization,largest_cluster_fraction`, una fila por paso.
 - `run.json` — inputs de la corrida + tiempos de cada llamada al CIM (punto g).
+
+## Animar una corrida
+
+El post-proceso de animación vive en [`anims/`](anims/README.md) (Python + VisPy, render en GPU):
+
+```bash
+cd anims && python -m anims ../output/demo
+```
+
+Genera `output/demo/anim.mp4` a partir de los archivos ya escritos, sin volver a simular.

@@ -68,7 +68,9 @@ Compilar desde la raíz del repo: `mvn package` → `vicsek-java/target/vicsek.j
       `plot_evolution.py` y `plot_curves.py` generan las figuras en `analysis/figures/`.
       Hallazgo: con ρ ≥ 2 y r_c = 1 el sistema percola y S ≈ 1 siempre (única variación:
       mínimo S ≈ 0.96 en ρ = 2 cerca de la transición); las figuras de S van con eje acotado.
-- [ ] Animaciones (videos con vectores coloreados por ángulo) a partir de `output/anim/`.
+- [x] Animaciones (`anims/`): paquete Python TP-agnóstico (VisPy + ffmpeg) que rinde una corrida
+      a MP4 sin re-simular, con vectores coloreados por ángulo y HUD con t, η, v_a y S. Se usa
+      sobre `output/anim/`; ver `anims/README.md`.
 - [ ] Punto g: comparar tiempos del CIM con los del TP1 (mismos N).
 - [ ] Presentación + informe.
 
