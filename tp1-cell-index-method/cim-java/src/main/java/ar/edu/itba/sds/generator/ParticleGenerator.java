@@ -49,7 +49,8 @@ public final class ParticleGenerator {
         this.rMax = rMax;
         this.periodic = periodic;
         this.maxAttemptsPerParticle = maxAttemptsPerParticle;
-        this.cells = Math.max(1, (int) Math.floor(l / (2 * rMax)));
+        // Con rMax = 0 (partículas puntuales) no hay solapamiento posible: una sola celda alcanza.
+        this.cells = rMax > 0 ? Math.max(1, (int) Math.floor(l / (2 * rMax))) : 1;
         this.cellSize = l / cells;
         this.grid = new ArrayList<>(cells * cells);
         for (int i = 0; i < cells * cells; i++) {
