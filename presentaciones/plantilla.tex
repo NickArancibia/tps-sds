@@ -1,0 +1,150 @@
+%% plantilla.tex — Presentacion de ejemplo para Simulacion de Sistemas (ITBA)
+%%
+%% Estructura obligatoria segun la Guia de la catedra (../AGENTS.md §5.3 / docs):
+%%   1. Introduccion / Sistema Real / Fundamentos  (< 1 min, max 3 diapositivas)
+%%   2. Implementacion  (solo motor de simulacion; sin post-proceso ni I/O)
+%%   3. Simulaciones    (sistema particular, observables definidos, repeticiones/tiempos)
+%%   4. Resultados      (animacion -> evolucion temporal -> input vs observable, por parametro)
+%%   5. Conclusiones    (1 diapositiva, solo sobre lo mostrado)
+%%   +  Cierre "Muchas Gracias"
+%%
+%% Reglas de figuras: sin titulo interno ni caption; parametros fijos al costado
+%% (usar \figuraparam). Ejes en palabras + unidades; leyendas SIN titulo (el modelo
+%% y los parametros van al costado, no dentro del grafico).
+%%
+%% Compilar:  pdflatex plantilla.tex   (dos veces)
+
+\documentclass[aspectratio=169]{beamer}
+\usepackage{sdsbeamer}
+
+% --- Datos de la presentacion (completar) ---
+\title{Titulo del Trabajo Practico}
+\subtitle{Simulacion de Sistemas --- ITBA}
+\author[Grupo 2]{Nombre Apellido \and Nombre Apellido \and Nombre Apellido}
+\institute[ITBA]{Grupo 2 --- Instituto Tecnologico de Buenos Aires}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% ==========================================================================
+\section{Introduccion}
+% Max 3 diapositivas: sistema real + ecuaciones del modelo matematico general.
+% ==========================================================================
+\begin{frame}{Sistema real}
+  \begin{itemize}
+    \item Descripcion somera del sistema real a simular.
+    \item Fenomeno de interes y por que amerita una simulacion.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Modelo matematico}
+  Ecuaciones generales del modelo (sin sistema particular ni metodo de resolucion):
+  \begin{equation}
+    \vect{r}_i(t+\Delta t) = \vect{r}_i(t) + \vect{v}_i(t)\,\Delta t
+  \end{equation}
+  donde $\vect{r}_i$ es la posicion de la particula $i$ y $\vect{v}_i$ su velocidad.
+  \begin{itemize}
+    \item Vectores en negrita recta ($\vect{v}$); escalares en italica ($t$).
+    \item Unidades MKS y notacion cientifica: $\Delta t = \sci{1.0}{-2}\uni{s}$.
+  \end{itemize}
+\end{frame}
+
+% ==========================================================================
+\section{Implementacion}
+% Solo el motor de simulacion: arquitectura, pseudocodigo, UML. Sin post-proceso.
+% ==========================================================================
+\begin{frame}{Motor de simulacion}
+  \begin{itemize}
+    \item Arquitectura del motor (modulos, estructuras de datos).
+    \item Pseudocodigo o diagrama del paso de simulacion.
+    \item Sin post-proceso ni formatos de archivo I/O (§2.2 de la guia).
+  \end{itemize}
+\end{frame}
+
+% ==========================================================================
+\section{Simulaciones}
+% Sistema particular, observables definidos matematicamente, repeticiones y tiempos.
+% ==========================================================================
+\begin{frame}{Sistema particular y observables}
+  \begin{columns}[t]
+    \begin{column}{0.5\textwidth}
+      \textbf{Configuracion}
+      \begin{itemize}
+        \item Geometria y condiciones de contorno.
+        \item Parametros fijos.
+        \item Input variable; output a estudiar.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Observable} (definicion explicita):
+      \begin{equation}
+        \langle O \rangle = \frac{1}{N}\sum_{i=1}^{N} o_i
+      \end{equation}
+      Repeticiones: 50 seeds distintas. \\
+      Tiempo simulado: $T = 2000$ pasos.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ==========================================================================
+\section{Resultados}
+% Por cada parametro: animacion -> evolucion temporal -> input vs observable.
+% ==========================================================================
+\begin{frame}{Animacion caracteristica}
+  % En el PDF entregado: fotograma fijo + link (no video embebido, §2.4/5.4).
+  \figuraparam{example-image}{%
+    \textbf{Parametros fijos}
+    \begin{itemize}
+      \item $L = 10\uni{m}$
+      \item $\rho = 2$
+      \item $\eta = 0.5\uni{rad}$
+    \end{itemize}
+    \vspace{0.5em}
+    Video: \url{https://youtu.be/XXXXXXX}
+  }
+\end{frame}
+
+\begin{frame}{Evolucion temporal del observable}
+  % Solo evoluciones tipicas (valores extremos) para validar la metrica.
+  % Leyenda SIN titulo: solo identifica cada curva; el modelo/rho van al costado.
+  \figuraparam{example-image}{%
+    \textbf{Vicsek}, $\rho = 2$ \\[0.4em]
+    Marca vertical: inicio del estado estacionario. \\[0.4em]
+    Escalar caracteristico: promedio temporal en el estacionario.
+  }
+\end{frame}
+
+\begin{frame}{Input vs observable}
+  % Promedios con barras de error; puntos con simbolos; rectas solo como guia.
+  \figuraparam{example-image}{%
+    \textbf{Vicsek} \\[0.4em]
+    Promedio sobre 50 seeds. \\
+    Barras de error: desvio estandar muestral. \\[0.4em]
+    Una curva por densidad $\rho$.
+  }
+\end{frame}
+
+% ==========================================================================
+\section{Conclusiones}
+% Solo sobre resultados mostrados; sin hipotesis no probadas ni pendientes.
+% ==========================================================================
+\begin{frame}{Conclusiones}
+  \begin{itemize}
+    \item Conclusion 1, basada en los resultados mostrados.
+    \item Conclusion 2, basada en los resultados mostrados.
+  \end{itemize}
+\end{frame}
+
+% ==========================================================================
+\begin{frame}[plain]
+  \centering
+  \vfill
+  {\Huge Muchas gracias}
+  \vfill
+\end{frame}
+
+\end{document}

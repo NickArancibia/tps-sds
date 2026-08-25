@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from common import (LABEL_ETA, LABEL_S, LABEL_VA, MODEL_LABEL, MODELS, RHO_COLOR,
-                    RHO_LABEL, RHO_MARKER, RHOS, SUMMARY_CSV, save_figure, use_style)
+                    RHO_LABEL, RHO_MARKER, RHOS, SUMMARY_CSV, legend_sidebar,
+                    save_figure, use_style)
 
 
 def load_summary() -> np.ndarray:
@@ -50,7 +51,7 @@ def plot_vs_eta(summary, model: str, column: str, ylabel: str, tag: str,
     else:
         margin = 0.05 * (1.0 - lo)
         ax.set_ylim(lo - margin, 1.0 + margin)
-    ax.legend(title=MODEL_LABEL[model])
+    legend_sidebar(ax)
     save_figure(fig, f"{model}_{tag}_vs_eta.png")
 
 
@@ -64,7 +65,7 @@ def plot_model_comparison(summary, rho: str) -> None:
     ax.set_ylabel(LABEL_VA)
     ax.set_xlim(left=-0.1)
     ax.set_ylim(0, 1.05)
-    ax.legend(title=f"ρ = {RHO_LABEL[rho]}")
+    legend_sidebar(ax)
     save_figure(fig, f"comparacion_va_vs_eta_rho{rho}.png")
 
 
@@ -79,7 +80,7 @@ def plot_va_vs_s(summary, model: str) -> None:
     ax.set_ylabel(LABEL_VA)
     ax.set_xlim(0, 1.05)
     ax.set_ylim(0, 1.05)
-    ax.legend(title=MODEL_LABEL[model])
+    legend_sidebar(ax)
     save_figure(fig, f"va_vs_s_{model}.png")
 
 

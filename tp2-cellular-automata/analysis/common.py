@@ -38,8 +38,8 @@ MODEL_LABEL = {"vicsek": "Vicsek", "voter": "Votante"}
 RHOS = ("0.1061", "0.1592", "0.3183", "2", "4", "8")
 RHO_LABEL = {"0.1061": "1/3π", "0.1592": "1/2π", "0.3183": "1/π",
              "2": "2", "4": "4", "8": "8"}
-RHO_COLOR = {"0.1061": "tab:purple", "0.1592": "tab:brown", "0.3183": "tab:red",
-             "2": "tab:blue", "4": "tab:orange", "8": "tab:green"}
+RHO_COLOR = {"0.1061": "tab:purple", "0.1592": "tab:brown", "0.3183": "tab:pink",
+             "2": "tab:blue", "4": "tab:red", "8": "black"}
 RHO_MARKER = {"0.1061": "v", "0.1592": "D", "0.3183": "P",
               "2": "o", "4": "s", "8": "^"}
 
@@ -50,19 +50,19 @@ LABEL_TIME = "Tiempo (pasos)"
 
 
 def use_style() -> None:
-    """Estilo común: fuente grande (las figuras terminan en diapositivas, mínimo 20)."""
+    """Estilo común para las figuras que terminan embebidas en diapositivas Beamer."""
     plt.rcParams.update({
-        "font.size": 16,
-        "axes.labelsize": 18,
-        "axes.titlesize": 18,
-        "legend.fontsize": 14,
-        "xtick.labelsize": 15,
-        "ytick.labelsize": 15,
+        "font.size": 13,
+        "axes.labelsize": 15,
+        "axes.titlesize": 15,
+        "legend.fontsize": 12,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
         "figure.figsize": (8.0, 5.0),
         "figure.constrained_layout.use": True,
         "errorbar.capsize": 3.0,
         "lines.markersize": 7.0,
-        "savefig.dpi": 150,
+        "savefig.dpi": 200,
     })
 
 
@@ -91,6 +91,41 @@ def sweep_etas(model: str, rho: str) -> list[str]:
     """Valores de η disponibles en el barrido, como strings (nombres de directorio)."""
     root = OUTPUT / "sweep" / model / f"rho{rho}"
     return sorted((p.name.removeprefix("eta") for p in root.glob("eta*")), key=float)
+
+
+#: Ubicaciones candidatas para la leyenda: solo esquinas y bordes (nunca el centro del
+#: gráfico, que queda ilógico aunque no tape curvas).
+LEGEND_LOCS = ("upper right", "upper left", "lower left", "lower right",
+               "center left", "center right", "upper center", "lower center")
+
+
+def legend_sidebar(ax, loc=None, **kwargs):
+    """Coloca la leyenda como `loc="best"` pero restringida a bordes/esquinas.
+
+    Elige, entre `LEGEND_LOCS`, la posición cuyo recuadro se superpone con menos puntos
+    de datos; excluye el centro del gráfico. Empates → gana la primera en el orden de
+    preferencia (esquinas antes que bordes). Si se pasa `loc`, se usa esa posición fija
+    (override manual para casos puntuales)."""
+    if loc is not None:
+        return ax.legend(loc=loc, **kwargs)
+    fig = ax.figure
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    curves = [(np.asarray(ln.get_xdata()), np.asarray(ln.get_ydata()))
+              for ln in ax.get_lines()]
+    best_loc, best_score = LEGEND_LOCS[0], None
+    for loc in LEGEND_LOCS:
+        leg = ax.legend(loc=loc, **kwargs)
+        fig.canvas.draw()
+        (dx0, dy0), (dx1, dy1) = leg.get_window_extent(renderer).get_points()
+        (ax0, ay0), (ax1, ay1) = ax.transData.inverted().transform([(dx0, dy0), (dx1, dy1)])
+        xlo, xhi = sorted((ax0, ax1))
+        ylo, yhi = sorted((ay0, ay1))
+        score = sum(int(((xd >= xlo) & (xd <= xhi) & (yd >= ylo) & (yd <= yhi)).sum())
+                    for xd, yd in curves)
+        if best_score is None or score < best_score:
+            best_loc, best_score = loc, score
+    return ax.legend(loc=best_loc, **kwargs)
 
 
 def save_figure(fig, name: str) -> Path:

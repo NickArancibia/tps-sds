@@ -1,0 +1,100 @@
+%% sdsbeamer.sty — Plantilla Beamer para presentaciones de Simulacion de Sistemas (ITBA)
+%%
+%% Implementa las normas de la catedra (../AGENTS.md §5 y docs/GuiaPresentaciones.md):
+%%   - Diapositivas numeradas (§1.2 / 5.1).
+%%   - Separadores de seccion con solo el titulo; secciones SIN numerar (§1.13 / 5.3).
+%%   - Tipografia tipo Times New Roman (§4 / notacion matematica).
+%%   - Figuras sin titulo interno ni caption; parametros fijos AL COSTADO (§1.7 / 5.2)
+%%     -> usar \figuraparam.
+%%   - Ejes en palabras + unidades MKS y notacion cientifica con potencias de 10 (§1.8/1.9)
+%%     -> macros \uni, \ten, \sci; el estilo de los graficos matplotlib se fija aparte.
+%%   - Sin seccion de bibliografia: cita abreviada en la diapositiva (§1.11) -> \fuente.
+%%   - Notacion: vectores en negrita recta, escalares en italica (§4) -> \vect.
+%%
+%% Uso:  \usepackage{sdsbeamer}   (con \documentclass{beamer})
+%% Compilar:  pdflatex plantilla.tex   (dos veces, por el navegador miniframes)
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sdsbeamer}[2026/08/25 Plantilla Beamer SdS ITBA]
+
+% ---------------------------------------------------------------------------
+% Fuente tipo Times New Roman (norma de notacion, texto + matematica)
+% ---------------------------------------------------------------------------
+\usefonttheme{professionalfonts}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{mathptmx}                 % Times para texto y ecuaciones
+\RequirePackage[spanish,es-nodecimaldot]{babel} % un solo idioma en todo el documento
+
+% ---------------------------------------------------------------------------
+% Paquetes utiles
+% ---------------------------------------------------------------------------
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}                 % tablas prolijas
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{microtype}
+
+% ---------------------------------------------------------------------------
+% Tema (sugerido por la catedra: miniframes; secciones no numeradas)
+% ---------------------------------------------------------------------------
+\useoutertheme[subsection=false]{miniframes}
+\useinnertheme{circles}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{} % sin simbolos de navegacion
+\setbeamertemplate{footline}[frame number] % numero de diapositiva (§1.2)
+\setbeamertemplate{caption}{\insertcaption}% figuras sin prefijo "Figura N:"
+\setbeamertemplate{itemize items}[circle]
+\beamertemplatenavigationsymbolsempty
+
+% Bloques de titulo compactos, coherentes (§1.12)
+\setbeamerfont{title}{series=\bfseries}
+\setbeamerfont{frametitle}{series=\bfseries}
+
+% ---------------------------------------------------------------------------
+% Separadores de seccion: solo el titulo de la seccion (§1.13 / 5.3)
+% Mantienen numero de diapositiva; las secciones NO se numeran.
+% ---------------------------------------------------------------------------
+\AtBeginSection[]{%
+  \begin{frame}
+    \centering
+    \vfill
+    {\usebeamercolor[fg]{structure}\usebeamerfont{title}\color{structure}\Huge\insertsectionhead\par}
+    \vfill
+  \end{frame}%
+}
+
+% ---------------------------------------------------------------------------
+% Figuras: sin titulo ni caption; parametros fijos AL COSTADO (§1.7 / 5.2)
+%   \figuraparam[<ancho fig>]{<archivo>}{<descripcion de parametros>}
+% ---------------------------------------------------------------------------
+\newcommand{\figuraparam}[3][0.62\textwidth]{%
+  \begin{columns}[c]
+    \begin{column}{#1}
+      \centering\includegraphics[width=\linewidth]{#2}%
+    \end{column}%
+    \begin{column}{\dimexpr\textwidth-#1-1.5em\relax}
+      \small #3
+    \end{column}
+  \end{columns}%
+}
+
+% Dos figuras (p. ej. valores extremos de un input) una al lado de la otra.
+\newcommand{\figurasdos}[2]{%
+  \begin{columns}[c]
+    \begin{column}{0.5\textwidth}\centering\includegraphics[width=\linewidth]{#1}\end{column}%
+    \begin{column}{0.5\textwidth}\centering\includegraphics[width=\linewidth]{#2}\end{column}
+  \end{columns}%
+}
+
+% ---------------------------------------------------------------------------
+% Notacion (norma §4) y unidades / notacion cientifica (§1.8 / 1.9)
+% ---------------------------------------------------------------------------
+\newcommand{\vect}[1]{\mathbf{#1}}          % vector: negrita recta  \vect{v}
+\newcommand{\uni}[1]{\,\mathrm{#1}}          % unidad recta con espacio fino: 4\uni{kg}
+\newcommand{\ten}[1]{\times 10^{#1}}         % potencia de 10:  5\ten{-3}
+\newcommand{\sci}[2]{#1\ten{#2}}             % notacion cientifica:  \sci{3.2}{-2}
+
+% Cita abreviada dentro de una diapositiva (no hay bibliografia final, §1.11)
+\newcommand{\fuente}[1]{\par\vspace{0.3em}{\scriptsize\itshape Fuente: #1}}
+
+\endinput

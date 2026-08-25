@@ -75,6 +75,8 @@ Recomendaciones de la cátedra: **Matlab/Octave**, **Matplotlib** (Python), **Ov
 Estas reglas aplican a toda figura, esté en una presentación o en un informe:
 
 - **Ejes**: siempre con leyenda/título en ambos ejes, preferentemente en **palabras** (no símbolos), con **unidades entre paréntesis** usando abreviaturas del sistema MKS: (s), (m), (kg), etc.
+- **Sin títulos**: las figuras **no** llevan título dentro (en presentaciones tampoco caption; en informes va caption debajo). Las **leyendas tampoco llevan título**: solo explican qué representa cada color/curva del gráfico (ej.: `ρ = 2`, `η = 0.5 rad`). La información de configuración fija —modelo, densidad, parámetros— va **al costado de la figura** (presentación) o en el caption (informe), nunca como título de leyenda.
+- **Ubicación de la leyenda**: colocar la leyenda en una zona vacía del gráfico, de modo que **no tape curvas ni barras de error**. Usar `loc="best"` como default y ajustar manualmente por figura cuando siga tapando datos.
 - **Tipografía**: el tamaño de fuente de letras y números dentro de las figuras debe ser similar al del texto que las rodea (en presentaciones, mínimo 20).
 - **Notación científica**: potencias de 10 con supraíndice (10⁻¹, 10⁰, 10¹, 10²). **Prohibido** usar `1E2`, `10^2` o similares. Toda cantidad lleva sus unidades.
 - **Datos promedio**: identificar claramente cada punto con un símbolo y/o barra de error. Nunca unir puntos con líneas sin que se distingan los puntos. Se permite unirlos con **rectas** como "guía para el ojo".
@@ -189,3 +191,34 @@ Basado en la "Guía para Redacción de Informe" de la cátedra. Los informes son
 - [ ] ¿PDF de presentación sin animaciones embebidas, con fotograma + link?
 - [ ] ¿Conclusiones basadas solo en resultados mostrados?
 - [ ] ¿Se verificó no repetir errores corregidos en TPs anteriores?
+
+## 8. Errores frecuentes en devoluciones de la cátedra
+
+Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4). Revisar antes de entregar.
+
+### 8.1 Modelo vs. Simulaciones
+- Los **escenarios/sistemas particulares** (geometrías, casos a estudiar) van en **Simulaciones**, NO en Modelo. El Modelo es solo ecuaciones generales.
+- Un **observable** (energía, polarización, etc.) es post-proceso: NO es parte del Modelo y NO se calcula "durante" la simulación en la descripción del modelo.
+- NO poner información de resultados en Simulaciones (ej.: el tiempo elegido como estado estacionario; se justifica en Resultados).
+- El tiempo final `t_f` se elige tal que el **observable estudiado** llegue al estacionario (no se conoce a priori). Los parámetros de integración (Δt, etc.) se informan con bajo protagonismo, dentro de un bullet "Parámetros de simulación" al final.
+
+### 8.2 Observables y consistencia
+- Las figuras deben medir **exactamente** los observables definidos; si el eje no respeta la definición, no mostrarlo.
+- Toda evolución temporal debe cerrar con el **escalar** que la caracteriza (ej.: promedio en el estacionario), no solo marcar el inicio del estacionario.
+- **Notación uniforme**: no reusar un símbolo para dos cosas (ej.: `L` para tamaño y para partícula líder; `r` vs `r_c`). Mantener el mismo nombre en ecuaciones, diagramas y parámetros fijos.
+- La **cantidad de realizaciones** no es un parámetro variable de estudio: indicarla en "Parámetros de simulación", no como input barrido.
+
+### 8.3 Gráficos
+- **Curvas que se tapan**: dibujar la que tapa por **detrás** (menor zorder) y usar **colores independientes/distinguibles** (azul, rojo, negro); evitar combinaciones que se confunden (verde/naranja).
+- Con varias realizaciones, mostrar **barras de error**.
+- Marcar máximos/puntos de interés con **línea vertical** u otro indicador, e informar el valor (ej.: el N del máximo).
+- Al afirmar una recta/ajuste, mostrar un **ejemplo de ajuste** sobre los datos.
+- Para asociar un parámetro a su color, considerar **escala de color tipo gradiente**.
+- NO duplicar en tablas datos que ya están en los gráficos.
+
+### 8.4 Animaciones
+- El sujeto de interés (ej.: líder) debe estar **centrado**, no en el borde.
+- Animaciones **grandes** y legibles; NO en formato "shorts" (dificulta ir y venir); título preciso ("Animaciones", no descripciones vagas).
+
+### 8.5 Conclusiones
+- **Cuantificar** explícitamente cada afirmación; si se compara (ej.: entre densidades), que exista un gráfico que muestre esa comparación.

@@ -16,12 +16,15 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import (LABEL_S, LABEL_TIME, LABEL_VA, MODEL_LABEL, MODELS, OUTPUT,
-                    RHO_LABEL, RHOS, load_observables, save_figure, use_style)
+from common import (LABEL_S, LABEL_TIME, LABEL_VA, MODELS, OUTPUT, RHOS,
+                    legend_sidebar, load_observables, save_figure, use_style)
 
 #: η característicos: sin ruido / ruido bajo / ruido intermedio.
 ETAS = ("0.0", "0.5", "2.0")
-ETA_COLOR = {"0.0": "tab:green", "0.5": "tab:blue", "2.0": "tab:orange"}
+#: Colores independientes (azul / rojo / negro): verde y naranja se confundían entre sí.
+#: η = 0 (curva suave que satura en 1) va detrás para no tapar las curvas con ruido.
+ETA_COLOR = {"0.0": "black", "0.5": "tab:blue", "2.0": "tab:red"}
+ETA_ZORDER = {"0.0": 1.5, "0.5": 2.5, "2.0": 2.0}
 #: Seed del barrido usada para las evoluciones típicas.
 SEED = 1
 #: Densidades bajas (N = 11, 16, 32): las curvas de v_a con ruido fluctúan tanto que las
@@ -32,6 +35,12 @@ LOW_RHOS = ("0.1061", "0.1592", "0.3183")
 #: cerca de 1 (densidades que percolan): la escala completa [0, 1] aplastaría la estructura.
 OBSERVABLES = (("polarization", LABEL_VA, "va"),
                ("largest_cluster_fraction", LABEL_S, "s"))
+
+#: Override manual de la posición de la leyenda (clave = nombre del archivo sin extensión).
+#: La colocación automática (`legend_sidebar`) elige la esquina con menos superposición,
+#: pero en esta figura cae sobre la marca de inicio del estacionario de la curva negra;
+#: se fuerza a la derecha, a la misma altura.
+LEGEND_LOC = {"evolucion_s_voter_rho0.3183": "upper right"}
 
 
 def stationary_onset(time, values, window: int = 100, drift_tol: float = 0.12):
@@ -61,6 +70,25 @@ def stationary_onset(time, values, window: int = 100, drift_tol: float = 0.12):
     return float(time[0]) if first == 0 else float(t_moving[first])
 
 
+def xlim_right(runs, column, tol: float = 0.01) -> float:
+    """Límite derecho del eje temporal.
+
+    Las corridas de votante con η = 0 duran 10000 pasos (ordenan lento) pero saturan en
+    v_a = S = 1 mucho antes; sin recorte el eje se estira hasta 10000 con una única curva
+    plana y aplasta la dinámica del resto. Si la corrida más larga supera 1.5× a la
+    siguiente y su cola (más allá de esa longitud) es plana, se corta en la longitud de la
+    siguiente. No se descartan datos: la cola recortada es constante.
+    """
+    ends = sorted(float(data["time"][-1]) for data in runs.values())
+    if len(ends) < 2 or ends[-1] <= 1.5 * ends[-2]:
+        return ends[-1]
+    longest = max(runs.values(), key=lambda data: data["time"][-1])
+    tail = longest[column][longest["time"] > ends[-2]]
+    if tail.size and (tail.max() - tail.min()) <= tol:
+        return ends[-2]
+    return ends[-1]
+
+
 def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
                    etas: tuple[str, ...] = ETAS, suffix: str = "") -> None:
     fig, ax = plt.subplots()
@@ -70,7 +98,7 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
     ylim = (0.75, 1.01) if lo >= 0.75 else (0.0, 1.05)
     for eta, data in runs.items():
         ax.plot(data["time"], data[column], color=ETA_COLOR[eta], linewidth=1.2,
-                label=f"η = {eta} rad")
+                zorder=ETA_ZORDER[eta], label=f"η = {eta} rad")
         onset = stationary_onset(data["time"], data[column])
         if onset is None:
             print(f"  (sin estacionario: {tag} {model} rho={rho} eta={eta})")
@@ -87,10 +115,11 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
                     color="black", linestyle="--", linewidth=1.5)
     ax.set_xlabel(LABEL_TIME)
     ax.set_ylabel(ylabel)
-    ax.set_xlim(left=0)
+    ax.set_xlim(0, xlim_right(runs, column))
     ax.set_ylim(*ylim)
-    ax.legend(title=f"{MODEL_LABEL[model]}, ρ = {RHO_LABEL[rho]}", loc="center right")
-    save_figure(fig, f"evolucion_{tag}_{model}_rho{rho}{suffix}.png")
+    name = f"evolucion_{tag}_{model}_rho{rho}{suffix}"
+    legend_sidebar(ax, loc=LEGEND_LOC.get(name))
+    save_figure(fig, f"{name}.png")
 
 
 def main() -> None:
