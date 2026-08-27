@@ -220,7 +220,7 @@
   \figuraparam{evolucion_s_vicsek_rho2.png}{%
     Vicsek, $\rho = 2$, corrida típica \\[0.35em]
     Eje acotado: todas las curvas viven cerca de 1. \\[0.35em]
-    Con $\rho \ge 2$ el grafo de vecinos percola: el cluster gigante abarca casi todo el sistema, con o sin ruido.
+    Con $\rho \ge 2$ el grafo de vecinos percola: el cluster más grande abarca casi todo el sistema, con o sin ruido.
   }
 \end{frame}
 
@@ -264,6 +264,14 @@
   }
 \end{frame}
 
+\begin{frame}{Votante: $v_a$ vs $\eta$}
+  \figuraparam{voter_va_vs_eta.png}{%
+    Votante, 50 seeds \\[0.35em]
+    Todas las densidades pierden el orden dentro del primer radián. \\[0.35em]
+    A diferencia de Vicsek, subir $\rho$ no corre la caída.
+  }
+\end{frame}
+
 \begin{frame}{Vicsek vs votante: $v_a$ vs $\eta$}
   \figuraparam{comparacion_va_vs_eta_rho4.png}{%
     $\rho = 4$, 50 seeds \\[0.35em]
@@ -302,13 +310,15 @@
 
 \begin{frame}{Conclusiones}
   \begin{itemize}
-    \item Vicsek, $\rho = 4$: $\langle v_a \rangle$ va de $1.000$ ($\eta = 0$) a
-      $0.783 \pm 0.007$ ($\eta = 2\uni{rad}$) y a $0.044$ ($\eta = 2\pi$).
-      Subir $\rho$ corre esa caída a $\eta$ más alto.
-    \item Votante, mismo $\rho$: a $\eta = 0.25\uni{rad}$ ya $\langle v_a \rangle = 0.53 \pm 0.08$;
-      Vicsek sigue en $0.997$.
-    \item $\rho = 2,\,4,\,8$: $S \ge 0.96$ para todo $\eta$. El desorden de $v_a$ no parte el cluster.
-    \item $\rho \le 1/\pi$: $S$ cae con $\eta$ y $v_a$ crece con $S$.
+    \item Vicsek es mucho más robusto al ruido que el votante: con $\rho = 4$ y
+      $\eta = 2\uni{rad}$, $\langle v_a \rangle \approx 0.8$ contra $\approx 0.1$;
+      ya con $\eta = 0.5\uni{rad}$ el votante cae a $0.29 \pm 0.04$
+      mientras Vicsek sigue en $0.99$.
+    \item La densidad determina el tamaño del cluster más grande: con $\rho = 2,\,4,\,8$,
+      $S$ se mantiene $\approx 1$ para todo ruido;
+      con $\rho \le 1/\pi$ queda lejos de 1.
+    \item En densidades bajas, a mayor ruido menor es el $S$ estacionario:
+      cae de $\approx 0.95$ a $\approx 0.2$ recorriendo $\eta$.
   \end{itemize}
 \end{frame}
 
