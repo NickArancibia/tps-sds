@@ -290,11 +290,9 @@
 \end{frame}
 
 \begin{frame}{Tiempos del CIM}
-  \begin{itemize}
-    \item En cada paso se cronometra solo \texttt{cim.findNeighbors} (\texttt{System.nanoTime}).
-    \item $N = 200,\,400,\,800$ ($L = 10\uni{m}$, $\rho = 2,\,4,\,8$), partículas puntuales, PBC.
-    \item Comparación con el TP1 a los mismos $N$: pendiente (los tiempos están en cada \texttt{run.json}).
-  \end{itemize}
+  \figuraparam{cim_tp1_vs_tp2.png}{%
+    Misma geometría que el TP1: $L = 10\uni{m}$, $M = 10$, $r_c = 1\uni{m}$, PBC, partículas puntuales
+  }
 \end{frame}
 
 % ==========================================================================
