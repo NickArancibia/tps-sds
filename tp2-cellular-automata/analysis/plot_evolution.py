@@ -36,11 +36,16 @@ LOW_RHOS = ("0.1061", "0.1592", "0.3183")
 OBSERVABLES = (("polarization", LABEL_VA, "va"),
                ("largest_cluster_fraction", LABEL_S, "s"))
 
-#: Override manual de la posición de la leyenda (clave = nombre del archivo sin extensión).
-#: La colocación automática (`legend_sidebar`) elige la esquina con menos superposición,
-#: pero en esta figura cae sobre la marca de inicio del estacionario de la curva negra;
-#: se fuerza a la derecha, a la misma altura.
-LEGEND_LOC = {"evolucion_s_voter_rho0.3183": "upper right"}
+#: Override manual de la leyenda (clave = nombre del archivo sin extensión; valor = kwargs
+#: de `ax.legend`). La colocación automática (`legend_sidebar`) elige la esquina con menos
+#: superposición, pero en estos casos igual cae sobre algo:
+#: - s_voter_rho0.3183: tapaba la marca de inicio del estacionario de la curva negra.
+#: - va_voter_rho4: tapaba la curva azul; va arriba a la derecha, debajo de la curva
+#:   negra saturada en 1 (por eso el bbox baja el borde superior a y = 0.92).
+LEGEND_LOC = {
+    "evolucion_s_voter_rho0.3183": {"loc": "upper right"},
+    "evolucion_va_voter_rho4": {"loc": "upper right", "bbox_to_anchor": (0.98, 0.92)},
+}
 
 
 def stationary_onset(time, values, window: int = 100, drift_tol: float = 0.12):
@@ -118,7 +123,7 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
     ax.set_xlim(0, xlim_right(runs, column))
     ax.set_ylim(*ylim)
     name = f"evolucion_{tag}_{model}_rho{rho}{suffix}"
-    legend_sidebar(ax, loc=LEGEND_LOC.get(name))
+    legend_sidebar(ax, **LEGEND_LOC.get(name, {}))
     save_figure(fig, f"{name}.png")
 
 
