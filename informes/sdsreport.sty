@@ -1,0 +1,103 @@
+%% sdsreport.sty - Plantilla de informes de Simulación de Sistemas (ITBA)
+%%
+%% Implementa las reglas comunes de AGENTS.md y docs/GuiaInformes.md:
+%%   - pagina A4 y texto tecnico en espanol;
+%%   - tipografia tipo Times para texto y matematica;
+%%   - secciones y subsecciones numeradas;
+%%   - figuras, tablas y ecuaciones numeradas y referenciables;
+%%   - vectores en negrita recta, escalares en italica y unidades rectas;
+%%   - Referencias como seccion final sin numero.
+%%
+%% Uso: \usepackage{sdsreport} con \documentclass[11pt,a4paper]{article}.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sdsreport}[2026/08/26 Plantilla de informes SdS ITBA]
+
+% Tipografia e idioma
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[spanish,es-nodecimaldot]{babel}
+\RequirePackage{mathptmx}
+\RequirePackage{microtype}
+
+% Matematica, figuras y tablas
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}
+\RequirePackage{siunitx}
+\RequirePackage{xcolor}
+\RequirePackage{caption}
+\RequirePackage{placeins}
+
+% Pagina y enlaces
+\RequirePackage[margin=2.5cm]{geometry}
+\RequirePackage[hidelinks]{hyperref}
+
+\definecolor{itbablue}{HTML}{006B9E}
+\setlength{\emergencystretch}{2em}
+\setlength{\parindent}{1.25em}
+\setlength{\parskip}{0pt}
+\sisetup{output-decimal-marker={,}, per-mode=symbol}
+\captionsetup{font=small, labelfont=bf}
+\hypersetup{
+  pdftitle={Informe de Simulación de Sistemas},
+  pdfsubject={Trabajo práctico},
+  colorlinks=false
+}
+
+% Notacion de la catedra
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\uni}[1]{\,\mathrm{#1}}
+\newcommand{\ten}[1]{\times 10^{#1}}
+\newcommand{\sci}[2]{#1\ten{#2}}
+
+% Marcador visible que debe desaparecer antes de entregar.
+\newcommand{\pendiente}[1]{\textcolor{red!70!black}{[Completar: #1]}}
+
+% Datos de caratula
+\makeatletter
+\newcommand{\sds@title}{Título del trabajo práctico}
+\newcommand{\sds@subtitle}{Subtítulo del trabajo}
+\newcommand{\sds@group}{Grupo XX}
+\newcommand{\sds@commission}{Comisión S/S2}
+\newcommand{\sds@members}{Nombre Apellido - Legajo 00000}
+\newcommand{\sds@term}{Segundo cuatrimestre de 2026}
+\newcommand{\sds@date}{\today}
+\newcommand{\sds@logo}{itba-logo.png}
+
+\newcommand{\reporttitle}[1]{\renewcommand{\sds@title}{#1}}
+\newcommand{\reportsubtitle}[1]{\renewcommand{\sds@subtitle}{#1}}
+\newcommand{\reportgroup}[1]{\renewcommand{\sds@group}{#1}}
+\newcommand{\reportcommission}[1]{\renewcommand{\sds@commission}{#1}}
+\newcommand{\reportmembers}[1]{\renewcommand{\sds@members}{#1}}
+\newcommand{\reportterm}[1]{\renewcommand{\sds@term}{#1}}
+\newcommand{\reportdate}[1]{\renewcommand{\sds@date}{#1}}
+\newcommand{\reportlogo}[1]{\renewcommand{\sds@logo}{#1}}
+
+\newcommand{\makereportcover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \centering
+    \vspace*{1.4cm}
+    \includegraphics[width=6.4cm]{\sds@logo}\par
+    \vfill
+    {\Large\bfseries Simulación de Sistemas\par}
+    \vspace{0.9cm}
+    {\LARGE\bfseries \sds@title\par}
+    \vspace{0.45cm}
+    {\Large \sds@subtitle\par}
+    \vspace{1.0cm}
+    {\color{itbablue}\rule{0.70\textwidth}{0.8pt}\par}
+    \vspace{0.9cm}
+    {\large\bfseries \sds@group\ -- \sds@commission\par}
+    \vspace{1.0cm}
+    {\large \sds@members\par}
+    \vfill
+    {\large \sds@term\par}
+    \vspace{0.2cm}
+    {\large Fecha: \sds@date\par}
+  \end{titlepage}%
+}
+\makeatother
+
+\endinput

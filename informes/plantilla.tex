@@ -1,0 +1,183 @@
+%% plantilla.tex - Informe de ejemplo para Simulación de Sistemas (ITBA)
+%%
+%% Estructura indicada por docs/GuiaInformes.md y AGENTS.md:
+%%   Resumen; Introduccion; Modelo; Implementacion; Simulaciones;
+%%   Resultados; Conclusiones; Referencias.
+%%
+%% Compilar desde este directorio:
+%%   latexmk -pdf -interaction=nonstopmode -halt-on-error plantilla.tex
+%%
+%% Antes de entregar:
+%%   - eliminar todos los \pendiente{...};
+%%   - referenciar en el texto cada figura, tabla y ecuacion;
+%%   - verificar ejes, unidades, barras de error y cifras significativas;
+%%   - dejar en Referencias solamente las fuentes citadas.
+
+\documentclass[11pt,a4paper]{article}
+\usepackage{sdsreport}
+
+% Datos de la caratula
+\reporttitle{Trabajo Práctico Nro. X}
+\reportsubtitle{Título específico del trabajo}
+\reportgroup{Grupo 2}
+\reportcommission{Comisión S2}
+\reportmembers{%
+  Arancibia Nicolás - Legajo pendiente\\
+  Morales Agustín - Legajo pendiente\\
+  Ronda Agustín - Legajo 64507}
+\reportterm{Segundo cuatrimestre de 2026}
+\reportdate{\today}
+% El logo incluido en informes/ es el default. Para usar otro:
+% \reportlogo{ruta/al/logo.png}
+
+\begin{document}
+
+\hypersetup{pageanchor=false}
+\makereportcover
+\setcounter{page}{1}
+\hypersetup{pageanchor=true}
+
+\begin{abstract}
+\pendiente{redactar al final}. Resumir el problema, el modelo, el protocolo de
+simulación y los resultados cuantitativos principales. El resumen no introduce
+resultados que luego no aparezcan en el cuerpo del informe.
+\end{abstract}
+
+\section{Introducción}
+
+Presentar el problema, el objetivo del estudio y las preguntas que se van a
+responder. Citar los antecedentes necesarios, como se hace con la
+Ref.~\cite{referencia-ejemplo}. Evitar adelantar resultados o describir en
+detalle el sistema particular que se simuló.
+
+\section{Modelo}
+
+Exponer el modelo matemático general sin fijar la geometría, los parámetros de
+una corrida ni el método numérico. Por ejemplo,
+\begin{equation}
+  \vect{r}_i(t+\Delta t)
+  = \vect{r}_i(t) + \vect{v}_i(t)\,\Delta t,
+  \label{eq:movimiento}
+\end{equation}
+donde \(\vect{r}_i\) es la posición de la partícula \(i\),
+\(\vect{v}_i\) su velocidad, \(t\) el tiempo y \(\Delta t\) el paso temporal.
+La Ec.~\eqref{eq:movimiento} también muestra la convención tipográfica:
+vectores en negrita recta y escalares en itálica.
+
+\section{Implementación}
+
+Describir cómo se tradujo el modelo matemático al motor de simulación:
+arquitectura, estructuras de datos, algoritmo de avance y criterio de
+actualización. Incluir pseudocódigo o un diagrama cuando aclare relaciones que
+serían difíciles de seguir en prosa. Esta sección no describe scripts de
+graficación ni formatos de archivos de salida.
+
+\section{Simulaciones}
+
+\subsection{Sistema estudiado}
+
+Definir el sistema particular: geometría, condiciones de contorno, parámetros
+fijos, inputs barridos y outputs guardados. La Tabla~\ref{tab:parametros}
+muestra un formato posible para registrar la configuración sin duplicar datos
+que ya aparecen en figuras.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Configuración del estudio. Reemplazar cada marcador por el valor
+  usado y agregar las unidades que correspondan.}
+  \label{tab:parametros}
+  \begin{tabular}{ll}
+    \toprule
+    Magnitud & Valor \\
+    \midrule
+    Geometría y contorno & \pendiente{descripción} \\
+    Parámetros fijos & \pendiente{valores y unidades} \\
+    Input barrido & \pendiente{rango y discretización} \\
+    Realizaciones & \pendiente{cantidad de seeds distintas} \\
+    Tiempo simulado & \pendiente{duración} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Observables y protocolo de medición}
+
+Definir matemáticamente cada observable y explicar cómo se obtiene el escalar
+que caracteriza una corrida. Si se promedia en estado estacionario, indicar
+qué instantes entran en la suma y justificar el inicio del estacionario con
+evoluciones temporales mostradas en Resultados.
+
+Para \(R\) realizaciones independientes, un promedio y su desvío estándar
+muestral pueden escribirse como
+\begin{align}
+  \langle \overline{A} \rangle
+    &= \frac{1}{R}\sum_{k=1}^{R}\overline{A}_k,
+    \label{eq:promedio-realizaciones}\\
+  \sigma_A
+    &= \sqrt{\frac{1}{R-1}\sum_{k=1}^{R}
+       \left(\overline{A}_k-\langle\overline{A}\rangle\right)^2}.
+    \label{eq:desvio-realizaciones}
+\end{align}
+Las barras de error deben indicar si representan \(\sigma_A\), el error
+estándar u otra magnitud.
+
+\section{Resultados}
+
+Cada subsección debe sostener una secuencia de texto, figura y análisis. Para
+cada input estudiado, conviene mostrar primero la dinámica característica,
+luego la evolución temporal que valida el escalar y finalmente el observable
+escalar en función del input.
+
+\subsection{Dinámica y evolución temporal}
+
+La Fig.~\ref{fig:evolucion} reserva el lugar para una evolución temporal. La
+figura final debe marcar con una línea vertical el comienzo del estado
+estacionario y mostrar el valor escalar que se usa en el estudio paramétrico.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{%
+    \parbox[c][5.0cm][c]{0.82\textwidth}{%
+      \centering
+      \pendiente{insertar una figura sin título interno, con ejes y unidades}}}
+  \caption{Evolución temporal del observable. Explicar qué representa, cómo
+  se identifica el estado estacionario y cuáles son los parámetros fijos.}
+  \label{fig:evolucion}
+\end{figure}
+
+\subsection{Observable en función del input}
+
+En la Fig.~\ref{fig:estudio-parametrico}, cada punto debe corresponder a un
+promedio de realizaciones independientes y debe llevar su barra de error. Las
+rectas que unen puntos se identifican como guías para el ojo; no se interpolan
+los datos con una función sin fundamento teórico.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{%
+    \parbox[c][5.0cm][c]{0.82\textwidth}{%
+      \centering
+      \pendiente{insertar input vs. observable con puntos y barras de error}}}
+  \caption{Observable estacionario en función del input. Informar cantidad de
+  realizaciones, significado de las barras de error y parámetros fijos.}
+  \label{fig:estudio-parametrico}
+\end{figure}
+
+\FloatBarrier
+
+\section{Conclusiones}
+
+Responder las preguntas planteadas en la Introducción con afirmaciones
+cuantificadas y respaldadas por las figuras del informe. No incluir trabajos
+futuros, resultados no mostrados ni explicaciones causales que no se hayan
+puesto a prueba.
+
+\begin{thebibliography}{9}
+
+\bibitem{referencia-ejemplo}
+Nombre Apellido,
+``Título del trabajo'',
+\textit{Nombre de la publicación}, vol. X, nro. Y, pp. 1--10 (2026).
+
+\end{thebibliography}
+
+\end{document}
