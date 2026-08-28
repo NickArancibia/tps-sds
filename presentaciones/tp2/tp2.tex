@@ -43,38 +43,67 @@
 % ==========================================================================
 
 \begin{frame}{Modelo}
-  Vecindad $\mathcal{N}_i = \{ j \neq i : \lvert \vect{r}_i - \vect{r}_j \rvert_{\mathrm{PBC}} < r_c \}$.
-  Ruido $\Delta\theta_i \sim U[-\eta/2,\,\eta/2]$. Actualización sincrónica.
+  \begin{block}{Vecindad y ruido}
+    \begin{columns}[T,onlytextwidth]
+      \begin{column}{0.48\textwidth}
+        \centering
+        \(
+          \displaystyle
+          \mathcal{N}_i(t)=\bigl\{j\neq i:
+          \lvert\vect{r}_i(t)-\vect{r}_j(t)\rvert_{\mathrm{PBC}}<r_c\bigr\}
+        \)
+      \end{column}
+      \begin{column}{0.48\textwidth}
+        \centering
+        \(
+          \displaystyle
+          \xi_i(t)\sim U[-\eta/2,\,\eta/2]
+        \)
+      \end{column}
+    \end{columns}
+  \end{block}
 
-  \vspace{0.25em}
-  \begin{columns}[t]
+  \vspace{0.4em}
+  \begin{columns}[T,onlytextwidth]
     \begin{column}{0.48\textwidth}
-      Vicsek
-      \begin{equation*}
-        \theta_i(t+\Delta t)
-        = \arg\!\sum_{j \in \mathcal{N}_i \cup \{i\}} e^{i\theta_j(t)}
-        + \Delta\theta_i
-      \end{equation*}
-      {\scriptsize Vicsek et al., PRL 1995}
+      {\color{structure}\large Vicsek}\par
+      \vspace{0.55em}
+      \begin{minipage}[t][0.17\textheight][t]{\linewidth}
+        \centering
+        \(
+          \displaystyle
+          \theta_i'=\arg\!\sum_{j\in\mathcal{N}_i(t)\cup\{i\}}
+          e^{\mathrm{i}\theta_j(t)}+\xi_i(t)
+        \)\par
+        \vfill
+        {\tiny Vicsek et al., PRL 1995}
+      \end{minipage}
     \end{column}
     \begin{column}{0.48\textwidth}
-      Votante
-      \begin{equation*}
-        \theta_i(t+\Delta t)
-        = \theta_j(t) + \Delta\theta_i
-      \end{equation*}
-      $j$ uniforme en $\mathcal{N}_i \cup \{i\}$.\\
-      {\scriptsize Loscar, Baglietto y Vazquez, PRE 2021}
+      {\color{structure}\large Votante}\par
+      \vspace{0.55em}
+      \begin{minipage}[t][0.17\textheight][t]{\linewidth}
+        \centering
+        \(
+          \displaystyle
+          J_i\sim U\bigl(\mathcal{N}_i(t)\cup\{i\}\bigr),
+          \qquad \theta_i'=\theta_{J_i}(t)+\xi_i(t)
+        \)\par
+        \vfill
+        {\tiny Loscar, Baglietto y Vazquez, PRE 2021}
+      \end{minipage}
     \end{column}
   \end{columns}
 
-  \vspace{0.15em}
-  \begin{equation*}
-    \vect{r}_i(t+\Delta t)
-    = \bigl(\vect{r}_i(t)
-      + v\,(\cos\theta_i(t+\Delta t),\,\sin\theta_i(t+\Delta t))\,\Delta t\bigr)
-      \bmod L
-  \end{equation*}
+  \vspace{0.2em}
+  \begin{block}{Movimiento y condiciones periódicas}
+    \vspace{-0.55em}
+    \[
+      \vect{r}_i(t+\Delta t)=
+      \bigl[\vect{r}_i(t)+v\,(\cos\theta_i',\,\sin\theta_i')\,\Delta t\bigr]
+      \mathbin{\mathrm{mod}}\,L
+    \]
+  \end{block}
 \end{frame}
 
 % ==========================================================================
