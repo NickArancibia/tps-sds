@@ -16,7 +16,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import (LABEL_S, LABEL_TIME, LABEL_VA, MODELS, OUTPUT, RHOS,
+from common import (LABEL_S_Y, LABEL_TIME, LABEL_VA, MODELS, OUTPUT, RHOS,
                     legend_sidebar, load_observables, save_figure, use_style)
 
 #: η característicos: sin ruido / ruido bajo / ruido intermedio.
@@ -31,10 +31,14 @@ SEED = 1
 #: tres η juntas son ilegibles → dos figuras por densidad, cada ruido contra η = 0.
 LOW_RHOS = ("0.1061", "0.1592", "0.3183")
 
+#: Alto mínimo del eje y cuando se lo acota a los datos, en unidades del observable.
+#: Evita ampliar fluctuaciones despreciables hasta que parezcan una señal.
+SPAN_MIN = 0.10
+
 #: (columna, label, tag). El eje y de S se acota a los datos cuando todas las curvas viven
 #: cerca de 1 (densidades que percolan): la escala completa [0, 1] aplastaría la estructura.
 OBSERVABLES = (("polarization", LABEL_VA, "va"),
-               ("largest_cluster_fraction", LABEL_S, "s"))
+               ("largest_cluster_fraction", LABEL_S_Y, "s"))
 
 #: Override manual de la leyenda (clave = nombre del archivo sin extensión; valor = kwargs
 #: de `ax.legend`). La colocación automática (`legend_sidebar`) elige la esquina con menos
@@ -100,7 +104,14 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
     runs = {eta: load_observables(OUTPUT / "sweep" / model / f"rho{rho}" / f"eta{eta}" / f"s{SEED}")
             for eta in etas}
     lo = min(data[column].min() for data in runs.values())
-    ylim = (0.75, 1.01) if lo >= 0.75 else (0.0, 1.05)
+    if lo >= 0.75:
+        # Eje acotado a los datos para que la variación real no quede aplastada
+        # contra el techo, pero con un span mínimo: en ρ = 4 y 8 la fracción vale
+        # ~1 siempre y un eje pegado a los datos ampliaría puro ruido.
+        top = 1.005
+        ylim = (min(lo - 0.02, top - SPAN_MIN), top)
+    else:
+        ylim = (0.0, 1.05)
     for eta, data in runs.items():
         ax.plot(data["time"], data[column], color=ETA_COLOR[eta], linewidth=1.2,
                 zorder=ETA_ZORDER[eta], label=f"η = {eta} rad")

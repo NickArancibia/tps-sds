@@ -6,6 +6,10 @@
 %% Animaciones: fotograma + link (el PDF de entrega no lleva video embebido).
 
 \documentclass[aspectratio=169]{beamer}
+% sdsbeamer.sty vive un directorio mas arriba. Buscarlo por \input@path en vez
+% de por symlink: git no materializa symlinks en Windows (core.symlinks=false)
+% y el .sty queda como un archivo de texto con la ruta adentro.
+\makeatletter\def\input@path{{../}}\makeatother
 \usepackage{sdsbeamer}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
@@ -13,21 +17,21 @@
 
 \graphicspath{{../../tp2-cellular-automata/analysis/figures/}{figuras/}}
 
-\newcommand{\animbox}[1]{%
+% Fotograma fijo representativo + enlace explicito debajo (GuiaPresentaciones 2.4.8).
+% El PDF de entrega no lleva video embebido.
+%   \animbox{<archivo>}{<condicion>}{<enlace>}
+\newcommand{\linkpendiente}{{\color{red!70!black}[link de YouTube pendiente]}}
+\newcommand{\animbox}[3]{%
   \centering
-  \fcolorbox{black!45}{black!4}{%
-    \parbox[c][0.48\textheight][c]{0.94\linewidth}{\centering
-      {\large Fotograma}\\[0.45em]
-      {\normalsize #1}\\[0.7em]
-      {\scriptsize Link: pendiente}
-    }%
-  }%
+  \includegraphics[width=0.86\linewidth]{#1}\\[0.4em]
+  {\small #2}\\[0.2em]
+  {\scriptsize #3}%
 }
 
 \title{Autómata off-lattice: bandadas}
 \subtitle{Simulación de Sistemas - ITBA}
-\author[Grupo 2]{Arancibia Nicolás -- Legajo pendiente \and
-  Morales Agustín -- Legajo pendiente \and Ronda Agustín -- Legajo 64507}
+\author[Grupo 2]{Arancibia Nicolás -- Legajo 64481 \and
+  Morantes Agustín -- Legajo 61306 \and Ronda Agustín -- Legajo 64507}
 \institute[ITBA]{Grupo 2 --- Comisión S2 --- Instituto Tecnológico de Buenos Aires}
 \date{4 de septiembre de 2026}
 
@@ -217,18 +221,25 @@
 % ==========================================================================
 
 \begin{frame}{Vicsek: animación}
-  \begin{columns}[c]
-    \begin{column}{0.48\textwidth}
-      \animbox{$\rho = 4$, $\eta = 2\uni{rad}$}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.70\textwidth}
+      \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.5\textwidth}
+          \animbox{anim_vicsek_rho4_eta05.png}{$\eta = 0.5\uni{rad}$, $v_a = 0.99$}{\linkpendiente}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+          \animbox{anim_vicsek_rho4_eta4.png}{$\eta = 4\uni{rad}$, $v_a = 0.18$}{\linkpendiente}
+        \end{column}
+      \end{columns}
     \end{column}
-    \begin{column}{0.48\textwidth}
-      \animbox{$\rho = 4$, $\eta = 4\uni{rad}$}
+    \begin{column}{0.28\textwidth}
+      {\small Vicsek, $\rho = 4$ ($N = 400$) \\[0.35em]
+      Vectores $=$ velocidad, color $=$ ángulo. \\[0.35em]
+      Fotograma en $t = 1500\uni{s}$. \\[0.35em]
+      $L = 10\uni{m}$, $r_c = 1\uni{m}$,
+      $v = 0.03\uni{m/s}$, $\Delta t = 1\uni{s}$.}
     \end{column}
   \end{columns}
-  \vspace{0.35em}
-  {\small Vectores $=$ velocidad, color $=$ ángulo.
-  $L = 10\uni{m}$, $r_c = 1\uni{m}$, $v = 0.03\uni{m/s}$.
-  Corridas en \texttt{output/anim/vicsek/rho4\_eta\{2.0,4.0\}}.}
 \end{frame}
 
 \begin{frame}{Vicsek: $v_a(t)$}
@@ -263,26 +274,34 @@
 \end{frame}
 
 \begin{frame}{Vicsek: $v_a$ vs $S$}
-  \figuraparam{va_vs_s_vicsek.png}{%
-    Vicsek. Cada punto: un $\eta$ (promedio sobre seeds). \\[0.35em]
-    $\rho \ge 2$: columna vertical en $S \approx 1$; el ruido desordena las direcciones sin partir el cluster. \\[0.35em]
-    $\rho \le 1/\pi$: $v_a$ crece con $S$; el orden necesita conectividad.
-  }
+  \centering
+  \includegraphics[width=0.84\linewidth]{va_vs_s_vicsek.png}
+
+  \vspace{0.3em}
+  {\small Vicsek, 50 seeds. Cada punto: un $\eta$. Paneles con distinta escala en $S$:
+  a la izquierda $v_a$ crece con $S$ (el orden necesita conectividad), a la derecha
+  $S$ no se mueve mientras $v_a$ recorre todo su rango.}
 \end{frame}
 
 \begin{frame}{Votante: animación}
-  \begin{columns}[c]
-    \begin{column}{0.48\textwidth}
-      \animbox{$\rho = 4$, $\eta = 0$ \\ {\scriptsize (falta corrida)}}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.70\textwidth}
+      \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.5\textwidth}
+          \animbox{anim_voter_rho4_eta05.png}{$\eta = 0.5\uni{rad}$, $v_a = 0.45$}{\linkpendiente}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+          \animbox{anim_voter_rho4_eta4.png}{$\eta = 4\uni{rad}$, $v_a = 0.08$}{\linkpendiente}
+        \end{column}
+      \end{columns}
     \end{column}
-    \begin{column}{0.48\textwidth}
-      \animbox{$\rho = 4$, $\eta = 2\uni{rad}$}
+    \begin{column}{0.28\textwidth}
+      {\small Votante, $\rho = 4$ ($N = 400$) \\[0.35em]
+      Mismos ruidos, mismo instante y misma representación que Vicsek. \\[0.35em]
+      A $\eta = 0.5\uni{rad}$ Vicsek está en $v_a = 0.99$ y el votante ya
+      recorre todo el círculo.}
     \end{column}
   \end{columns}
-  \vspace{0.35em}
-  {\small Misma representación que Vicsek.
-  El votante solo se ordena con ruido muy bajo.
-  Corrida en \texttt{output/anim/voter/rho4\_eta2.0}.}
 \end{frame}
 
 \begin{frame}{Votante: $v_a(t)$}
@@ -311,6 +330,14 @@
   }
 \end{frame}
 
+\begin{frame}{Votante: $S(t)$}
+  \figuraparam{evolucion_s_voter_rho2.png}{%
+    Votante, $\rho = 2$, corrida típica \\[0.35em]
+    Eje acotado: todas las curvas viven cerca de 1. \\[0.35em]
+    Mismo comportamiento que Vicsek: con $\rho \ge 2$ el grafo de vecinos percola y el cluster más grande abarca casi todo, con o sin ruido.
+  }
+\end{frame}
+
 \begin{frame}{Votante: $S$ vs $\eta$}
   \figuraparam{voter_s_vs_eta.png}{%
     Votante \\[0.35em]
@@ -320,11 +347,33 @@
 \end{frame}
 
 \begin{frame}{Votante: $v_a$ vs $S$}
-  \figuraparam{va_vs_s_voter.png}{%
-    Votante. Cada punto: un $\eta$ (promedio sobre seeds). \\[0.35em]
-    Misma estructura que Vicsek: vertical en $S \approx 1$ ($\rho \ge 2$), $v_a$ creciente con $S$ ($\rho \le 1/\pi$). \\[0.35em]
-    La vertical llega más abajo: el votante pierde $v_a$ a $\eta$ menor.
+  \centering
+  \includegraphics[width=0.84\linewidth]{va_vs_s_voter.png}
+
+  \vspace{0.3em}
+  {\small Votante, 50 seeds. Misma estructura que Vicsek: correlación a la izquierda,
+  columna en $S \approx 1$ a la derecha. La conectividad no depende de la regla.}
+\end{frame}
+
+\begin{frame}{Vicsek vs votante: $S$ vs $\eta$}
+  \figuraparam{comparacion_s_vs_eta_rho4.png}{%
+    $\rho = 4$, 50 seeds \\[0.35em]
+    Ojo con el eje: está acotado a los datos. Mínimos $0.9982$ y $0.9991$, toda
+    la variación entra en menos del $0.2\%$. \\[0.35em]
+    La regla de alineación separa $v_a$ en un factor tres, pero no deja huella
+    en la conectividad.
   }
+\end{frame}
+
+\begin{frame}{Vicsek vs votante: $v_a$ vs $S$}
+  \centering
+  \includegraphics[width=0.84\linewidth]{comparacion_va_vs_s.png}
+
+  \vspace{0.3em}
+  {\small Cada panel junta las tres densidades de su grupo. A la izquierda las dos
+  nubes se solapan: con menos de un vecino por partícula, promediar y copiar dejan de
+  distinguirse. A la derecha ambos modelos se apilan en $S \approx 1$.
+  $S$ no separa una regla de la otra en ningún régimen.}
 \end{frame}
 
 \begin{frame}{Tiempos del CIM}

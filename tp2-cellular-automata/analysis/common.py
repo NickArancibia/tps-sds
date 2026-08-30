@@ -1,8 +1,9 @@
 """Utilidades compartidas del post-proceso del TP2 (carga de outputs + estilo de figuras).
 
 Convenciones (ver ../../AGENTS.md §3):
-- Ejes con leyenda en palabras y unidades entre paréntesis (η y el tiempo del modelo van en
-  rad y pasos respectivamente; v_a y S son adimensionales).
+- Ejes con leyenda en palabras y unidades MKS entre paréntesis (η en rad y el tiempo en s,
+  que con Δt = 1 s coincide numéricamente con el número de pasos; v_a y S son
+  adimensionales).
 - Puntos promedio siempre con símbolo y barra de error; las rectas que los unen son solo
   guía para el ojo.
 """
@@ -44,25 +45,47 @@ RHO_MARKER = {"0.1061": "v", "0.1592": "D", "0.3183": "P",
               "2": "o", "4": "s", "8": "^"}
 
 LABEL_ETA = "Amplitud de ruido η (rad)"
-LABEL_VA = "Polarización v_a"
-LABEL_S = "Fracción del cluster más grande S"
-LABEL_TIME = "Tiempo (pasos)"
+LABEL_VA = "Polarización $v_a$"
+LABEL_S = "Fracción del cluster más grande $S$"
+#: Igual que LABEL_S pero en dos renglones, para el eje vertical: rotada a 90° la
+#: version de un renglon es mas larga que el alto de la figura y matplotlib la recorta.
+LABEL_S_Y = "Fracción del cluster\nmás grande $S$"
+LABEL_TIME = "Tiempo (s)"
 
 
 def use_style() -> None:
-    """Estilo común para las figuras que terminan embebidas en diapositivas Beamer."""
+    """Estilo común para las figuras que terminan embebidas en diapositivas Beamer.
+
+    El tamaño de fuente que importa es el *aparente*: el texto ya escalado dentro
+    del documento. La misma figura se inserta a dos anchos distintos, así que se
+    eligen figsize y fuentes para que las dos escalas den un tamaño parecido al
+    del cuerpo de texto (11 pt en ambos documentos):
+
+      informe        0.70 x 455.2 pt = 318.7 pt = 4.43 in  -> escala 4.43/5.0 = 0.89
+      presentación   0.62 x 398.3 pt = 247.0 pt = 3.43 in  -> escala 3.43/5.0 = 0.69
+
+    Con axes.labelsize = 13 eso da ~11.5 pt en el informe y ~9 pt en las
+    diapositivas. El DPI no interviene: \\includegraphics escala a un ancho fijo,
+    así que solo cambia la nitidez.
+
+    Tipografía STIX (métricamente similar a Times) para que las figuras coincidan
+    con el mathptmx del informe y de la presentación.
+    """
     plt.rcParams.update({
-        "font.size": 13,
-        "axes.labelsize": 15,
-        "axes.titlesize": 15,
-        "legend.fontsize": 12,
-        "xtick.labelsize": 12,
-        "ytick.labelsize": 12,
-        "figure.figsize": (8.0, 5.0),
+        "font.family": "STIXGeneral",
+        "mathtext.fontset": "stix",
+        "font.size": 12,
+        "axes.labelsize": 13,
+        "axes.titlesize": 13,
+        "legend.fontsize": 11,
+        "xtick.labelsize": 11,
+        "ytick.labelsize": 11,
+        "figure.figsize": (5.0, 3.3),
         "figure.constrained_layout.use": True,
-        "errorbar.capsize": 3.0,
-        "lines.markersize": 7.0,
-        "savefig.dpi": 200,
+        "errorbar.capsize": 2.5,
+        "lines.markersize": 4.5,
+        "lines.linewidth": 1.1,
+        "savefig.dpi": 300,
     })
 
 
