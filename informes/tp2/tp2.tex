@@ -247,29 +247,32 @@ y se estudian \va\ y $S$ en función del ruido.
 \subsubsection{Dinámica característica}
 
 La Fig.~\ref{fig:anim-vicsek} compara dos instantes de las animaciones de
-Vicsek para $\rho=4$. Los vectores se colorean según su dirección. Con
-$\eta=0{,}5$ rad casi todas las partículas comparten el mismo color y la
-polarización instantánea es $0{,}986$. Con $\eta=4$ rad conviven direcciones
-de todo el círculo y la polarización baja a $0{,}185$. En ambos casos la
-componente gigante contiene a todas las partículas ($S=1{,}000$).
+Vicsek para $\rho=2$, la menor de las densidades exigidas y por lo tanto la
+que permite distinguir los vectores individuales. Los vectores se colorean
+según su dirección. Con $\eta=0{,}5$ rad casi todas las partículas comparten
+el mismo color y la polarización instantánea es $0{,}984$. Con $\eta=4$ rad
+conviven direcciones de todo el círculo y la polarización de ese instante cae
+a $0{,}043$. La componente gigante abarca todo el sistema en el primer caso
+y $S=0{,}995$ en el segundo.
 
 \begin{figure}[htbp]
     \centering
     \begin{minipage}{0.49\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{anim_vicsek_rho4_eta05.png}\\
+        \includegraphics[width=\linewidth]{anim_vicsek_rho2_eta05.png}\\
         (a) $\eta=0{,}5$ rad.
     \end{minipage}\hfill
     \begin{minipage}{0.49\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{anim_vicsek_rho4_eta4.png}\\
+        \includegraphics[width=\linewidth]{anim_vicsek_rho2_eta4.png}\\
         (b) $\eta=4$ rad.
     \end{minipage}
     \caption{Fotogramas en $t=1500$ s de una realización del modelo de Vicsek
-    para $\rho=4$ ($N=400$), dentro de la ventana de promediado $t\geq T/2$.
+    para $\rho=2$ ($N=200$), dentro de la ventana de promediado $t\geq T/2$.
     Cada segmento representa la velocidad de una partícula y su color, el
-    ángulo de movimiento. Parámetros fijos: $L=10$ m, $r_c=1$ m,
-    $v=0{,}03$ m/s y $\Delta t=1$ s.}
+    ángulo de movimiento. Los valores citados en el texto son los de este
+    instante y esta realización, no promedios de ensamble. Parámetros fijos:
+    $L=10$ m, $r_c=1$ m, $v=0{,}03$ m/s y $\Delta t=1$ s.}
     \label{fig:anim-vicsek}
 \end{figure}
 
@@ -386,27 +389,27 @@ simultáneamente la orientación y la estructura espacial.
 
 \subsubsection{Dinámica característica}
 
-La Fig.~\ref{fig:anim-voter} repite los mismos dos ruidos para el votante, de
-modo que cada panel se compara con el de Vicsek. Con $\eta=0{,}5$ rad, donde
-Vicsek alcanza $0{,}986$, el votante ya muestra direcciones de todo el círculo
-y su polarización instantánea es $0{,}451$. Con $\eta=4$ rad baja a
-$0{,}078$. En ambos casos $S=1{,}000$.
+La Fig.~\ref{fig:anim-voter} repite la misma densidad y los mismos dos ruidos
+para el votante, de modo que cada panel se compara con el de Vicsek. Con
+$\eta=0{,}5$ rad, donde Vicsek alcanza $0{,}984$, el votante ya muestra
+direcciones de todo el círculo y su polarización en ese instante es
+$0{,}553$. Con $\eta=4$ rad baja a $0{,}101$. En ambos casos $S=1{,}000$.
 
 \begin{figure}[htbp]
     \centering
     \begin{minipage}{0.49\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{anim_voter_rho4_eta05.png}\\
+        \includegraphics[width=\linewidth]{anim_voter_rho2_eta05.png}\\
         (a) $\eta=0{,}5$ rad.
     \end{minipage}\hfill
     \begin{minipage}{0.49\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{anim_voter_rho4_eta4.png}\\
+        \includegraphics[width=\linewidth]{anim_voter_rho2_eta4.png}\\
         (b) $\eta=4$ rad.
     \end{minipage}
     \caption{Fotogramas en $t=1500$ s de una realización del modelo de votante
-    para $\rho=4$ ($N=400$). Los ruidos, la representación y los parámetros
-    fijos son los mismos que en la Fig.~\ref{fig:anim-vicsek}.}
+    para $\rho=2$ ($N=200$). La densidad, los ruidos, la representación y los
+    parámetros fijos son los mismos que en la Fig.~\ref{fig:anim-vicsek}.}
     \label{fig:anim-voter}
 \end{figure}
 
