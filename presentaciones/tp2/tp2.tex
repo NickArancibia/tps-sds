@@ -28,6 +28,15 @@
   {\scriptsize #3}%
 }
 
+% Valores discretos usados por el barrido principal (no un intervalo continuo).
+\newcommand{\etasweep}{%
+  \begin{aligned}
+    \eta \in{}& \{0.25k\}_{k=0}^{4}
+      \!\cup\!\{1.5+0.5k\}_{k=0}^{8}\\[-0.2em]
+      &{}\cup\{6.28\}\uni{rad}
+  \end{aligned}%
+}
+
 \title{Autómata off-lattice: bandadas}
 \subtitle{Simulación de Sistemas - ITBA}
 \author[Grupo 2]{Arancibia Nicolás -- Legajo 64481 \and
@@ -186,10 +195,15 @@
       \begin{itemize}
         \item Modelo: Vicsek o votante
         \item $\rho = 2,\,4,\,8$ ($N = 200,\,400,\,800$)
-        \item $\eta \in [0,\,2\pi]\uni{rad}$
+        \item \(\etasweep\)
+        \item[] {\small\textbf{Para el estudio de clusters ($S$)}}
+          \begin{itemize}
+            \item $\rho = \frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi}$
+              ($N = 11,\,16,\,32$)
+            \item[] {\scriptsize Observación:
+              $\langle k\rangle \approx \rho\pi r_c^2 < 1$.}
+          \end{itemize}
       \end{itemize}
-      \textbf{Extra} (para $S$): $\rho = 1/(3\pi),\,1/(2\pi),\,1/\pi$
-      \newline{\small $N = 11,\,16,\,32$; $\langle k \rangle = \rho\pi r_c^2 < 1$}
     \end{column}
   \end{columns}
 \end{frame}
@@ -244,32 +258,68 @@
 
 \begin{frame}{Vicsek: $v_a(t)$}
   \figuraparam{evolucion_va_vicsek_rho4.png}{%
-    Vicsek, $\rho = 4$, corrida típica \\[0.35em]
-    Menos ruido $\to$ ordena antes y satura más alto.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: Vicsek
+      \item $\rho = 4$ ($N = 400$)
+      \item Seed: 1
+    \end{itemize}
+    \textbf{Variables}
+    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
+    \textbf{Observación}\\[0.2em]
+    Menos ruido ordena antes y satura más alto.\\[0.35em]
+    {\scriptsize Trazos punteados: comienzo del estacionario.}
   }
 \end{frame}
 
 \begin{frame}{Vicsek: $v_a$ vs $\eta$}
   \figuraparam{vicsek_va_vs_eta.png}{%
-    Vicsek, 50 seeds \\[0.35em]
-    De orden total sin ruido a desorden con $\eta$ alto. \\[0.35em]
-    Mayor $\rho$ corre la caída hacia $\eta$ más alto.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: Vicsek
+      \item 50 seeds por punto
+    \end{itemize}
+    \textbf{Variables}\\[0.2em]
+    \(\etasweep\)\\
+    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
+    \textbf{Observación}\\[0.2em]
+    De orden total sin ruido a desorden con $\eta$ alto; mayor $\rho$ corre la
+    caída hacia ruidos mayores.\\[0.35em]
+    {\scriptsize Barras: desvío muestral entre seeds.}
   }
 \end{frame}
 
 \begin{frame}{Vicsek: $S(t)$}
   \figuraparam{evolucion_s_vicsek_rho2.png}{%
-    Vicsek, $\rho = 2$, corrida típica \\[0.35em]
-    Eje acotado: todas las curvas viven cerca de 1. \\[0.35em]
-    Con $\rho \ge 2$ el grafo de vecinos percola: el cluster más grande abarca casi todo el sistema, con o sin ruido.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: Vicsek
+      \item $\rho = 2$ ($N = 200$)
+      \item Seed: 1
+    \end{itemize}
+    \textbf{Variables}
+    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
+    \textbf{Observación}\\[0.2em]
+    $S \approx 1$ para los tres ruidos: con $\rho \ge 2$ el grafo de vecinos
+    percola y el cluster más grande abarca casi todo.\\[0.35em]
+    {\scriptsize Eje vertical acotado a los datos.}
   }
 \end{frame}
 
 \begin{frame}{Vicsek: $S$ vs $\eta$}
   \figuraparam{vicsek_s_vs_eta.png}{%
-    Vicsek \\[0.35em]
-    $\rho = 2,\,4,\,8$: el cluster más grande toma casi la totalidad de las partículas, sin importar el ruido. \\[0.35em]
-    $\rho \le 1/\pi$: $S$ cae con $\eta$ y se aplana a partir de $\eta \approx 4\uni{rad}$, en las tres densidades bajas.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: Vicsek
+      \item 50 seeds por punto
+    \end{itemize}
+    \textbf{Variables}\\[0.2em]
+    \(\etasweep\)\\
+    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
+    \textbf{Observación}\\[0.2em]
+    Para $\rho \ge 2$, $S \approx 1$ con todo ruido; en las densidades bajas
+    cae con $\eta$ y se aplana desde $\eta \approx 4\uni{rad}$.\\[0.35em]
+    {\scriptsize Barras: desvío muestral entre seeds.}
   }
 \end{frame}
 
@@ -306,43 +356,85 @@
 
 \begin{frame}{Votante: $v_a(t)$}
   \figuraparam{evolucion_va_voter_rho4.png}{%
-    Votante, $\rho = 4$, corrida típica \\[0.35em]
-    $\eta = 0$: ordena y satura en 1. \\[0.35em]
-    $\eta = 0.5\uni{rad}$: deriva sin estacionarse (por eso no lleva recta vertical). \\[0.35em]
-    $\eta = 2\uni{rad}$: desorden desde el inicio.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: votante
+      \item $\rho = 4$ ($N = 400$)
+      \item Seed: 1
+    \end{itemize}
+    \textbf{Variables}
+    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
+    \textbf{Observación}\\[0.2em]
+    Sin ruido satura en 1; con $0.5\uni{rad}$ fluctúa sin estacionarse; con
+    $2\uni{rad}$ queda cerca de cero.\\[0.35em]
+    {\scriptsize Sin trazo punteado cuando no se identifica un estacionario.}
   }
 \end{frame}
 
 \begin{frame}{Votante: $v_a$ vs $\eta$}
   \figuraparam{voter_va_vs_eta.png}{%
-    Votante, 50 seeds \\[0.35em]
-    Todas las densidades pierden el orden dentro del primer radián. \\[0.35em]
-    A diferencia de Vicsek, subir $\rho$ no corre la caída.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: votante
+      \item 50 seeds por punto
+    \end{itemize}
+    \textbf{Variables}\\[0.2em]
+    \(\etasweep\)\\
+    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
+    \textbf{Observación}\\[0.2em]
+    Todas las densidades pierden el orden dentro del primer radián; a
+    diferencia de Vicsek, subir $\rho$ no corre la caída.\\[0.35em]
+    {\scriptsize Barras: desvío muestral entre seeds.}
   }
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $v_a$ vs $\eta$}
   \figuraparam{comparacion_va_vs_eta_rho4.png}{%
-    $\rho = 4$, 50 seeds \\[0.35em]
-    Sin ruido, ambos alcanzan $v_a = 1$. \\[0.35em]
-    El votante pierde el orden con ruidos mucho menores: promediar filtra el ruido, copiar a uno solo no. \\[0.35em]
-    Misma forma en $\rho = 2$ y $8$.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item $\rho = 4$ ($N = 400$)
+      \item 50 seeds por punto
+    \end{itemize}
+    \textbf{Variables}\\[0.2em]
+    Modelo $\in \{\text{Vicsek, votante}\}$\\
+    \(\etasweep\)\\[0.45em]
+    \textbf{Observación}\\[0.2em]
+    Ambos alcanzan $v_a = 1$ sin ruido, pero el votante pierde el orden con
+    ruidos mucho menores: promediar filtra el ruido, copiar a uno solo no.\\[0.35em]
+    {\scriptsize Misma forma en $\rho = 2$ y $8$.}
   }
 \end{frame}
 
 \begin{frame}{Votante: $S(t)$}
   \figuraparam{evolucion_s_voter_rho2.png}{%
-    Votante, $\rho = 2$, corrida típica \\[0.35em]
-    Eje acotado: todas las curvas viven cerca de 1. \\[0.35em]
-    Mismo comportamiento que Vicsek: con $\rho \ge 2$ el grafo de vecinos percola y el cluster más grande abarca casi todo, con o sin ruido.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: votante
+      \item $\rho = 2$ ($N = 200$)
+      \item Seed: 1
+    \end{itemize}
+    \textbf{Variables}
+    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
+    \textbf{Observación}\\[0.2em]
+    Mismo comportamiento que Vicsek: $S \approx 1$ para los tres ruidos.\\[0.35em]
+    {\scriptsize Eje vertical acotado a los datos.}
   }
 \end{frame}
 
 \begin{frame}{Votante: $S$ vs $\eta$}
   \figuraparam{voter_s_vs_eta.png}{%
-    Votante \\[0.35em]
-    Igual que en Vicsek: $\rho \ge 2$ percola, $\rho \le 1/\pi$ cae con $\eta$. \\[0.35em]
-    La conectividad depende de la densidad, no de la regla de alineación.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item Modelo: votante
+      \item 50 seeds por punto
+    \end{itemize}
+    \textbf{Variables}\\[0.2em]
+    \(\etasweep\)\\
+    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
+    \textbf{Observación}\\[0.2em]
+    Igual que en Vicsek: $\rho \ge 2$ percola y las densidades bajas caen con
+    $\eta$. La conectividad depende de la densidad, no de la regla.\\[0.35em]
+    {\scriptsize Barras: desvío muestral entre seeds.}
   }
 \end{frame}
 
@@ -377,8 +469,20 @@
 \end{frame}
 
 \begin{frame}{Tiempos del CIM}
-  \figuraparam{cim_tp1_vs_tp2.png}{%
-    Misma geometría que el TP1: $L = 10\uni{m}$, $M = 10$, $r_c = 1\uni{m}$, PBC, partículas puntuales
+  \figuraparam[0.58\textwidth]{cim_tp1_vs_tp2.png}{%
+    \textbf{Fijos}
+    \begin{itemize}
+      \item $L = 10\uni{m}$, $M = 10$
+      \item $r_c = 1\uni{m}$, PBC
+      \item Partículas puntuales
+    \end{itemize}
+    \textbf{Variables}\\[0.2em]
+    $N \in \{200,\,400,\,800\}$\\
+    Ejecución $\in \{\text{TP1, Vicsek, votante}\}$\\[0.45em]
+    \textbf{Observación}\\[0.2em]
+    Vicsek y votante dan tiempos casi idénticos: el CIM no depende de la regla.
+    El TP2, medido dentro de la simulación, queda por encima del microbenchmark
+    del TP1.
   }
 \end{frame}
 
@@ -395,7 +499,7 @@
       mientras Vicsek sigue en $0.99$.
     \item La densidad determina el tamaño del cluster más grande: con $\rho = 2,\,4,\,8$,
       $S$ se mantiene $\approx 1$ para todo ruido;
-      con $\rho \le 1/\pi$ queda lejos de 1.
+      con $\rho \le \frac{1}{\pi}$ queda lejos de 1.
     \item En densidades bajas, a mayor ruido menor es el $S$ estacionario:
       cae de $\approx 0.95$ a $\approx 0.2$ recorriendo $\eta$.
   \end{itemize}

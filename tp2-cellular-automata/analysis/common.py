@@ -37,7 +37,8 @@ MODEL_LABEL = {"vicsek": "Vicsek", "voter": "Votante"}
 #: mayor. Las bajas son 1/(3π), 1/(2π) y 1/π (~0.33, 0.5 y 1 vecino promedio dentro de
 #: r_c); con L = 10 el motor redondea N = round(ρ·L²) = 11, 16, 32, 200, 400, 800.
 RHOS = ("0.1061", "0.1592", "0.3183", "2", "4", "8")
-RHO_LABEL = {"0.1061": "1/3π", "0.1592": "1/2π", "0.3183": "1/π",
+RHO_LABEL = {"0.1061": r"$\frac{1}{3\pi}$", "0.1592": r"$\frac{1}{2\pi}$",
+             "0.3183": r"$\frac{1}{\pi}$",
              "2": "2", "4": "4", "8": "8"}
 RHO_COLOR = {"0.1061": "tab:purple", "0.1592": "tab:brown", "0.3183": "tab:pink",
              "2": "tab:blue", "4": "tab:red", "8": "black"}
