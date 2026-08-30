@@ -20,7 +20,9 @@
 % Fotograma fijo representativo + enlace explicito debajo (GuiaPresentaciones 2.4.8).
 % El PDF de entrega no lleva video embebido.
 %   \animbox{<archivo>}{<condicion>}{<enlace>}
-\newcommand{\linkpendiente}{{\color{red!70!black}[link de YouTube pendiente]}}
+% El enlace se escribe visible (no oculto tras un texto): en PDFium el anotado
+% funciona, pero la guia pide que el link se lea tambien en la proyeccion.
+\newcommand{\yt}[1]{\href{https://youtu.be/#1}{\texttt{youtu.be/#1}}}
 \newcommand{\animbox}[3]{%
   \centering
   \includegraphics[width=0.86\linewidth]{#1}\\[0.4em]
@@ -28,14 +30,16 @@
   {\scriptsize #3}%
 }
 
-% Valores discretos usados por el barrido principal (no un intervalo continuo).
+% Barrido principal de eta: 15 valores discretos (paso 0.25 hasta 1, luego 0.5
+% hasta 5.5, mas 2*pi). Lista explicita: en proyeccion la notacion por
+% comprension (uniones de conjuntos indexados) no se lee.
 \newcommand{\etasweep}{%
-  \begin{aligned}
-    \eta \in{}& \{0.25k\}_{k=0}^{4}
-      \!\cup\!\{1.5+0.5k\}_{k=0}^{8}\\[-0.2em]
-      &{}\cup\{6.28\}\uni{rad}
-  \end{aligned}%
+  \eta \in \{0;\;0{,}25;\;0{,}5;\;0{,}75;\;1;\;1{,}5;\;2;\;\dots;\;5{,}5;\;6{,}28\}\uni{rad}%
 }
+% Forma abreviada para el costado de las figuras de Resultados: el detalle de
+% los valores ya esta en la diapositiva de Simulaciones.
+\newcommand{\etacorto}{$\eta$: 15 valores entre 0 y $6{,}28\uni{rad}$}
+\newcommand{\rhocorto}{$\rho$: 6 valores entre $\frac{1}{3\pi}$ y 8}
 
 \title{Autómata off-lattice: bandadas}
 \subtitle{Simulación de Sistemas - ITBA}
@@ -130,7 +134,8 @@
 
 \begin{frame}{Motor}
   \centering
-  \begin{tikzpicture}[>=Stealth, font=\small,
+  % scale=0.93: a tamaño natural el diagrama se pasa ~26pt del ancho del texto.
+  \begin{tikzpicture}[>=Stealth, font=\small, scale=0.93, every node/.append style={scale=0.93},
       caja/.style={draw, rounded corners, align=center, inner sep=5pt},
       regla/.style={caja, fill=blue!10}]
     \node[caja] (estado) {Estado en $t$:\\ $\vect{r}_i,\ \theta_i$};
@@ -243,10 +248,10 @@
     \begin{column}{0.70\textwidth}
       \begin{columns}[T,onlytextwidth]
         \begin{column}{0.5\textwidth}
-          \animbox{anim_vicsek_rho2_eta05.png}{$\eta = 0.5\uni{rad}$, $v_a = 0.98$}{\linkpendiente}
+          \animbox{anim_vicsek_rho2_eta05.png}{$\eta = 0.5\uni{rad}$, $v_a = 0.98$}{\yt{P-lkSdXIhaI}}
         \end{column}
         \begin{column}{0.5\textwidth}
-          \animbox{anim_vicsek_rho2_eta4.png}{$\eta = 4\uni{rad}$, $v_a = 0.04$}{\linkpendiente}
+          \animbox{anim_vicsek_rho2_eta4.png}{$\eta = 4\uni{rad}$, $v_a = 0.04$}{\yt{ez4dm6Y6-3w}}
         \end{column}
       \end{columns}
     \end{column}
@@ -271,9 +276,8 @@
     \end{itemize}
     \textbf{Variables}
     \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Observación}\\[0.2em]
-    Menos ruido ordena antes y satura más alto.\\[0.35em]
-    {\scriptsize Trazos punteados: comienzo del estacionario.}
+    \textbf{Referencia}\\[0.2em]
+    Trazo punteado: inicio del estacionario.
   }
 \end{frame}
 
@@ -285,12 +289,8 @@
       \item 50 seeds por punto
     \end{itemize}
     \textbf{Variables}\\[0.2em]
-    \(\etasweep\)\\
-    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
-    \textbf{Observación}\\[0.2em]
-    De orden total sin ruido a desorden con $\eta$ alto; mayor $\rho$ corre la
-    caída hacia ruidos mayores.\\[0.35em]
-    {\scriptsize Barras: desvío muestral entre seeds.}
+    \etacorto\\
+    \rhocorto
   }
 \end{frame}
 
@@ -304,10 +304,8 @@
     \end{itemize}
     \textbf{Variables}
     \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Observación}\\[0.2em]
-    $S \approx 1$ para los tres ruidos: con $\rho \ge 2$ el grafo de vecinos
-    percola y el cluster más grande abarca casi todo.\\[0.35em]
-    {\scriptsize Eje vertical acotado a los datos.}
+    \textbf{Referencia}\\[0.2em]
+    Eje vertical acotado a los datos.
   }
 \end{frame}
 
@@ -319,23 +317,20 @@
       \item 50 seeds por punto
     \end{itemize}
     \textbf{Variables}\\[0.2em]
-    \(\etasweep\)\\
-    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
-    \textbf{Observación}\\[0.2em]
-    Para $\rho \ge 2$, $S \approx 1$ con todo ruido; en las densidades bajas
-    cae con $\eta$ y se aplana desde $\eta \approx 4\uni{rad}$.\\[0.35em]
-    {\scriptsize Barras: desvío muestral entre seeds.}
+    \etacorto\\
+    \rhocorto
   }
 \end{frame}
 
 \begin{frame}{Vicsek: $v_a$ vs $S$}
-  \centering
-  \includegraphics[width=0.84\linewidth]{va_vs_s_vicsek.png}
-
-  \vspace{0.3em}
-  {\small Vicsek, 50 seeds. Cada punto: un $\eta$. Paneles con distinta escala en $S$:
-  a la izquierda $v_a$ crece con $S$ (el orden necesita conectividad), a la derecha
-  $S$ no se mueve mientras $v_a$ recorre todo su rango.}
+  \figuraparam[0.66\textwidth]{va_vs_s_vicsek.png}{%
+    \textbf{Fijos}\\[0.2em]
+    Modelo: Vicsek\\
+    50 seeds por punto\\[0.45em]
+    \textbf{Variables}\\[0.2em]
+    Un punto por $\eta$\\
+    $\rho$: bajas (izq.), exigidas (der.)
+  }
 \end{frame}
 
 \begin{frame}{Votante: animación}
@@ -343,19 +338,20 @@
     \begin{column}{0.70\textwidth}
       \begin{columns}[T,onlytextwidth]
         \begin{column}{0.5\textwidth}
-          \animbox{anim_voter_rho2_eta05.png}{$\eta = 0.5\uni{rad}$, $v_a = 0.55$}{\linkpendiente}
+          \animbox{anim_voter_rho2_eta05.png}{$\eta = 0.5\uni{rad}$, $v_a = 0.55$}{\yt{tHQbmPHvScs}}
         \end{column}
         \begin{column}{0.5\textwidth}
-          \animbox{anim_voter_rho2_eta4.png}{$\eta = 4\uni{rad}$, $v_a = 0.10$}{\linkpendiente}
+          \animbox{anim_voter_rho2_eta4.png}{$\eta = 4\uni{rad}$, $v_a = 0.10$}{\yt{UtGcnTB9IRE}}
         \end{column}
       \end{columns}
     \end{column}
     \begin{column}{0.28\textwidth}
       {\small Votante, $\rho = 2$ ($N = 200$) \\[0.35em]
-      Misma densidad, mismos ruidos, mismo instante y misma representación que
-      Vicsek. \\[0.35em]
-      A $\eta = 0.5\uni{rad}$ Vicsek está en $v_a = 0.98$ y el votante ya
-      recorre todo el círculo.}
+      Vectores $=$ velocidad, color $=$ ángulo. \\[0.35em]
+      Fotograma en $t = 1500\uni{s}$; los $v_a$ son de ese instante, no
+      promedios. \\[0.35em]
+      $L = 10\uni{m}$, $r_c = 1\uni{m}$,
+      $v = 0.03\uni{m/s}$, $\Delta t = 1\uni{s}$.}
     \end{column}
   \end{columns}
 \end{frame}
@@ -370,10 +366,8 @@
     \end{itemize}
     \textbf{Variables}
     \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Observación}\\[0.2em]
-    Sin ruido satura en 1; con $0.5\uni{rad}$ fluctúa sin estacionarse; con
-    $2\uni{rad}$ queda cerca de cero.\\[0.35em]
-    {\scriptsize Sin trazo punteado cuando no se identifica un estacionario.}
+    \textbf{Referencia}\\[0.2em]
+    Sin trazo punteado cuando no se identifica un estacionario.
   }
 \end{frame}
 
@@ -385,12 +379,8 @@
       \item 50 seeds por punto
     \end{itemize}
     \textbf{Variables}\\[0.2em]
-    \(\etasweep\)\\
-    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
-    \textbf{Observación}\\[0.2em]
-    Todas las densidades pierden el orden dentro del primer radián; a
-    diferencia de Vicsek, subir $\rho$ no corre la caída.\\[0.35em]
-    {\scriptsize Barras: desvío muestral entre seeds.}
+    \etacorto\\
+    \rhocorto
   }
 \end{frame}
 
@@ -403,11 +393,9 @@
     \end{itemize}
     \textbf{Variables}\\[0.2em]
     Modelo $\in \{\text{Vicsek, votante}\}$\\
-    \(\etasweep\)\\[0.45em]
-    \textbf{Observación}\\[0.2em]
-    Ambos alcanzan $v_a = 1$ sin ruido, pero el votante pierde el orden con
-    ruidos mucho menores: promediar filtra el ruido, copiar a uno solo no.\\[0.35em]
-    {\scriptsize Misma forma en $\rho = 2$ y $8$.}
+    \etacorto\\[0.45em]
+    \textbf{Referencia}\\[0.2em]
+    Misma forma en $\rho = 2$ y $8$.
   }
 \end{frame}
 
@@ -421,9 +409,8 @@
     \end{itemize}
     \textbf{Variables}
     \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Observación}\\[0.2em]
-    Mismo comportamiento que Vicsek: $S \approx 1$ para los tres ruidos.\\[0.35em]
-    {\scriptsize Eje vertical acotado a los datos.}
+    \textbf{Referencia}\\[0.2em]
+    Eje vertical acotado a los datos.
   }
 \end{frame}
 
@@ -435,43 +422,46 @@
       \item 50 seeds por punto
     \end{itemize}
     \textbf{Variables}\\[0.2em]
-    \(\etasweep\)\\
-    $\rho \in \left\{\frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi},\,2,\,4,\,8\right\}$\\[0.45em]
-    \textbf{Observación}\\[0.2em]
-    Igual que en Vicsek: $\rho \ge 2$ percola y las densidades bajas caen con
-    $\eta$. La conectividad depende de la densidad, no de la regla.\\[0.35em]
-    {\scriptsize Barras: desvío muestral entre seeds.}
+    \etacorto\\
+    \rhocorto
   }
 \end{frame}
 
 \begin{frame}{Votante: $v_a$ vs $S$}
-  \centering
-  \includegraphics[width=0.84\linewidth]{va_vs_s_voter.png}
-
-  \vspace{0.3em}
-  {\small Votante, 50 seeds. Misma estructura que Vicsek: correlación a la izquierda,
-  columna en $S \approx 1$ a la derecha. La conectividad no depende de la regla.}
+  \figuraparam[0.66\textwidth]{va_vs_s_voter.png}{%
+    \textbf{Fijos}\\[0.2em]
+    Modelo: votante\\
+    50 seeds por punto\\[0.45em]
+    \textbf{Variables}\\[0.2em]
+    Un punto por $\eta$\\
+    $\rho$: bajas (izq.), exigidas (der.)
+  }
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $S$ vs $\eta$}
   \figuraparam{comparacion_s_vs_eta_rho4.png}{%
-    $\rho = 4$, 50 seeds \\[0.35em]
-    Ojo con el eje: está acotado a los datos. Mínimos $0.9982$ y $0.9991$, toda
-    la variación entra en menos del $0.2\%$. \\[0.35em]
-    La regla de alineación separa $v_a$ en un factor tres, pero no deja huella
-    en la conectividad.
+    \textbf{Fijos}
+    \begin{itemize}
+      \item $\rho = 4$ ($N = 400$)
+      \item 50 seeds por punto
+    \end{itemize}
+    \textbf{Variables}\\[0.2em]
+    Modelo $\in \{\text{Vicsek, votante}\}$\\
+    \etacorto\\[0.45em]
+    \textbf{Referencia}\\[0.2em]
+    Eje vertical acotado a los datos.
   }
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $v_a$ vs $S$}
-  \centering
-  \includegraphics[width=0.84\linewidth]{comparacion_va_vs_s.png}
-
-  \vspace{0.3em}
-  {\small Cada panel junta las tres densidades de su grupo. A la izquierda las dos
-  nubes se solapan: con menos de un vecino por partícula, promediar y copiar dejan de
-  distinguirse. A la derecha ambos modelos se apilan en $S \approx 1$.
-  $S$ no separa una regla de la otra en ningún régimen.}
+  \figuraparam[0.66\textwidth]{comparacion_va_vs_s.png}{%
+    \textbf{Fijos}\\[0.2em]
+    50 seeds por punto\\[0.45em]
+    \textbf{Variables}\\[0.2em]
+    Modelo: Vicsek y votante\\
+    Un punto por $\eta$\\
+    $\rho$: bajas (izq.), exigidas (der.)
+  }
 \end{frame}
 
 \begin{frame}{Tiempos del CIM}
@@ -484,11 +474,7 @@
     \end{itemize}
     \textbf{Variables}\\[0.2em]
     $N \in \{200,\,400,\,800\}$\\
-    Ejecución $\in \{\text{TP1, Vicsek, votante}\}$\\[0.45em]
-    \textbf{Observación}\\[0.2em]
-    Vicsek y votante dan tiempos casi idénticos: el CIM no depende de la regla.
-    El TP2, medido dentro de la simulación, queda por encima del microbenchmark
-    del TP1.
+    Ejecución $\in \{\text{TP1, Vicsek, votante}\}$
   }
 \end{frame}
 
