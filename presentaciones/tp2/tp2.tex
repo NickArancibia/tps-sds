@@ -78,7 +78,7 @@
         \centering
         \(
           \displaystyle
-          \xi_i(t)\sim U[-\eta/2,\,\eta/2]
+          \Delta\theta_i(t)\sim U[-\eta/2,\,\eta/2]
         \)
       \end{column}
     \end{columns}
@@ -89,13 +89,14 @@
     \begin{column}{0.48\textwidth}
       {\color{structure}\large Vicsek}\par
       \vspace{0.55em}
-      \begin{minipage}[t][0.17\textheight][t]{\linewidth}
+      \begin{minipage}[t][0.27\textheight][t]{\linewidth}
         \centering
         \(
           \displaystyle
-          \theta_i'=\arg\!\sum_{j\in\mathcal{N}_i(t)\cup\{i\}}
-          e^{\mathrm{i}\theta_j(t)}+\xi_i(t)
-        \)\par
+          \theta_i'=\operatorname{atan2}\!\Bigl({\textstyle\sum_{j}}\sin\theta_j,\;
+          {\textstyle\sum_{j}}\cos\theta_j\Bigr)+\Delta\theta_i(t)
+        \)\\[0.4em]
+        {\scriptsize suma sobre \(j\in\mathcal{N}_i(t)\cup\{i\}\)}\par
         \vfill
         {\tiny Vicsek et al., PRL 1995}
       \end{minipage}
@@ -103,12 +104,15 @@
     \begin{column}{0.48\textwidth}
       {\color{structure}\large Votante}\par
       \vspace{0.55em}
-      \begin{minipage}[t][0.17\textheight][t]{\linewidth}
+      \begin{minipage}[t][0.27\textheight][t]{\linewidth}
         \centering
         \(
           \displaystyle
-          J_i\sim U\bigl(\mathcal{N}_i(t)\cup\{i\}\bigr),
-          \qquad \theta_i'=\theta_{J_i}(t)+\xi_i(t)
+          J_i\sim U\bigl(\mathcal{N}_i(t)\cup\{i\}\bigr)
+        \)\\[0.45em]
+        \(
+          \displaystyle
+          \theta_i'=\theta_{J_i}(t)+\Delta\theta_i(t)
         \)\par
         \vfill
         {\tiny Loscar, Baglietto y Vazquez, PRE 2021}
