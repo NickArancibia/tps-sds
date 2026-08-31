@@ -9,10 +9,18 @@ N = 200, 400, 800 (ρ = 2, 4, 8):
   imposible (área de partículas > área de la caja); (b) los `neighbor_pairs` medidos calzan
   con la predicción para puntuales, dist(centros) < r_c (615/2531/10065 vs ~625/2507/10041),
   y no con el criterio borde a borde de radios default (~1388/5566/22291).
-- TP2: tiempos por llamada guardados en cada `run.json` del barrido (una llamada por paso,
-  intercalada con la dinámica). Se promedia la segunda mitad de cada corrida (mismo criterio
-  que los observables) y luego entre corridas (todas las seeds y todos los η); la barra es
-  el desvío estándar entre corridas.
+- TP2: tiempos por llamada guardados en cada `run.json` de `output/cimbench` (una llamada
+  por paso, intercalada con la dinámica). Se promedia la segunda mitad de cada corrida
+  (mismo criterio que los observables) y luego entre corridas; la barra es el desvío
+  estándar entre corridas.
+
+Las dos series se miden en la misma máquina: un tiempo de ejecución solo es comparable
+contra otro medido en el mismo hardware. Por eso el TP2 no se toma de `output/sweep` (que
+puede venir de otra máquina) sino de `output/cimbench`, un conjunto chico hecho para esto:
+5 seeds por (modelo, ρ) con η = 0.5 y 1000 pasos, o sea 500 llamadas cronometradas por
+corrida, las mismas 500 repeticiones que mide el bench del TP1. El tiempo por llamada no
+depende de η ni de la seed, solo de N, así que no hace falta el barrido completo.
+Regenerar con `scripts/run_cimbench.sh`.
 
 Figura: `cim_tp1_vs_tp2.png`, tiempo por llamada vs N en log-log (los datos cruzan casi dos
 órdenes de magnitud). Las rectas entre puntos son guía para el ojo.
@@ -59,7 +67,7 @@ def tp2_times(model: str) -> dict[int, tuple[float, float]]:
     result = {}
     for rho, n in RHO_N:
         means = []
-        for run_json in (TP_ROOT / "output" / "sweep" / model / f"rho{rho}").glob("eta*/s*/run.json"):
+        for run_json in (TP_ROOT / "output" / "cimbench" / model / f"rho{rho}").glob("s*/run.json"):
             with open(run_json) as fh:
                 times = np.asarray(json.load(fh)["cimTimesNs"], dtype=float)
             means.append(times[len(times) // 2:].mean() / 1e6)
@@ -81,6 +89,11 @@ def main() -> None:
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xticks([200, 400, 800], labels=["200", "400", "800"])
+    # Los datos cubren ~1.4 décadas: con las marcas automáticas del eje log queda
+    # un solo rótulo (10^-1). Se fijan potencias de 10 y sus mitades de década.
+    ax.set_yticks([0.02, 0.05, 0.1, 0.2, 0.5, 1.0],
+                  labels=[r"$2\times10^{-2}$", r"$5\times10^{-2}$", r"$10^{-1}$",
+                          r"$2\times10^{-1}$", r"$5\times10^{-1}$", r"$10^{0}$"])
     ax.minorticks_off()
     ax.set_xlabel("Número de partículas N")
     ax.set_ylabel("Tiempo por llamada al CIM (ms)")

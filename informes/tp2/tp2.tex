@@ -556,43 +556,53 @@ Fig.~\ref{fig:comparacion-s-voter}.
 \subsection{Tiempos de ejecución del CIM}
 
 El motor registra en cada \texttt{run.json} el tiempo de las llamadas al CIM,
-una por paso. Se tomaron las corridas con $N=200$, $400$ y $800$, que
-corresponden a las densidades exigidas y cubren el rango de tamaños medido en
+una por paso. Se corrieron cinco semillas por modelo para $N=200$, $400$ y
+$800$, que son las densidades exigidas y cubren el rango de tamaños medido en
 el TP1 bajo la misma geometría: $L=10$ m, $M=10$ celdas por lado, $r_c=1$ m,
 condiciones periódicas y partículas puntuales. De cada corrida se promedió la
 segunda mitad, con el mismo criterio aplicado a los observables, y luego se
 promedió entre corridas. La dispersión es el desvío estándar entre corridas.
+Un tiempo de ejecución solo es comparable contra otro medido en el mismo
+equipo, así que ambas series se tomaron en la misma máquina.
 
 \begin{table}[htbp]
     \centering
     \caption{Tiempo por llamada al CIM dentro de la simulación del TP2, en
-    milisegundos. Cada valor promedia todas las semillas y todos los ruidos del
-    barrido para esa cantidad de partículas.}
+    milisegundos. Cada valor promedia cinco semillas, con $\eta=0{,}5$ rad y
+    500 llamadas cronometradas por corrida.}
     \label{tab:cim}
     \begin{tabular}{lccc}
         \toprule
         Modelo & $N=200$ & $N=400$ & $N=800$ \\
         \midrule
-        Vicsek  & $0{,}176\pm0{,}037$ & $0{,}483\pm0{,}072$ & $1{,}51\pm0{,}20$ \\
-        Votante & $0{,}182\pm0{,}051$ & $0{,}529\pm0{,}089$ & $1{,}54\pm0{,}12$ \\
+        Vicsek  & $0{,}066\pm0{,}013$ & $0{,}218\pm0{,}021$ & $0{,}622\pm0{,}027$ \\
+        Votante & $0{,}057\pm0{,}004$ & $0{,}172\pm0{,}011$ & $0{,}562\pm0{,}040$ \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-Los dos modelos coinciden dentro del desvío, como corresponde a una rutina de
-vecindad que no depende de la regla de alineación. Al multiplicar $N$ por
-cuatro, el tiempo por llamada crece un factor $8{,}6$ en Vicsek y $8{,}5$ en el
-votante. El crecimiento supera al de $N$ porque $L$ y $M$ se mantienen fijos:
-al aumentar $N$ crece la ocupación de cada celda, y con ella la cantidad de
-pares que el método revisa por partícula.
+Los dos modelos dan tiempos del mismo orden y con la misma pendiente, como
+corresponde a una rutina de vecindad que es idéntica en ambos y no depende de
+la regla de alineación. Vicsek queda algo por encima en los tres tamaños, con
+una diferencia que en $N=200$ entra dentro del desvío y en $N=400$ no: el
+código del CIM es el mismo, así que la brecha no es del método sino del resto
+del paso, que en Vicsek promedia sobre los vecinos en lugar de elegir uno.
+Al multiplicar $N$ por cuatro, el tiempo por llamada crece un factor $9{,}4$ en
+Vicsek y $9{,}9$ en el votante. El crecimiento supera al de $N$ porque $L$ y
+$M$ se mantienen fijos: al aumentar $N$ crece la ocupación de cada celda, y con
+ella la cantidad de pares que el método revisa por partícula.
 
 La Fig.~\ref{fig:cim} compara estos tiempos con los del TP1 sobre la misma
 geometría. El TP1 midió 500 llamadas a \texttt{findNeighbors} sobre una
 configuración estática, mientras que en el TP2 cada llamada se intercala con la
 dinámica; la comparación se presenta en escala doble logarítmica porque los
-datos recorren casi dos órdenes de magnitud.
-\pendiente{cociente entre los tiempos del TP1 y del TP2 para cada $N$, una vez
-disponible el bench del TP1 en esta copia}
+datos recorren casi dos órdenes de magnitud. El bench del TP1 midió
+$0{,}025\pm0{,}002$, $0{,}137\pm0{,}009$ y $0{,}543\pm0{,}079$ ms para $N=200$,
+$400$ y $800$. El TP2 queda por encima en los tres tamaños, pero el cociente
+cae al crecer $N$: $2{,}6$, $1{,}6$ y $1{,}2$ en Vicsek, y $2{,}3$, $1{,}3$ y
+$1{,}0$ en el votante. El sobrecosto de intercalar la llamada con la dinámica
+es un costo fijo por llamada, y pesa cada vez menos frente al trabajo del
+método, que sí crece con $N$.
 
 \begin{figure}[htbp]
     \centering
