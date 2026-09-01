@@ -30,16 +30,12 @@
   {\scriptsize #3}%
 }
 
-% Barrido principal de eta: 15 valores discretos (paso 0.25 hasta 1, luego 0.5
-% hasta 5.5, mas 2*pi). Lista explicita: en proyeccion la notacion por
-% comprension (uniones de conjuntos indexados) no se lee.
-\newcommand{\etasweep}{%
-  \eta \in \{0;\;0{,}25;\;0{,}5;\;0{,}75;\;1;\;1{,}5;\;2;\;\dots;\;5{,}5;\;6{,}28\}\uni{rad}%
+% Barrido principal de eta (15 valores: paso 0.25 hasta 1, luego 0.5 hasta 5.5, mas 2*pi).
+\newcommand{\etasweep}{$\eta$: 15 valores entre 0 y $6{,}28\uni{rad}$}
+\newcommand{\figura}[1]{%
+  \centering
+  \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{#1}%
 }
-% Forma abreviada para el costado de las figuras de Resultados: el detalle de
-% los valores ya esta en la diapositiva de Simulaciones.
-\newcommand{\etacorto}{$\eta$: 15 valores entre 0 y $6{,}28\uni{rad}$}
-\newcommand{\rhocorto}{$\rho$: 6 valores entre $\frac{1}{3\pi}$ y 8}
 
 \title{Autómata off-lattice: bandadas}
 \subtitle{Simulación de Sistemas - ITBA}
@@ -121,12 +117,13 @@
   \end{columns}
 
   \vspace{0.2em}
-  \begin{block}{Movimiento y condiciones periódicas}
+  \begin{block}{Movimiento}
     \vspace{-0.55em}
     \[
       \vect{r}_i(t+\Delta t)=
-      \bigl[\vect{r}_i(t)+v\,(\cos\theta_i',\,\sin\theta_i')\,\Delta t\bigr]
-      \mathbin{\mathrm{mod}}\,L
+      \vect{r}_i(t)+v\,(\cos\theta_i',\,\sin\theta_i')\,\Delta t
+      \qquad
+      \text{con condiciones periódicas de contorno}
     \]
   \end{block}
 \end{frame}
@@ -162,12 +159,6 @@
       node[pos=0.25, below, font=\scriptsize] {$t \leftarrow t + \Delta t$};
   \end{tikzpicture}
 
-  \vspace{0.7em}
-  \begin{itemize}
-    \item Java. Dos buffers de $\theta$: la regla lee $\theta(t)$, nunca $\theta'$ (sincrónico).
-    \item Sin vecinos, ambas reglas conservan la dirección propia ($+$ ruido).
-    \item Clusters para $S$: union-find sobre la misma lista de vecinos del CIM.
-  \end{itemize}
 \end{frame}
 
 % ==========================================================================
@@ -208,7 +199,7 @@
       \begin{itemize}
         \item Modelo: Vicsek o votante
         \item $\rho = 2,\,4,\,8$ ($N = 200,\,400,\,800$)
-        \item \(\etasweep\)
+        \item \etasweep
         \item[] {\small\textbf{Para el estudio de clusters ($S$)}}
           \begin{itemize}
             \item $\rho = \frac{1}{3\pi},\,\frac{1}{2\pi},\,\frac{1}{\pi}$
@@ -235,8 +226,8 @@
   ($t \ge T/2$, con $T$ la duración total), ya dentro del estacionario.
   \begin{itemize}
     \item $T = 2000$ pasos ($5000$ si $\rho < 2$)
-    \item 50 seeds distintas por punto $(\mathrm{modelo},\,\rho,\,\eta)$
-    \item Punto en las curvas: media entre seeds. Barra: desvío muestral
+    \item 50 repeticiones distintas por punto $(\mathrm{modelo},\,\rho,\,\eta)$
+    \item Punto en las curvas: media entre repeticiones. Barra: desvío muestral
   \end{itemize}
 \end{frame}
 
@@ -260,81 +251,36 @@
       \end{columns}
     \end{column}
     \begin{column}{0.28\textwidth}
-      {\small Vicsek, $\rho = 2$ ($N = 200$) \\[0.35em]
-      Vectores $=$ velocidad, color $=$ ángulo. \\[0.35em]
-      Fotograma en $t = 1500\uni{s}$; los $v_a$ son de ese instante, no
-      promedios. \\[0.35em]
-      $L = 10\uni{m}$, $r_c = 1\uni{m}$,
-      $v = 0.03\uni{m/s}$, $\Delta t = 1\uni{s}$.}
+      {\small $\rho = 2$ ($N = 200$) \\[0.35em]
+      Vectores $=$ velocidad, color $=$ ángulo.}
     \end{column}
   \end{columns}
 \end{frame}
 
 \begin{frame}{Vicsek: $v_a(t)$}
   \figuraparam{evolucion_va_vicsek_rho4.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: Vicsek
-      \item $\rho = 4$ ($N = 400$)
-      \item Seed: 1
-    \end{itemize}
-    \textbf{Variables}
-    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Referencia}\\[0.2em]
+    $\rho = 4$ ($N = 400$)\\[0.45em]
     Trazo punteado: inicio del estacionario.
   }
 \end{frame}
 
 \begin{frame}{Vicsek: $v_a$ vs $\eta$}
-  \figuraparam{vicsek_va_vs_eta.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: Vicsek
-      \item 50 seeds por punto
-    \end{itemize}
-    \textbf{Variables}\\[0.2em]
-    \etacorto\\
-    \rhocorto
-  }
+  \figura{vicsek_va_vs_eta.png}
 \end{frame}
 
 \begin{frame}{Vicsek: $S(t)$}
   \figuraparam{evolucion_s_vicsek_rho2.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: Vicsek
-      \item $\rho = 2$ ($N = 200$)
-      \item Seed: 1
-    \end{itemize}
-    \textbf{Variables}
-    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Referencia}\\[0.2em]
+    $\rho = 2$ ($N = 200$)\\[0.45em]
     Eje vertical acotado a los datos.
   }
 \end{frame}
 
 \begin{frame}{Vicsek: $S$ vs $\eta$}
-  \figuraparam{vicsek_s_vs_eta.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: Vicsek
-      \item 50 seeds por punto
-    \end{itemize}
-    \textbf{Variables}\\[0.2em]
-    \etacorto\\
-    \rhocorto
-  }
+  \figura{vicsek_s_vs_eta.png}
 \end{frame}
 
 \begin{frame}{Vicsek: $v_a$ vs $S$}
-  \figuraparam[0.66\textwidth]{va_vs_s_vicsek.png}{%
-    \textbf{Fijos}\\[0.2em]
-    Modelo: Vicsek\\
-    50 seeds por punto\\[0.45em]
-    \textbf{Variables}\\[0.2em]
-    Un punto por $\eta$\\
-    $\rho$: bajas (izq.), exigidas (der.)
-  }
+  \figura{va_vs_s_vicsek.png}
 \end{frame}
 
 \begin{frame}{Votante: animación}
@@ -350,136 +296,57 @@
       \end{columns}
     \end{column}
     \begin{column}{0.28\textwidth}
-      {\small Votante, $\rho = 2$ ($N = 200$) \\[0.35em]
-      Vectores $=$ velocidad, color $=$ ángulo. \\[0.35em]
-      Fotograma en $t = 1500\uni{s}$; los $v_a$ son de ese instante, no
-      promedios. \\[0.35em]
-      $L = 10\uni{m}$, $r_c = 1\uni{m}$,
-      $v = 0.03\uni{m/s}$, $\Delta t = 1\uni{s}$.}
+      {\small $\rho = 2$ ($N = 200$) \\[0.35em]
+      Vectores $=$ velocidad, color $=$ ángulo.}
     \end{column}
   \end{columns}
 \end{frame}
 
 \begin{frame}{Votante: $v_a(t)$}
   \figuraparam{evolucion_va_voter_rho4.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: votante
-      \item $\rho = 4$ ($N = 400$)
-      \item Seed: 1
-    \end{itemize}
-    \textbf{Variables}
-    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Referencia}\\[0.2em]
-    Sin trazo punteado cuando no se identifica un estacionario.
+    $\rho = 4$ ($N = 400$)
   }
 \end{frame}
 
 \begin{frame}{Votante: $v_a$ vs $\eta$}
-  \figuraparam{voter_va_vs_eta.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: votante
-      \item 50 seeds por punto
-    \end{itemize}
-    \textbf{Variables}\\[0.2em]
-    \etacorto\\
-    \rhocorto
-  }
+  \figura{voter_va_vs_eta.png}
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $v_a$ vs $\eta$}
   \figuraparam{comparacion_va_vs_eta_rho4.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item $\rho = 4$ ($N = 400$)
-      \item 50 seeds por punto
-    \end{itemize}
-    \textbf{Variables}\\[0.2em]
-    Modelo $\in \{\text{Vicsek, votante}\}$\\
-    \etacorto\\[0.45em]
-    \textbf{Referencia}\\[0.2em]
+    $\rho = 4$ ($N = 400$)\\[0.45em]
     Misma forma en $\rho = 2$ y $8$.
   }
 \end{frame}
 
 \begin{frame}{Votante: $S(t)$}
   \figuraparam{evolucion_s_voter_rho2.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: votante
-      \item $\rho = 2$ ($N = 200$)
-      \item Seed: 1
-    \end{itemize}
-    \textbf{Variables}
-    \[ \eta \in \{0,\,0.5,\,2\}\uni{rad} \]
-    \textbf{Referencia}\\[0.2em]
+    $\rho = 2$ ($N = 200$)\\[0.45em]
     Eje vertical acotado a los datos.
   }
 \end{frame}
 
 \begin{frame}{Votante: $S$ vs $\eta$}
-  \figuraparam{voter_s_vs_eta.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item Modelo: votante
-      \item 50 seeds por punto
-    \end{itemize}
-    \textbf{Variables}\\[0.2em]
-    \etacorto\\
-    \rhocorto
-  }
+  \figura{voter_s_vs_eta.png}
 \end{frame}
 
 \begin{frame}{Votante: $v_a$ vs $S$}
-  \figuraparam[0.66\textwidth]{va_vs_s_voter.png}{%
-    \textbf{Fijos}\\[0.2em]
-    Modelo: votante\\
-    50 seeds por punto\\[0.45em]
-    \textbf{Variables}\\[0.2em]
-    Un punto por $\eta$\\
-    $\rho$: bajas (izq.), exigidas (der.)
-  }
+  \figura{va_vs_s_voter.png}
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $S$ vs $\eta$}
   \figuraparam{comparacion_s_vs_eta_rho4.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item $\rho = 4$ ($N = 400$)
-      \item 50 seeds por punto
-    \end{itemize}
-    \textbf{Variables}\\[0.2em]
-    Modelo $\in \{\text{Vicsek, votante}\}$\\
-    \etacorto\\[0.45em]
-    \textbf{Referencia}\\[0.2em]
+    $\rho = 4$ ($N = 400$)\\[0.45em]
     Eje vertical acotado a los datos.
   }
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $v_a$ vs $S$}
-  \figuraparam[0.66\textwidth]{comparacion_va_vs_s.png}{%
-    \textbf{Fijos}\\[0.2em]
-    50 seeds por punto\\[0.45em]
-    \textbf{Variables}\\[0.2em]
-    Modelo: Vicsek y votante\\
-    Un punto por $\eta$\\
-    $\rho$: bajas (izq.), exigidas (der.)
-  }
+  \figura{comparacion_va_vs_s.png}
 \end{frame}
 
 \begin{frame}{Tiempos del CIM}
-  \figuraparam[0.58\textwidth]{cim_tp1_vs_tp2.png}{%
-    \textbf{Fijos}
-    \begin{itemize}
-      \item $L = 10\uni{m}$, $M = 10$
-      \item $r_c = 1\uni{m}$, PBC
-      \item Partículas puntuales
-    \end{itemize}
-    \textbf{Variables}\\[0.2em]
-    $N \in \{200,\,400,\,800\}$\\
-    Ejecución $\in \{\text{TP1, Vicsek, votante}\}$
-  }
+  \figura{cim_tp1_vs_tp2.png}
 \end{frame}
 
 % ==========================================================================
