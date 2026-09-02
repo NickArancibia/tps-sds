@@ -80,6 +80,8 @@ public final class BenchmarkRunner {
               --Nmax <int>     Último N cuando no se pasa --N                 (default: el máximo de la geometría)
               --points <int>   Cantidad de valores de N cuando no se pasa --N (default 12)
               --M <int>        M óptimo hallado en el punto 3                 (default: el máximo válido)
+              --fresh          Una llamada cronometrada por configuración (sin repetir
+                               configuraciones); ignora --reps
 
             Opciones de --sweep density:
               --rho <double>   Densidad N/L^2 a mantener constante            (default 1.25, o sea N=500 con L=20)
@@ -166,21 +168,65 @@ public final class BenchmarkRunner {
 
     // ------------------------------------------------------------------ punto 4: barridos de N
 
-    /** Punto 4.1: L fijo, N creciente, M constante. La densidad crece con N. */
+    /**
+     * Punto 4.1: L fijo, N creciente, M constante. La densidad crece con N.
+     *
+     * <p>Con {@code --fresh} se cambia el protocolo de medición: cada configuración se cronometra
+     * <b>una sola vez</b>, tras calentar el JIT sobre una configuración descartada. Así ninguna
+     * llamada cronometrada repite una configuración ya vista, igual que dentro de una simulación
+     * dinámica (TP2), donde las partículas se mueven entre llamada y llamada. Sin {@code --fresh},
+     * las {@code reps} repeticiones recorren la misma configuración y el procesador la memoriza
+     * (predicción de saltos, caché), lo que subestima el costo real por llamada con N chico.</p>
+     */
     private static void sweepN(final BufferedWriter writer, final CliArgs cli, final double l,
                                final Params params) throws IOException {
         final int maxM = maxM(l, params);
         final int m = cli.integer("M", maxM);
         final List<Integer> ns = nValues(cli, l, params);
-        System.err.printf(Locale.US, "Barrido de N (densidad libre): N=%s, L=%.2f, M=%d%n", ns, l, m);
+        final boolean fresh = cli.has("fresh");
+        System.err.printf(Locale.US, "Barrido de N (densidad libre%s): N=%s, L=%.2f, M=%d%n",
+                fresh ? ", configuración fresca por llamada" : "", ns, l, m);
 
         for (final int n : ns) {
-            for (int s = 0; s < params.seeds(); s++) {
-                final long seed = params.seed() + s;
-                final List<Particle> particles = generate(n, l, seed, params);
-                measure(writer, "N_free", particles, n, l, m, seed, params);
+            if (fresh) {
+                measureFresh(writer, n, l, m, params);
+            } else {
+                for (int s = 0; s < params.seeds(); s++) {
+                    final long seed = params.seed() + s;
+                    final List<Particle> particles = generate(n, l, seed, params);
+                    measure(writer, "N_free", particles, n, l, m, seed, params);
+                }
             }
             System.err.printf(Locale.US, "  N=%d listo (densidad %.4f)%n", n, n / (l * l));
+        }
+    }
+
+    /**
+     * Una llamada cronometrada por configuración: {@code seeds} configuraciones distintas, cada una
+     * vista por primera vez en el momento de medirla. El calentamiento usa una configuración
+     * aparte, con una semilla fuera del rango medido. Escribe una fila por configuración
+     * (repetición 0) para que el post-proceso promedie y disperse entre configuraciones.
+     */
+    private static void measureFresh(final BufferedWriter writer, final int n, final double l,
+                                     final int m, final Params params) throws IOException {
+        final CellIndexMethod cim = new CellIndexMethod(l, m, params.rc(), params.periodic(),
+                params.rMax());
+        final List<Particle> warmupParticles = generate(n, l, params.seed() + params.seeds(), params);
+        final long warmupDeadline = System.nanoTime() + MIN_WARMUP_NANOS;
+        for (int i = 0; i < params.warmup() || System.nanoTime() < warmupDeadline; i++) {
+            cim.findNeighbors(warmupParticles);
+        }
+
+        for (int s = 0; s < params.seeds(); s++) {
+            final long seed = params.seed() + s;
+            final List<Particle> particles = generate(n, l, seed, params);
+            final long start = System.nanoTime();
+            final NeighborLists neighbors = cim.findNeighbors(particles);
+            final long elapsed = System.nanoTime() - start;
+            writer.write(String.format(Locale.US, "%s,%d,%.6f,%d,%.6f,%b,%d,0,%d,%d",
+                    "N_free_fresh", n, l, m, params.rc(), params.periodic(), seed, elapsed,
+                    neighbors.totalPairs()));
+            writer.newLine();
         }
     }
 

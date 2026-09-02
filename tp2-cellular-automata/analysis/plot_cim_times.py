@@ -2,8 +2,12 @@
 
 Comparación a igual geometría (L = 10, M = 10, r_c = 1, PBC, partículas puntuales) para
 N = 200, 400, 800 (ρ = 2, 4, 8):
-- TP1: `bench_tp2_geometry_pbc.csv`, 500 llamadas a findNeighbors sobre una configuración
-  uniforme estática (microbench: caché caliente, JIT ya optimizado).
+- TP1: `bench_tp2_geometry_pbc.csv`, bench del TP1 con `--fresh --seeds 50`: 50
+  configuraciones uniformes con semillas distintas, cada una cronometrada una sola vez
+  tras calentar el JIT. Así ninguna llamada repite una configuración ya vista, igual que
+  en el TP2, donde las partículas se mueven entre llamada y llamada. (El protocolo
+  original del TP1, 500 llamadas seguidas sobre una misma configuración, da 2x menos en
+  N = 200 porque el procesador memoriza el recorrido repetido; no es comparable.)
   El CSV no registra los radios, pero se verificó que se corrió con r = 0: (a) el generador
   del TP1 rechaza solapamientos y con los radios default (0.23-0.26) N = 800 en L = 10 es
   imposible (área de partículas > área de la caja); (b) los `neighbor_pairs` medidos calzan
@@ -18,8 +22,9 @@ Las dos series se miden en la misma máquina: un tiempo de ejecución solo es co
 contra otro medido en el mismo hardware. Por eso el TP2 no se toma de `output/sweep` (que
 puede venir de otra máquina) sino de `output/cimbench`, un conjunto chico hecho para esto:
 5 seeds por (modelo, ρ) con η = 0.5 y 1000 pasos, o sea 500 llamadas cronometradas por
-corrida, las mismas 500 repeticiones que mide el bench del TP1. El tiempo por llamada no
-depende de η ni de la seed, solo de N, así que no hace falta el barrido completo.
+corrida. El tiempo por llamada sí
+depende de η (con η = 0,5 Vicsek forma bandadas y las celdas quedan desbalanceadas: ~1,4×
+más lento que con η = 6,28 en N = 200), por eso se fija un único η para la serie.
 Regenerar con `scripts/run_cimbench.sh`.
 
 Figura: `cim_tp1_vs_tp2.png`, tiempo por llamada vs N en log-log (los datos cruzan casi dos
@@ -54,7 +59,7 @@ SERIES_STYLE = {
 
 
 def tp1_times() -> dict[int, tuple[float, float]]:
-    """N -> (media, desvío) del tiempo por llamada (ms) del bench del TP1."""
+    """N -> (media, desvío) entre configuraciones del tiempo por llamada (ms) del TP1."""
     by_n: dict[int, list[float]] = {}
     with open(TP1_BENCH) as fh:
         for row in csv.DictReader(fh):
@@ -89,11 +94,10 @@ def main() -> None:
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xticks([200, 400, 800], labels=["200", "400", "800"])
-    # Los datos cubren ~1.4 décadas: con las marcas automáticas del eje log queda
-    # un solo rótulo (10^-1). Se fijan potencias de 10 y sus mitades de década.
-    ax.set_yticks([0.02, 0.05, 0.1, 0.2, 0.5, 1.0],
-                  labels=[r"$2\times10^{-2}$", r"$5\times10^{-2}$", r"$10^{-1}$",
-                          r"$2\times10^{-1}$", r"$5\times10^{-1}$", r"$10^{0}$"])
+    # Eje log con rótulos equiespaciados (AGENTS.md §3): solo potencias de 10, sin marcas
+    # intermedias sin rótulo. Los datos cubren 0,03-0,7 ms, dentro de 10^-2 .. 10^0.
+    ax.set_ylim(0.01, 1.0)
+    ax.set_yticks([0.01, 0.1, 1.0], labels=[r"$10^{-2}$", r"$10^{-1}$", r"$10^{0}$"])
     ax.minorticks_off()
     ax.set_xlabel("Número de partículas N")
     ax.set_ylabel("Tiempo por llamada al CIM (ms)")

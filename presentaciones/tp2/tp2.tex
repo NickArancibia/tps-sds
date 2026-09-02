@@ -259,7 +259,7 @@
 \begin{frame}{Vicsek: $v_a(t)$}
   \figuraparam{evolucion_va_vicsek_rho4.png}{%
     $\rho = 4$ ($N = 400$)\\[0.45em]
-    Trazo punteado: inicio del estacionario.
+    Líneas de trazos: inicio del estacionario de cada curva.
   }
 \end{frame}
 
@@ -333,8 +333,8 @@
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $S$ vs $\eta$}
-  \figuraparam{comparacion_s_vs_eta_rho4.png}{%
-    $\rho = 4$ ($N = 400$)\\[0.45em]
+  \figuraparam{comparacion_s_vs_eta_rho2.png}{%
+    $\rho = 2$ ($N = 200$)\\[0.45em]
     Eje vertical acotado a los datos.
   }
 \end{frame}
@@ -361,10 +361,12 @@
       ya con $\eta = 0.5\uni{rad}$ el votante cae a $0.28 \pm 0.04$
       mientras Vicsek sigue en $0.99$.
     \item La densidad determina el tamaño del cluster más grande: con $\rho = 2,\,4,\,8$,
-      $S$ se mantiene $\approx 1$ para todo ruido;
-      con $\rho \le \frac{1}{\pi}$ queda lejos de 1.
-    \item En densidades bajas, a mayor ruido menor es el $S$ estacionario:
-      cae de $\approx 0.95$ a $\approx 0.2$ recorriendo $\eta$.
+      $S \ge 0.96$ para todo ruido, con un mínimo en la transición de cada modelo;
+      con $\rho = \frac{1}{\pi}$ cae de $0.98$ a $0.16$ recorriendo $\eta$.
+    \item En el plano $v_a$--$S$ ambos modelos recorren la misma curva: la regla
+      cambia el $\eta$ al que se llega a cada punto, no la relación entre observables.
+    \item El CIM dentro de la simulación tarda lo mismo que en el TP1; Vicsek
+      queda un $20\%$ arriba en $N = 200$ y $400$ por las bandadas.
   \end{itemize}
 \end{frame}
 

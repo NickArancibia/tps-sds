@@ -16,7 +16,8 @@
 % Tipografia e idioma
 \RequirePackage[T1]{fontenc}
 \RequirePackage[utf8]{inputenc}
-\RequirePackage[spanish,es-nodecimaldot]{babel}
+% es-noquoting: sin << >> activos, que rompen las opciones de tikz (>=Stealth).
+\RequirePackage[spanish,es-nodecimaldot,es-tabla,es-noquoting]{babel}
 \RequirePackage{mathptmx}
 \RequirePackage{microtype}
 
@@ -24,7 +25,6 @@
 \RequirePackage{amsmath,amssymb}
 \RequirePackage{graphicx}
 \RequirePackage{booktabs}
-\RequirePackage{siunitx}
 \RequirePackage{xcolor}
 \RequirePackage{caption}
 \RequirePackage{placeins}
@@ -37,7 +37,14 @@
 \setlength{\emergencystretch}{2em}
 \setlength{\parindent}{1.25em}
 \setlength{\parskip}{0pt}
-\sisetup{output-decimal-marker={,}, per-mode=symbol}
+% Flotantes: permitir que una pagina mezcle mas figura con menos texto antes de
+% que LaTeX decida armar paginas de solo figuras, lejos del texto que las cita.
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}
 \captionsetup{font=small, labelfont=bf}
 \hypersetup{
   pdftitle={Informe de Simulación de Sistemas},

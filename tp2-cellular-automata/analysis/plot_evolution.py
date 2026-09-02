@@ -1,9 +1,9 @@
 """Evolución temporal de los observables: v_a(t) y S(t) para valores característicos de η.
 
 Una figura por (modelo, observable, ρ), con una curva por η (sin ruido / ruido bajo /
-ruido intermedio). Cada curva lleva una marca punteada corta en su propio comienzo del
-estado estacionario (validado a ojo, ../../AGENTS.md §3); las curvas que no se estacionan
-en la ventana simulada van sin marca.
+ruido intermedio). Cada curva lleva una recta vertical de trazos, de su mismo color, en su
+propio comienzo del estado estacionario (validado a ojo, ../../AGENTS.md §3); las curvas
+que no se estacionan en la ventana simulada van sin marca.
 
 Las curvas salen de las corridas del barrido (seed 1): `observables.csv` tiene una fila
 por paso en todas las corridas, independientemente de `--every`.
@@ -49,6 +49,8 @@ OBSERVABLES = (("polarization", LABEL_VA, "va"),
 LEGEND_LOC = {
     "evolucion_s_voter_rho0.3183": {"loc": "upper right"},
     "evolucion_va_voter_rho4": {"loc": "upper right", "bbox_to_anchor": (0.98, 0.92)},
+    # va_vicsek_rho4: abajo a la izquierda tapaba las rectas de inicio del estacionario.
+    "evolucion_va_vicsek_rho4": {"loc": "lower right"},
 }
 
 
@@ -119,16 +121,11 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
         if onset is None:
             print(f"  (sin estacionario: {tag} {model} rho={rho} eta={eta})")
         else:
-            level = data[column][data["time"] >= onset].mean()
-            span = ylim[1] - ylim[0]
-            half = 0.067 * span
-            # Marca en t=0: corrida un 1% del eje hacia adentro, si no queda negro sobre
-            # negro, invisible encima del borde del gráfico.
+            # Marca en t=0: corrida un 1% del eje hacia adentro, si no queda encima del
+            # borde del gráfico, invisible.
             x = max(onset, 0.01 * data["time"][-1])
-            ax.plot([x, x],
-                    [max(level - half, ylim[0] + 0.01 * span),
-                     min(level + half, ylim[1] - 0.01 * span)],
-                    color="black", linestyle="--", linewidth=1.5)
+            ax.axvline(x, color=ETA_COLOR[eta], linestyle="--", linewidth=1.3,
+                       zorder=ETA_ZORDER[eta] + 0.25)
     ax.set_xlabel(LABEL_TIME)
     ax.set_ylabel(ylabel)
     ax.set_xlim(0, xlim_right(runs, column))
