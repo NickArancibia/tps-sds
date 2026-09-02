@@ -7,7 +7,7 @@ Figuras:
   dos paneles (densidades bajas / exigidas) porque no comparten escala en S.
 - Comparaciones Vicsek vs votante sobre los mismos ejes, punto (f) del enunciado:
   `comparacion_va_vs_eta_rho<ρ>.png` (punto c), `comparacion_s_vs_eta_rho<ρ>.png`
-  (punto d) y `comparacion_va_vs_s.png` (punto e, también en dos paneles).
+  (punto d) y `comparacion_va_vs_s.png` (punto e, solo densidades bajas).
 
 Las rectas entre puntos son solo guía para el ojo.
 
@@ -98,27 +98,34 @@ def plot_model_comparison_s(summary, rho: str) -> None:
 
 
 def plot_model_comparison_va_vs_s(summary) -> None:
-    """Punto (e) comparado entre modelos, con la misma partición en dos paneles.
+    """Punto (e) comparado entre modelos, solo con las densidades bajas.
 
-    A diferencia de `plot_va_vs_s`, acá no se distingue por densidad: cada panel
-    junta las tres densidades de su grupo y separa por modelo. La comparación que
-    pide el punto (f) es entre reglas de alineación, y el detalle por densidad ya
-    está en las figuras individuales. Fijar una sola densidad exigida no sirve:
-    con ρ = 4 todos los puntos caen en S > 0.999 y el gráfico queda vacío."""
-    fig, (ax_lo, ax_hi) = plt.subplots(1, 2, sharey=True, figsize=(7.2, 3.2))
-    for ax, grupo in ((ax_lo, RHOS_BAJAS), (ax_hi, RHOS_EXIGIDAS)):
-        for model, color, marker in MODEL_STYLE:
-            rows = np.concatenate([select(summary, model, r) for r in grupo])
+    Un panel en vez de dos: el de densidades exigidas apilaba 90 puntos entre
+    S = 0.994 y 1 con barras que cruzaban el panel entero, y no agrega nada sobre
+    `comparacion_s_vs_eta_rho*` (S ≈ 1 para todo η en los dos modelos).
+
+    Una serie por (modelo, densidad): color = modelo, marcador = densidad. Los
+    puntos van unidos por segmentos rectos en orden de η — guía para el ojo, no
+    interpolación (GuiaPresentaciones §46). Así las dos nubes se leen como dos
+    haces de curvas superpuestos, que es el resultado: las dos reglas de
+    alineación recorren la misma relación v_a–S."""
+    # Misma proporción que las demás figuras comparativas: `\figura` acota la altura
+    # a 0.72\textheight, así que una figura menos apaisada entra por altura y queda
+    # usando dos tercios del ancho de la diapositiva.
+    fig, ax = plt.subplots(figsize=(7.2, 3.2))
+    for model, color, _ in MODEL_STYLE:
+        for rho in RHOS_BAJAS:
+            rows = select(summary, model, rho)  # `select` ya ordena por η
             ax.errorbar(rows["s_mean"], rows["va_mean"], xerr=rows["s_std"],
-                        yerr=rows["va_std"], color=color, marker=marker,
-                        linestyle="none", label=MODEL_LABEL[model])
-        ax.set_xlabel(LABEL_S)
-    # Una sola leyenda: las dos series son las mismas en ambos paneles.
-    ax_lo.legend()
-    ax_lo.set_ylabel(LABEL_VA)
-    ax_lo.set_xlim(0, 1.05)
-    _zoom_xlim(ax_hi, summary, MODELS)
-    ax_lo.set_ylim(0, 1.05)
+                        yerr=rows["va_std"], color=color, marker=RHO_MARKER[rho],
+                        linestyle="-", linewidth=0.9, elinewidth=0.6, markersize=4,
+                        label=f"{MODEL_LABEL[model]}, ρ = {RHO_LABEL[rho]}")
+    ax.set_xlabel(LABEL_S)
+    ax.set_ylabel(LABEL_VA)
+    ax.set_xlim(0, 1.05)
+    ax.set_ylim(0, 1.05)
+    ax.legend(loc="lower right", ncol=2, fontsize=10, handlelength=1.6,
+              columnspacing=1.0, borderpad=0.4)
     save_figure(fig, "comparacion_va_vs_s.png")
 
 
