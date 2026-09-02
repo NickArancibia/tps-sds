@@ -149,11 +149,14 @@ deja huella en la conectividad.
 
 ### Vicsek vs votante: v_a vs S
 
-Cada panel junta las tres densidades de su grupo.
+Mostramos una sola densidad, ρ = 1/π, por el mismo criterio que en las
+comparaciones anteriores: es la que recorre el rango más amplio de S. Con ρ ≥ 2
+los dos modelos quedan clavados en S > 0,99 y el gráfico no dice nada; el
+detalle por densidad está en las dos figuras por modelo.
 
-A la izquierda las dos nubes se solapan: con menos de un vecino por partícula,
-promediar y copiar dejan de distinguirse. A la derecha ambos modelos se apilan
-en S ≈ 1.
+Las dos curvas se superponen dentro de las barras de error. O sea: la regla de
+alineación no cambia la relación entre polarización y conectividad. Recorren el
+mismo camino, lo que cambia es a qué η llega cada uno a cada punto del camino.
 
 En ningún régimen S separa una regla de la otra. El observable que discrimina es
 v_a.

@@ -222,7 +222,8 @@
   $c$ = componente conexa del grafo de vecindad (arista si distancia $< r_c$).
 
   \vspace{0.6em}
-  Escalar de cada corrida: promedio temporal para $t \ge T/2$.
+  Valor de cada corrida: $\langle v_a \rangle$, $\langle S \rangle$ $=$ promedio
+  temporal para $t \ge T/2$.
   \begin{itemize}
     \item $T = 2000$ pasos ($5000$ si $\rho < 2$)
     \item 50 repeticiones por punto
@@ -339,7 +340,10 @@
 \end{frame}
 
 \begin{frame}{Vicsek vs votante: $v_a$ vs $S$}
-  \figura{comparacion_va_vs_s.png}
+  \figuraparam{comparacion_va_vs_s.png}{%
+    $\rho = \frac{1}{\pi}$ ($N = 32$)\\[0.45em]
+    Con $\rho \ge 2$ ambos modelos quedan en $S > 0.99$ para todo $\eta$.
+  }
 \end{frame}
 
 \begin{frame}{Tiempos del CIM}
