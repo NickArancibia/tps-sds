@@ -108,10 +108,10 @@ def plot_model_comparison_va_vs_s(summary) -> None:
     fig, (ax_lo, ax_hi) = plt.subplots(1, 2, sharey=True, figsize=(7.2, 3.2))
     for ax, grupo in ((ax_lo, RHOS_BAJAS), (ax_hi, RHOS_EXIGIDAS)):
         for model, color, marker in MODEL_STYLE:
-            s = np.concatenate([select(summary, model, r)["s_mean"] for r in grupo])
-            va = np.concatenate([select(summary, model, r)["va_mean"] for r in grupo])
-            ax.plot(s, va, color=color, marker=marker, linestyle="none",
-                    label=MODEL_LABEL[model])
+            rows = np.concatenate([select(summary, model, r) for r in grupo])
+            ax.errorbar(rows["s_mean"], rows["va_mean"], xerr=rows["s_std"],
+                        yerr=rows["va_std"], color=color, marker=marker,
+                        linestyle="none", label=MODEL_LABEL[model])
         ax.set_xlabel(LABEL_S)
     # Una sola leyenda: las dos series son las mismas en ambos paneles.
     ax_lo.legend()
