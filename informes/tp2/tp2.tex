@@ -22,7 +22,6 @@
 \newcommand{\yt}[1]{\href{https://youtu.be/#1}{\texttt{youtu.be/#1}}}
 
 \newcommand{\va}{\ensuremath{v_{a}}}
-\newcommand{\est}{\ensuremath{\mathrm{est}}}
 \newcommand{\noise}{\ensuremath{\eta}}
 
 \reporttitle{Trabajo Práctico Nro. 2}
@@ -63,24 +62,26 @@ disminuye con el ruido.
 El modelo de Vicsek describe partículas autopropulsadas que alinean su
 dirección con la de sus vecinos y reciben una perturbación angular aleatoria
 \cite{vicsek1995}. En este trabajo se lo comparó con una regla de votante: cada
-partícula copia una sola dirección elegida al azar, en lugar de promediar todas
-las direcciones vecinas \cite{loscar2021}.
+partícula copia una sola dirección, elegida al azar de entre sus vecinas
+incluyéndose a sí misma, en lugar de promediar todas las direcciones vecinas
+\cite{loscar2021}.
 
 El parámetro de control fue la amplitud de ruido \noise. Se estudió cómo cambia
 el orden orientacional, medido por la polarización \va, y si ese cambio está
 acompañado por una modificación de la conectividad espacial, medida por la
 fracción $S$ del cluster más grande. La comparación entre ambos modelos se
 realizó para las densidades principales $\rho=2$, $4$ y $8$, y se extendió a
-tres densidades complementarias menores donde la conectividad deja de ser
-trivial.
+tres densidades complementarias menores, $\rho=1/(3\pi)$, $1/(2\pi)$ y
+$1/\pi$.
 
 \section{Modelo}
 
 \subsection{Sistema y vecindad}
 
-El sistema contiene $N$ partículas puntuales en una caja cuadrada de lado $L$,
+El sistema contiene $N$ partículas puntuales, cada una etiquetada con un
+índice $i=1,\dots,N$, en una caja cuadrada de lado $L$
 con condiciones periódicas de contorno. Todas se desplazan con rapidez
-constante $v$. Dos partículas son vecinas si la distancia mínima entre sus
+constante $v=|\vect{v}_i|$. Dos partículas son vecinas si la distancia mínima entre sus
 centros, considerando las imágenes periódicas, es menor que el radio de
 interacción $r_c$.
 
@@ -101,36 +102,33 @@ donde $\Delta\theta_i\sim U[-\noise/2,\noise/2]$ es el ruido angular. La
 propia partícula se incluye en el promedio; por ello, si no tiene vecinos,
 conserva su dirección antes de sumar el ruido.
 
-En el modelo de votante se elige al azar un índice
-$k\in\{i\}\cup\mathcal{N}_i(t)$ y se copia una única dirección:
+En el modelo de votante se elige al azar, con probabilidad uniforme, un
+índice $J_i\in\{i\}\cup\mathcal{N}_i(t)$ y se copia una única dirección:
 \begin{equation}
-    \theta_i(t+\Delta t) = \theta_k(t) + \Delta\theta_i.
+    \theta_i(t+\Delta t) = \theta_{J_i}(t) + \Delta\theta_i.
     \label{eq:voter}
 \end{equation}
-El enunciado exige copiar una sola dirección y no excluye la propia, por lo que
-se admitió $k=i$. Cuando no hay vecinos, la Ec.~\eqref{eq:voter} se reduce a
-conservar la dirección y sumar ruido.
+Se decidió que el votante considere también la propia dirección para que,
+cuando una partícula no tiene vecinos, siempre exista un ángulo al que sumar
+el ruido: en ese caso la Ec.~\eqref{eq:voter} se reduce a conservar la
+dirección y sumar ruido.
 
 Una vez calculadas todas las direcciones a partir del estado en $t$, se mueven
 las partículas con la dirección actualizada:
 \begin{equation}
     \vect{r}_i(t+\Delta t) =
-    \left[\vect{r}_i(t) + v\,
-    \begin{pmatrix}
-        \cos\theta_i(t+\Delta t)\\
-        \sin\theta_i(t+\Delta t)
-    \end{pmatrix}\Delta t\right] \bmod L.
+    \vect{r}_i(t) + v\,\bigl(\cos\theta_i(t+\Delta t),\,\sin\theta_i(t+\Delta t)\bigr)\,\Delta t,
     \label{eq:position-update}
 \end{equation}
-donde $\Delta t$ es el paso temporal y la operación módulo $L$ implementa las
-condiciones periódicas de contorno. Las Ecs.~\eqref{eq:vicsek},
+donde $\Delta t$ es el paso temporal, con condiciones periódicas de contorno.
+Las Ecs.~\eqref{eq:vicsek},
 \eqref{eq:voter} y \eqref{eq:position-update} se aplican sincrónicamente.
 
 \section{Implementación}
 
 El motor se implementó en Java. La Fig.~\ref{fig:motor} resume el paso
-temporal: a partir del estado en $t$ se construye la lista de vecinos con el
-Cell Index Method (CIM) del TP1, se calculan todas las direcciones nuevas con
+temporal: a partir del estado en $t$ se construye la lista de vecinos con un
+motor de Cell Index Method (CIM), se calculan todas las direcciones nuevas con
 la regla del modelo, se suma el ruido y recién entonces se reemplazan las
 direcciones y se actualizan las posiciones.
 
@@ -142,7 +140,7 @@ direcciones y se actualizan las posiciones.
         regla/.style={caja, fill=blue!10}]
       \node[caja] (estado) {Estado en $t$:\\ $\vect{r}_i,\ \theta_i$};
       \node[caja, right=0.6cm of estado] (cim)
-        {Vecinos $< r_c$\\ CIM del TP1\\ {\scriptsize radio $0$, PBC}};
+        {Vecinos $< r_c$\\ CIM\\ {\scriptsize radio $0$, PBC}};
       \node[regla, above right=0.12cm and 0.6cm of cim.east, anchor=south west] (vicsek)
         {\textbf{Vicsek}: promedia\\ $\mathcal{N}_i \cup \{i\}$};
       \node[regla, below right=0.12cm and 0.6cm of cim.east, anchor=north west] (voter)
@@ -174,8 +172,7 @@ $L/M=r_c=1$ permite revisar la celda propia y las ocho adyacentes. Para obtener
 las componentes conexas se aplica una estructura union-find a los pares de
 vecinos entregados por el CIM. En cada paso el motor guarda en archivos de
 texto el estado, la polarización, la fracción del cluster más grande y el
-tiempo de la llamada al CIM; las animaciones, las figuras y los promedios se
-obtienen después, sin volver a simular.
+tiempo de la llamada al CIM.
 
 \section{Simulaciones}
 
@@ -219,10 +216,8 @@ ejecutaron 50 realizaciones con semillas distintas.
     \label{fig:sistema}
 \end{figure}
 
-\begin{table}[htbp]
+\begin{table}[!htb]
     \centering
-    \caption{Parámetros del barrido principal, comunes a ambos modelos.}
-    \label{tab:parametros}
     \begin{tabular}{ll}
         \toprule
         Parámetro & Valor \\
@@ -231,29 +226,22 @@ ejecutaron 50 realizaciones con semillas distintas.
         Radio de interacción, $r_c$ & $1$ m \\
         Rapidez, $v$ & $0{,}03$ m/s \\
         Paso temporal, $\Delta t$ & $1$ s \\
-        Densidades, $\rho$ & $2$; $4$; $8$ \\
-        Cantidad de partículas, $N$ & $200$; $400$; $800$ \\
+        Densidades principales, $\rho$ & $2$; $4$; $8$ ($N=200$; $400$; $800$) \\
+        Densidades complementarias, $\rho$ & $1/(3\pi)$; $1/(2\pi)$; $1/\pi$ ($N=11$; $16$; $32$) \\
         Ruido, $\eta$ (rad) & $0$; $0{,}25$; $0{,}5$; $0{,}75$; $1$; $1{,}5$; \\
         & $2$; $2{,}5$; $3$; $3{,}5$; $4$; $4{,}5$; $5$; $5{,}5$; $6{,}28$ \\
         Realizaciones por punto & $50$ \\
-        Duración usual, $T$ & $2000$ s \\
+        Duración, $T$ & $2000$ s ($5000$ s para $\rho<2$; $10000$ s para votante con $\eta=0$) \\
         \bottomrule
     \end{tabular}
+    \caption{Parámetros de las simulaciones, comunes a ambos modelos.}
+    \label{tab:parametros}
 \end{table}
 
 Los valores de la Tabla~\ref{tab:parametros} rigen para todas las corridas y
-todas las figuras de este informe: en el resto del texto solo se indican los
-parámetros que cambian respecto de ella.
-
-Las corridas del modelo de votante con $\eta=0$ se extendieron a 10000 pasos
-porque el tiempo de consenso crece con $N$. También se realizaron corridas
-complementarias de 5000 pasos para
-$\rho\in\{1/(3\pi),1/(2\pi),1/\pi\}$, equivalentes por la
-Ec.~\eqref{eq:density} a $N=11$, $16$ y $32$. Se eligieron porque el número
-medio de vecinos de una distribución uniforme puede estimarse como
-$\rho\pi r_c^2$; los tres valores corresponden aproximadamente a $1/3$, $1/2$
-y $1$ vecino, respectivamente. En adelante se las llama densidades
-complementarias, y densidades principales a $\rho=2$, $4$ y $8$.
+todas las figuras de este informe; solo se indicará cuando un parámetro varíe
+respecto de ella. Las densidades complementarias se agregaron para estudiar
+el sistema por debajo de $\rho=2$.
 
 \subsection{Observables y protocolo de medición}
 
@@ -263,14 +251,14 @@ individual:
     \va(t) = \frac{\left|\sum_{i=1}^{N}\vect{v}_i(t)\right|}{N v}.
     \label{eq:polarization}
 \end{equation}
-Aquí $\vect{v}_i(t)$ es la velocidad de la partícula $i$ y $v$ es su módulo,
+Aquí $\vect{v}_i(t)$ es la velocidad de la partícula $i$ y $v=|\vect{v}_i(t)|$,
 común a todas las partículas. Por lo tanto, la Ec.~\eqref{eq:polarization} da
 $\va\simeq1$ ante alineamiento colectivo y $\va\simeq0$ ante direcciones
 globalmente compensadas.
 
 Se definió un cluster como una componente conexa del grafo cuyos nodos son las
 partículas y cuyas aristas unen vecinos. Si $N_{\max}(t)$ es la cantidad de
-partículas en la componente más grande, su fracción es
+partículas en la componente más grande en el instante $t$, su fracción es
 \begin{equation}
     S(t) = \frac{N_{\max}(t)}{N}.
     \label{eq:giant-cluster}
@@ -278,36 +266,19 @@ partículas en la componente más grande, su fracción es
 En la Ec.~\eqref{eq:giant-cluster}, el valor $S=1$ corresponde a una única
 componente conectada.
 
-Para cada realización $k$ se descartó la primera mitad de la corrida y se
-promedió el resto:
+El valor escalar de cada realización es el promedio temporal del observable
+sobre la segunda mitad de la corrida, para asegurar que el sistema ya alcanzó
+el estado estacionario (Sección~\ref{sec:resultados}):
 \begin{equation}
-    \overline{A}_k = \frac{1}{n_{\est}}
-    \sum_{t\,\geq\,T/2} A_k(t),
+    \overline{A} = \frac{1}{n}\sum_{t\,\geq\,T/2} A(t),
     \qquad A\in\{\va,S\},
     \label{eq:stationary-average}
 \end{equation}
-donde $T$ es la duración total y $n_{\est}$ la cantidad de instantes con
-$t\geq T/2$. El corte en $T/2$ se justifica en la
-Sección~\ref{sec:resultados} a partir de las evoluciones temporales. Sobre las
-$R=50$ realizaciones se calcularon
-\begin{align}
-    \langle\overline{A}\rangle & = \frac{1}{R}
-    \sum_{k=1}^{R}\overline{A}_k,
-    \label{eq:ensemble-mean}\\
-    \sigma_A & = \sqrt{\frac{1}{R-1}\sum_{k=1}^{R}
-    \left(\overline{A}_k-\langle\overline{A}\rangle\right)^2}.
-    \label{eq:ensemble-std}
-\end{align}
-Los puntos de las curvas son la media de la Ec.~\eqref{eq:ensemble-mean} y las
-barras de error, el desvío estándar de la Ec.~\eqref{eq:ensemble-std} entre
-realizaciones, no el error estándar de la media. Se dispersa entre
-realizaciones y no entre instantes porque los instantes de una misma corrida
-están autocorrelacionados, con tiempos de correlación de entre $40$ y $90$
-pasos; tratarlos como muestras independientes subestimaría el desvío en un
-factor de entre $8$ y $14$. Esta convención rige para todas las figuras de la
-Sección~\ref{sec:resultados}: salvo aclaración en contrario, cada punto
-promedia las $R=50$ realizaciones, la barra es $\sigma_A$ y las rectas solo
-unen puntos consecutivos como guía para el ojo, sin ser un ajuste.
+donde $T$ es la duración de la corrida y $n$ la cantidad de instantes con
+$t\geq T/2$. Cada punto de las curvas de la Sección~\ref{sec:resultados} es
+el promedio de $\overline{A}$ sobre las 50 realizaciones y su barra de error,
+el desvío estándar entre realizaciones; las rectas que unen puntos
+consecutivos son solo guía para el ojo.
 
 \section{Resultados}
 \label{sec:resultados}
@@ -343,7 +314,7 @@ y $S=0{,}995$ en el segundo.
         (b) $\eta=4$ rad. \yt{ez4dm6Y6-3w}
     \end{minipage}
     \caption{Fotogramas en $t=1500$ s de una realización del modelo de Vicsek
-    para $\rho=2$ ($N=200$), dentro de la ventana de promediado $t\geq T/2$.
+    para $\rho=2$ ($N=200$).
     Cada segmento representa la velocidad de una partícula y su color, el
     ángulo de movimiento. Los valores citados en el texto son los de este
     instante y esta realización, no promedios de ensamble. Debajo de cada
@@ -360,12 +331,12 @@ trazos, una por curva), muy antes del corte en $T/2=1000$ s de la
 Ec.~\eqref{eq:stationary-average}. Sin ruido, la polarización llega a uno; para
 $\eta=0{,}5$ rad se estabiliza cerca del mismo valor y para $\eta=2$ rad
 alcanza un nivel menor. Los promedios estacionarios de esas tres curvas,
-calculados con las Ecs.~\eqref{eq:stationary-average} y
-\eqref{eq:ensemble-mean}, son $\langle\overline{\va}\rangle=1{,}000$;
+calculados con la Ec.~\eqref{eq:stationary-average} y promediados sobre las
+50 realizaciones, son $\langle\overline{\va}\rangle=1{,}000$;
 $0{,}9862\pm0{,}0007$ y $0{,}783\pm0{,}007$. Promediar el último $10\%$ de
 cada corrida en lugar de la segunda mitad cambia los 180 puntos del barrido en
-$0{,}14\,\sigma_A$ en mediana y a lo sumo $0{,}7\,\sigma_A$: el resultado no
-depende de dónde se corte.
+$0{,}14$ desvíos en mediana y a lo sumo $0{,}7$: el resultado no depende de
+dónde se corte.
 
 \begin{figure}[htbp]
     \centering
@@ -688,33 +659,17 @@ TP2, donde las partículas se mueven entre llamada y llamada. El promedio y el
 desvío son sobre las 50 configuraciones. Un tiempo de ejecución solo es
 comparable contra otro medido en el mismo equipo y en las mismas condiciones,
 así que las tres series se tomaron en la misma máquina (AMD Ryzen 7 5700U,
-OpenJDK 21) y en la misma sesión. La Tabla~\ref{tab:cim} y la
-Fig.~\ref{fig:cim} las reúnen.
-
-\begin{table}[htbp]
-    \centering
-    \caption{Tiempo por llamada al CIM en milisegundos, para el bench del TP1
-    (50 configuraciones) y para ambos modelos del TP2 ($\eta=0{,}5$ rad,
-    cinco semillas, 500 llamadas cronometradas por corrida).}
-    \label{tab:cim}
-    \begin{tabular}{lccc}
-        \toprule
-        Serie & $N=200$ & $N=400$ & $N=800$ \\
-        \midrule
-        TP1 & $0{,}058\pm0{,}009$ & $0{,}18\pm0{,}02$ & $0{,}66\pm0{,}07$ \\
-        TP2, Vicsek  & $0{,}07\pm0{,}01$ & $0{,}23\pm0{,}02$ & $0{,}71\pm0{,}04$ \\
-        TP2, votante & $0{,}062\pm0{,}002$ & $0{,}20\pm0{,}02$ & $0{,}64\pm0{,}02$ \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+OpenJDK 21) y en la misma sesión. La Fig.~\ref{fig:cim} reúne las tres
+series.
 
 Los dos modelos del TP2 dan tiempos del mismo orden y con la misma pendiente,
-como corresponde a una rutina de vecindad idéntica en ambos. Al multiplicar
-$N$ por cuatro, el tiempo por llamada crece un factor $9{,}8$ en Vicsek y
-$10{,}2$ en el votante, y $11$ en el TP1. El crecimiento supera al de $N$
-porque $L$ y $M$ se mantienen fijos: al aumentar $N$ crece la ocupación de
-cada celda, y con ella la cantidad de pares que el método revisa por
-partícula.
+como corresponde a una rutina de vecindad idéntica en ambos: en $N=200$,
+$0{,}07\pm0{,}01$ ms para Vicsek y $0{,}062\pm0{,}002$ ms para el votante,
+contra $0{,}058\pm0{,}009$ ms del TP1. Al multiplicar $N$ por cuatro, el
+tiempo por llamada crece un factor $9{,}8$ en Vicsek, $10{,}2$ en el votante
+y $11$ en el TP1. El crecimiento supera al de $N$ porque $L$ y $M$ se
+mantienen fijos: al aumentar $N$ crece la ocupación de cada celda, y con ella
+la cantidad de pares que el método revisa por partícula.
 
 El votante coincide con el TP1 dentro de la dispersión en los tres tamaños
 (cocientes $1{,}1$; $1{,}1$ y $1{,}0$). Vicsek queda un $20\%$ por encima en
