@@ -27,9 +27,11 @@ ETA_COLOR = {"0.0": "black", "0.5": "tab:blue", "2.0": "tab:red"}
 ETA_ZORDER = {"0.0": 1.5, "0.5": 2.5, "2.0": 2.0}
 #: Seed del barrido usada para las evoluciones típicas.
 SEED = 1
-#: Densidades bajas (N = 11, 16, 32): las curvas de v_a con ruido fluctúan tanto que las
-#: tres η juntas son ilegibles → dos figuras por densidad, cada ruido contra η = 0.
-LOW_RHOS = ("0.1061", "0.1592", "0.3183")
+#: Inicio del estacionario fijado a ojo, clave (tag, model, rho, eta) → t (s). Para las
+#: curvas donde el criterio automático no marca nada (veto de deriva) pero la curva sí
+#: tiene un inicio claro: v_a con ρ = 1/(3π) y η = 0,5 llega a ~0,95 en t ≈ 700 s y
+#: después vaga entre 0,4 y 1 sin volver al transitorio.
+ONSET_OVERRIDE = {("va", "vicsek", "0.1061", "0.5"): 700.0}
 
 #: Alto mínimo del eje y cuando se lo acota a los datos, en unidades del observable.
 #: Evita ampliar fluctuaciones despreciables hasta que parezcan una señal.
@@ -100,11 +102,10 @@ def xlim_right(runs, column, tol: float = 0.01) -> float:
     return ends[-1]
 
 
-def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
-                   etas: tuple[str, ...] = ETAS, suffix: str = "") -> None:
+def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str) -> None:
     fig, ax = plt.subplots()
     runs = {eta: load_observables(OUTPUT / "sweep" / model / f"rho{rho}" / f"eta{eta}" / f"s{SEED}")
-            for eta in etas}
+            for eta in ETAS}
     lo = min(data[column].min() for data in runs.values())
     if lo >= 0.75:
         # Eje acotado a los datos para que la variación real no quede aplastada
@@ -117,7 +118,8 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
     for eta, data in runs.items():
         ax.plot(data["time"], data[column], color=ETA_COLOR[eta], linewidth=1.2,
                 zorder=ETA_ZORDER[eta], label=f"η = {eta} rad")
-        onset = stationary_onset(data["time"], data[column])
+        onset = ONSET_OVERRIDE.get((tag, model, rho, eta),
+                                   stationary_onset(data["time"], data[column]))
         if onset is None:
             print(f"  (sin estacionario: {tag} {model} rho={rho} eta={eta})")
         else:
@@ -130,7 +132,7 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str,
     ax.set_ylabel(ylabel)
     ax.set_xlim(0, xlim_right(runs, column))
     ax.set_ylim(*ylim)
-    name = f"evolucion_{tag}_{model}_rho{rho}{suffix}"
+    name = f"evolucion_{tag}_{model}_rho{rho}"
     legend_sidebar(ax, **LEGEND_LOC.get(name, {}))
     save_figure(fig, f"{name}.png")
 
@@ -140,13 +142,7 @@ def main() -> None:
     for model in MODELS:
         for rho in RHOS:
             for column, ylabel, tag in OBSERVABLES:
-                if tag == "va" and rho in LOW_RHOS:
-                    plot_evolution(model, rho, column, ylabel, tag,
-                                   etas=("0.0", "0.5"), suffix="_eta0.5")
-                    plot_evolution(model, rho, column, ylabel, tag,
-                                   etas=("0.0", "2.0"), suffix="_eta2.0")
-                else:
-                    plot_evolution(model, rho, column, ylabel, tag)
+                plot_evolution(model, rho, column, ylabel, tag)
 
 
 if __name__ == "__main__":
