@@ -273,8 +273,9 @@ En la Ec.~\eqref{eq:giant-cluster}, el valor $S=1$ corresponde a una única
 componente conectada.
 
 El valor escalar de cada realización es el promedio temporal del observable
-sobre la segunda mitad de la corrida, para asegurar que el sistema ya alcanzó
-el estado estacionario (Sección~\ref{sec:resultados}):
+sobre la segunda mitad de la corrida. Las evoluciones temporales de la
+Sección~\ref{sec:resultados} verifican que el estado estacionario empieza
+antes de ese corte en todos los casos mostrados:
 \begin{equation}
     \overline{A} = \frac{1}{n}\sum_{t\,\geq\,T/2} A(t),
     \qquad A\in\{\va,S\},
@@ -374,12 +375,19 @@ menor es la densidad.
 
 La Fig.~\ref{fig:evol-s-vicsek} muestra la evolución de $S$ para $\rho=2$,
 la densidad principal donde más varía, y para $\rho=1/\pi$, una de las
-complementarias. En $\rho=2$ aparecen fragmentaciones breves, pero el
-cluster más grande sigue conteniendo a la mayor parte del sistema; para
-$\rho=4$ y $8$ se mantiene en uno durante toda la corrida. En $\rho=1/\pi$ el
-comportamiento cambia: sin ruido el sistema se reúne en un único cluster a
-partir de $t\simeq400$ s, con $\eta=0{,}5$ rad $S$ fluctúa entre $0{,}5$ y
-$1$ sin estabilizarse, y con $\eta=2$ rad oscila alrededor de $0{,}4$.
+complementarias. En $\rho=2$ las tres curvas son estacionarias desde el
+inicio: aparecen fragmentaciones breves, pero el cluster más grande sigue
+conteniendo a la mayor parte del sistema; para $\rho=4$ y $8$ se mantiene en
+uno durante toda la corrida. En $\rho=1/\pi$ el transitorio es más largo: sin
+ruido el sistema se reúne en un único cluster en $t\simeq400$ s, con
+$\eta=0{,}5$ rad $S$ es estacionario desde $t\simeq140$ s y oscila entre
+$0{,}5$ y $1$, y con $\eta=2$ rad lo es desde $t\simeq130$ s y oscila
+alrededor de $0{,}4$. Todos esos inicios quedan antes del corte de la
+Ec.~\eqref{eq:stationary-average}, que es $1000$ s para $\rho=2$ y $2500$ s
+para $\rho=1/\pi$. Los promedios estacionarios sobre las 50 realizaciones son
+$\langle\overline{S}\rangle=0{,}9999\pm0{,}0007$; $0{,}994\pm0{,}006$ y
+$0{,}98\pm0{,}01$ para $\rho=2$, y $0{,}98\pm0{,}08$; $0{,}81\pm0{,}09$ y
+$0{,}48\pm0{,}07$ para $\rho=1/\pi$.
 
 \begin{figure}[H]
     \centering
@@ -394,8 +402,8 @@ $1$ sin estabilizarse, y con $\eta=2$ rad oscila alrededor de $0{,}4$.
     \caption{Evolución de la fracción del cluster más grande para Vicsek. Cada
     panel corresponde a una realización y compara $\eta=0$, $0{,}5$ y $2$
     rad. Cada línea vertical de trazos marca el comienzo del régimen
-    estacionario de la curva de su color; las curvas sin marca no se
-    estabilizan alrededor de un valor fijo dentro de la corrida. En (a) el eje
+    estacionario de la curva de su color; en (a) las tres empiezan en $t=0$
+    y se dibujan levemente corridas para que se distingan. En (a) el eje
     vertical se acotó al intervalo donde varían los datos.}
     \label{fig:evol-s-vicsek}
 \end{figure}
@@ -472,15 +480,17 @@ $0{,}553$. Con $\eta=4$ rad baja a $0{,}101$. En ambos casos $S=1{,}000$.
 \subsubsection{Polarización}
 
 La evolución temporal de la Fig.~\ref{fig:evol-va-voter} difiere de Vicsek. La
-corrida sin ruido alcanza el estado estacionario $\va=1$ en $t\simeq320$ s.
-Para $\eta=0{,}5$ rad, una realización individual mantiene fluctuaciones
-amplias y no se estabiliza alrededor de un valor fijo; para $\eta=2$ rad la
-polarización permanece baja desde el inicio. Sin embargo, para $\eta=0{,}5$
-rad la media entre las 50 realizaciones fue $0{,}282$ en el tercer cuarto de
-la corrida y $0{,}288$ en el último: el ensamble es estacionario aunque cada
-realización fluctúe, lo que respalda el promedio sobre $t\geq T/2$, y el
-desvío entre realizaciones conserva esa dispersión. Los promedios
-estacionarios de las tres curvas son $\langle\overline{\va}\rangle=1{,}000$;
+corrida sin ruido alcanza $\va=1$ en $t\simeq320$ s y no vuelve a cambiar;
+esas corridas se extendieron a $10000$ s porque el consenso tarda más
+cuanto mayor es $N$, y la figura muestra sus primeros $2000$ s. Para
+$\eta=0{,}5$ rad y $\eta=2$ rad el régimen estacionario comienza desde el
+inicio: el sistema parte desordenado y se mantiene así. La realización con
+$\eta=0{,}5$ rad oscila entre $0{,}1$ y $0{,}6$, pero alrededor de un valor
+fijo: la media entre las 50 realizaciones fue $0{,}282$ en el tercer cuarto
+de la corrida y $0{,}288$ en el último, y el desvío entre realizaciones
+conserva esa dispersión. El corte en $T/2$ ($5000$ s sin ruido, $1000$ s en
+los otros dos casos) cae dentro del estacionario de las tres curvas. Los
+promedios estacionarios son $\langle\overline{\va}\rangle=1{,}000$;
 $0{,}28\pm0{,}04$ y $0{,}079\pm0{,}003$.
 
 \begin{figure}[H]
@@ -488,9 +498,9 @@ $0{,}28\pm0{,}04$ y $0{,}079\pm0{,}003$.
     \includegraphics[width=\figw]{evolucion_va_voter_rho4.png}
     \caption{Evolución de la polarización en el modelo de votante para
     $\rho=4$ y una realización. Las líneas verticales de trazos marcan el
-    comienzo del régimen estacionario de la curva de su color; la de
-    $\eta=0{,}5$ rad no se marca porque esa realización no se estabiliza
-    alrededor de un valor fijo, aunque el ensamble sí es estacionario.}
+    comienzo del régimen estacionario de la curva de su color; las de
+    $\eta=0{,}5$ y $2$ rad empiezan en $t=0$ y se dibujan levemente corridas
+    para que se distingan.}
     \label{fig:evol-va-voter}
 \end{figure}
 
@@ -537,27 +547,36 @@ al mismo valor, $\va\simeq0{,}044$.
 La evolución de $S$ para el votante, presentada en la
 Fig.~\ref{fig:evol-s-voter} para las mismas dos densidades que en Vicsek,
 repite la estructura observada allí. En $\rho=2$ aparecen caídas breves y el
-cluster más grande abarca prácticamente todo el sistema. En $\rho=1/\pi$, sin
-ruido el sistema queda en un único cluster a partir de $t\simeq900$ s; con
-$\eta=0{,}5$ rad $S$ fluctúa entre $0{,}3$ y $0{,}9$ sin estabilizarse, y
-con $\eta=2$ rad oscila alrededor de $0{,}2$, por debajo de Vicsek.
+cluster más grande abarca prácticamente todo el sistema; las tres curvas son
+estacionarias desde el inicio (la de $\eta=0$, desde $t\simeq50$ s). En
+$\rho=1/\pi$, sin ruido el sistema queda en un único cluster en
+$t\simeq900$ s; con $\eta=0{,}5$ rad $S$ es estacionario desde $t\simeq60$ s
+y oscila entre $0{,}3$ y $0{,}9$, y con $\eta=2$ rad oscila alrededor de
+$0{,}2$ desde el inicio, por debajo de Vicsek. El inicio más tardío,
+$900$ s, sigue lejos del corte de $5000$ s de las corridas sin ruido; en las
+demás el corte es $1000$ s ($\rho=2$) o $2500$ s ($\rho=1/\pi$). Los promedios
+estacionarios son $\langle\overline{S}\rangle=0{,}99\pm0{,}04$;
+$0{,}975\pm0{,}011$ y $0{,}987\pm0{,}006$ para $\rho=2$, y
+$0{,}9\pm0{,}2$; $0{,}54\pm0{,}05$ y $0{,}22\pm0{,}03$ para $\rho=1/\pi$.
 
 \begin{figure}[H]
     \centering
     \begin{minipage}{\figwpair}
         \centering\includegraphics[width=\linewidth]{evolucion_s_voter_rho2.png}\\
-        (a) $\rho=2$, $T=2000$ s.
+        (a) $\rho=2$.
     \end{minipage}\hfill
     \begin{minipage}{\figwpair}
         \centering\includegraphics[width=\linewidth]{evolucion_s_voter_rho0.3183.png}\\
-        (b) $\rho=1/\pi$, $T=5000$ s.
+        (b) $\rho=1/\pi$.
     \end{minipage}
     \caption{Evolución de la fracción del cluster más grande para el votante.
     Cada panel corresponde a una realización y compara $\eta=0$, $0{,}5$ y
-    $2$ rad. Cada línea vertical de trazos marca el comienzo del régimen
-    estacionario de la curva de su color; las curvas sin marca no se
-    estabilizan alrededor de un valor fijo dentro de la corrida. En (a) el eje
-    vertical se acotó al intervalo donde varían los datos.}
+    $2$ rad. Las corridas duran $2000$ s en (a) y $5000$ s en (b), salvo las
+    de $\eta=0$, de $10000$ s, de las que se muestra el mismo intervalo.
+    Cada línea vertical de trazos marca el comienzo del régimen
+    estacionario de la curva de su color; las que empiezan en $t=0$ se
+    dibujan levemente corridas para que se distingan. En (a) el eje vertical
+    se acotó al intervalo donde varían los datos.}
     \label{fig:evol-s-voter}
 \end{figure}
 

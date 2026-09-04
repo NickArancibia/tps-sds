@@ -2,8 +2,7 @@
 
 Una figura por (modelo, observable, ρ), con una curva por η (sin ruido / ruido bajo /
 ruido intermedio). Cada curva lleva una recta vertical de trazos, de su mismo color, en su
-propio comienzo del estado estacionario (validado a ojo, ../../AGENTS.md §3); las curvas
-que no se estacionan en la ventana simulada van sin marca.
+propio comienzo del estado estacionario (validado a ojo, ../../AGENTS.md §3).
 
 Las curvas salen de las corridas del barrido (seed 1): `observables.csv` tiene una fila
 por paso en todas las corridas, independientemente de `--every`.
@@ -27,10 +26,10 @@ ETA_COLOR = {"0.0": "black", "0.5": "tab:blue", "2.0": "tab:red"}
 ETA_ZORDER = {"0.0": 1.5, "0.5": 2.5, "2.0": 2.0}
 #: Seed del barrido usada para las evoluciones típicas.
 SEED = 1
-#: Inicio del estacionario fijado a ojo, clave (tag, model, rho, eta) → t (s). Para las
-#: curvas donde el criterio automático no marca nada (veto de deriva) pero la curva sí
-#: tiene un inicio claro: v_a con ρ = 1/(3π) y η = 0,5 llega a ~0,95 en t ≈ 700 s y
-#: después vaga entre 0,4 y 1 sin volver al transitorio.
+#: Inicio del estacionario fijado a ojo, clave (tag, model, rho, eta) → t (s), para las
+#: curvas donde el criterio automático cae demasiado temprano: v_a con ρ = 1/(3π) y
+#: η = 0,5 entra en la banda μ ± 2σ en 413 s (σ es enorme) pero recién llega a ~0,95 en
+#: t ≈ 700 s, y después vaga entre 0,4 y 1 sin volver al transitorio.
 ONSET_OVERRIDE = {("va", "vicsek", "0.1061", "0.5"): 700.0}
 
 #: Alto mínimo del eje y cuando se lo acota a los datos, en unidades del observable.
@@ -56,22 +55,18 @@ LEGEND_LOC = {
 }
 
 
-def stationary_onset(time, values, window: int = 100, drift_tol: float = 0.12):
-    """Comienzo del estacionario de una curva, o None si no se estaciona.
+def stationary_onset(time, values, window: int = 100):
+    """Comienzo del estacionario de una curva, o None si nunca entra en régimen.
 
     Criterio: la media móvil centrada (ventana `window`) entra por primera vez en la
-    banda μ ± max(2σ, 0.02) del último cuarto de la corrida. Veto de deriva: si las
-    medias de 4 bloques de la última mitad difieren en más de `drift_tol`, la curva
-    sigue vagando y no se marca (ej.: votante con η = 0.5, spread 0.15–0.26).
+    banda μ ± max(2σ, 0.02) del último cuarto de la corrida. Una amplitud de
+    fluctuación grande (votante con η = 0.5, densidades bajas) no invalida el
+    estacionario: la curva oscila alrededor de un valor fijo, solo que con banda ancha.
     Umbrales calibrados y validados a ojo sobre cada figura.
     """
     duration = time[-1]
     tail = values[time >= 0.75 * duration]
     mu, sigma = tail.mean(), tail.std()
-    last = values[time >= 0.5 * duration]
-    block_means = [block.mean() for block in np.array_split(last, 4)]
-    if max(block_means) - min(block_means) > drift_tol:
-        return None
     moving = np.convolve(values, np.ones(window) / window, mode="valid")
     t_moving = time[window // 2:window // 2 + len(moving)]
     inside = np.abs(moving - mu) <= max(2.0 * sigma, 0.02)
@@ -115,6 +110,7 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str) -> 
         ylim = (min(lo - 0.02, top - SPAN_MIN), top)
     else:
         ylim = (0.0, 1.05)
+    marks: list[float] = []
     for eta, data in runs.items():
         ax.plot(data["time"], data[column], color=ETA_COLOR[eta], linewidth=1.2,
                 zorder=ETA_ZORDER[eta], label=f"η = {eta} rad")
@@ -124,8 +120,14 @@ def plot_evolution(model: str, rho: str, column: str, ylabel: str, tag: str) -> 
             print(f"  (sin estacionario: {tag} {model} rho={rho} eta={eta})")
         else:
             # Marca en t=0: corrida un 1% del eje hacia adentro, si no queda encima del
-            # borde del gráfico, invisible.
-            x = max(onset, 0.01 * data["time"][-1])
+            # borde del gráfico, invisible. Si dos curvas comparten inicio (típico: las
+            # dos con ruido del votante, estacionarias desde t = 0), la segunda se
+            # corre otro 1% para que la primera no la tape.
+            step = 0.01 * data["time"][-1]
+            x = max(onset, step)
+            while any(abs(x - m) < step / 2 for m in marks):
+                x += step
+            marks.append(x)
             ax.axvline(x, color=ETA_COLOR[eta], linestyle="--", linewidth=1.3,
                        zorder=ETA_ZORDER[eta] + 0.25)
     ax.set_xlabel(LABEL_TIME)
