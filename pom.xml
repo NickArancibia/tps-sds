@@ -15,6 +15,7 @@
         <module>common</module>
         <module>tp1-cell-index-method/cim-java</module>
         <module>tp2-cellular-automata/vicsek-java</module>
+        <module>tp3-event-driven-md/billiard-java</module>
     </modules>
 
     <properties>
