@@ -8,6 +8,8 @@ Salidas:
 - `analysis/out/time_vs_n.csv`: N, realizaciones, tiempo medio (s), desvío (s), eventos medios.
 - `analysis/figures/time_vs_n.png`: tiempo vs N en log-log (los datos cruzan varios órdenes de
   magnitud); las rectas entre puntos son guía para el ojo.
+- `analysis/figures/time_vs_n_linear.png`: lo mismo en escala lineal (comparación).
+- `analysis/figures/events_vs_n.png`: eventos procesados en t_f vs N, log-log.
 
 Uso:  python3 plot_time_vs_n.py
 """
@@ -56,6 +58,18 @@ def log_ticks(lo: float, hi: float) -> list[float]:
     return [10.0 ** k for k in range(int(np.floor(np.log10(lo))), int(np.ceil(np.log10(hi))) + 1)]
 
 
+def loglog_axes(ax, ns, values, xlabel: str, ylabel: str) -> None:
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xticks(ns, labels=[str(n) for n in ns])
+    yticks = log_ticks(min(values), max(values))
+    ax.set_ylim(yticks[0], yticks[-1])
+    ax.set_yticks(yticks, labels=[rf"$10^{{{int(np.log10(t))}}}$" for t in yticks])
+    ax.minorticks_off()
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+
 def main() -> None:
     rows = collect()
     if not rows:
@@ -66,22 +80,29 @@ def main() -> None:
               f"{r['time_std_s']:.3f} s  ({r['events_mean']:.0f} eventos)")
 
     use_style()
-    fig, ax = plt.subplots()
     ns = [r["N"] for r in rows]
     means = [r["time_mean_s"] for r in rows]
     stds = [r["time_std_s"] for r in rows]
+    events = [r["events_mean"] for r in rows]
+
+    fig, ax = plt.subplots()
     ax.errorbar(ns, means, yerr=stds, color="tab:blue", marker="o", linestyle="--",
                 linewidth=1.0)
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xticks(ns, labels=[str(n) for n in ns])
-    yticks = log_ticks(min(means), max(means))
-    ax.set_ylim(yticks[0], yticks[-1])
-    ax.set_yticks(yticks, labels=[rf"$10^{{{int(np.log10(t))}}}$" for t in yticks])
-    ax.minorticks_off()
+    loglog_axes(ax, ns, means, LABEL_N, "Tiempo de ejecución (s)")
+    save_figure(fig, "time_vs_n.png")
+
+    fig, ax = plt.subplots()
+    ax.errorbar(ns, means, yerr=stds, color="tab:blue", marker="o", linestyle="--",
+                linewidth=1.0)
+    ax.set_xticks(ns)
     ax.set_xlabel(LABEL_N)
     ax.set_ylabel("Tiempo de ejecución (s)")
-    save_figure(fig, "time_vs_n.png")
+    save_figure(fig, "time_vs_n_linear.png")
+
+    fig, ax = plt.subplots()
+    ax.plot(ns, events, color="tab:blue", marker="o", linestyle="--", linewidth=1.0)
+    loglog_axes(ax, ns, events, LABEL_N, "Eventos procesados")
+    save_figure(fig, "events_vs_n.png")
 
 
 if __name__ == "__main__":
