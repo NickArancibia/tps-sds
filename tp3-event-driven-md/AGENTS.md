@@ -170,3 +170,37 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   100 s: 10⁵ eventos. La cola queda acotada (8·10³ entradas con N = 100). Con estos números,
   **20 realizaciones por configuración son baratas**; el punto 1.1 con N ≥ 400 es lo único lento.
 
+
+## 5. Estado del post-proceso (2026-09-10)
+
+- **1.1 hecho**: `scripts/run_time_vs_n.sh 20` → `analysis/plot_time_vs_n.py` →
+  `time_vs_n.png` (log-log), `time_vs_n_linear.png`, `events_vs_n.png`. Tiempo ~N³ (eventos ~N²
+  × O(N) por evento), se empina para N ≥ 300 (fracción de área ≥ 0.35). Barras de error ≤ 9 %,
+  menores que el símbolo.
+- **Animaciones**: `analysis/animate.py <run_dir>` (requiere `--every 1`; muestrea a fps fijo
+  avanzando el último bloque en MRU). Demos en `output/anim/{empty,obst}/anim.mp4`.
+- **1.2 barridos corridos** (20 seeds, `tf = 100`, `--stop-at-t90`, 8 en paralelo, ~1 min):
+  `analysis/gen_configs.py` → `output/sweeps/<barrido>/<punto>/config.txt` + `index.json`;
+  `scripts/run_sweeps.sh 20 8`; `analysis/plot_t90.py` → `t90_<barrido>.png`, `fg_vs_t.png`,
+  `analysis/out/t90_<barrido>.csv`. Resultados (`<t_90>` en s, mesa vacía 22.2 ± 2.1):
+  - `single_x` (R = 0.10 sobre el eje): peor cerca del arco (29.3 en x = 0.15), ≈ mesa vacía
+    desde x ≥ 0.30. No hay mínimo claro.
+  - `single_R` (centrado): **monótono decreciente con R**: 21.6 (R = 0.025) → 16.5 (0.30) →
+    16.1 (0.33, mesa partida en dos mitades: gap con pared < 2r). Mejor de todo lo probado.
+  - `grid_K` (área total fija = círculo R = 0.10): empeora con K (20.8 → 26.1).
+  - `funnel` (embudos de obstáculos R = 0.03): mucho peor (30–34) y empeora con el largo.
+- Ninguna realización dejó de alcanzar 0.9 antes de 100 s (`t90 = null` se maneja igual).
+- **Hipótesis probadas y descartadas** (20 seeds cada una):
+  - "t_90 ∝ área libre" → `corridor` (mesa rellena de discos tangentes salvo un corredor central
+    de altura h alineado con los arcos, huecos rellenados para que no haya bolsillos): **peor**,
+    45.8 (h = 0.20) → 22.5 (h = 0.38). `corridor_smooth` (además rellena las cuñas del lado del
+    corredor): igual o peor → no es atrapamiento en cúspides.
+  - "lo que importa es partir la mesa" → `barrier` (columna de discos chicos en x = L/2, gap
+    < 2r): 20.3–21.1 ≈ mesa vacía. La partición sola no hace nada.
+  - Lectura consistente con todo: lo que ayuda es **quitar el área lejana a los arcos** (el
+    centro), no quitar área en general ni partir. El disco central grande es el que más centro
+    quita. `analysis/plot_configs.py` dibuja configs; `animate.py --snapshot t` guarda un PNG.
+- **Pendiente**: familia "disco central + discos en esquinas/laterales" (quitar más área lejana
+    sin tapar los arcos), eventualmente búsqueda aleatoria sobre esa familia; elegir
+    `Config.txt`; 1.3 (DCM con `--every 1` por configuración: mide D vs t_90); animación de la
+    mejor.

@@ -59,6 +59,8 @@ def main() -> None:
     ap.add_argument("--t0", type=float, default=0.0)
     ap.add_argument("--t1", type=float, default=None)
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--snapshot", type=float, default=None,
+                    help="en vez de un video, guardar un PNG del estado en este instante (s)")
     args = ap.parse_args()
 
     n, L, W, d, radii, obstacles = load_static(args.run_dir)
@@ -87,13 +89,24 @@ def main() -> None:
     ax.add_collection(balls)
     label = ax.text(0.01, 1.02, "", transform=ax.transAxes, ha="left", va="bottom")
 
+    def render(t):
+        pos, used = state_at(times, state, t)
+        balls.set_offsets(pos)
+        balls.set_facecolors(np.where(used, USED, FRESH))
+        label.set_text(f"t = {t:5.2f} s    goles = {int(used.sum())}/{n}")
+
+    if args.snapshot is not None:
+        out = args.out or args.run_dir / f"snapshot_{args.snapshot:.1f}s.png"
+        render(args.snapshot)
+        fig.savefig(out, dpi=120)
+        plt.close(fig)
+        print(f"  {out}")
+        return
+
     writer = FFMpegWriter(fps=args.fps, bitrate=2500)
     with writer.saving(fig, out, dpi=120):
         for t in frame_times:
-            pos, used = state_at(times, state, t)
-            balls.set_offsets(pos)
-            balls.set_facecolors(np.where(used, USED, FRESH))
-            label.set_text(f"t = {t:5.2f} s    goles = {int(used.sum())}/{n}")
+            render(t)
             writer.grab_frame()
     plt.close(fig)
     print(f"  {out.relative_to(TP_ROOT) if out.is_relative_to(TP_ROOT) else out}  "
