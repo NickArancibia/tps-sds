@@ -65,7 +65,7 @@ def main() -> None:
 
     n, L, W, d, radii, obstacles = load_static(args.run_dir)
     times, state = load_dynamic(args.run_dir, n)
-    t1 = times[-1] if args.t1 is None else args.t1
+    t1 = times[-1] if args.t1 is None else min(args.t1, times[-1])
     frame_times = np.arange(args.t0, t1, args.speed / args.fps)
     out = args.out or args.run_dir / "anim.mp4"
 
@@ -96,8 +96,11 @@ def main() -> None:
         label.set_text(f"t = {t:5.2f} s    goles = {int(used.sum())}/{n}")
 
     if args.snapshot is not None:
-        out = args.out or args.run_dir / f"snapshot_{args.snapshot:.1f}s.png"
-        render(args.snapshot)
+        t = min(args.snapshot, times[-1])
+        if t < args.snapshot:
+            print(f"  la corrida termina en t = {t:.3f} s: se usa ese instante")
+        out = args.out or args.run_dir / f"snapshot_{t:.1f}s.png"
+        render(t)
         fig.savefig(out, dpi=120)
         plt.close(fig)
         print(f"  {out}")

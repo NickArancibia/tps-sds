@@ -9,8 +9,9 @@ se alcanza 0.9 antes de t_f, `t90` es null en run.json: esa realización se cuen
 
 Salidas:
 - `analysis/out/t90_<barrido>.csv`: variable, realizaciones, <t_90>, desvío, no alcanzados.
-- `analysis/figures/t90_<barrido>.png`: <t_90> vs variable; mesa vacía como recta horizontal
-  (su <t_90> ± desvío va en la leyenda).
+- `analysis/figures/t90_<barrido>.png`: <t_90> vs variable; mesa vacía como recta horizontal.
+  Su <t_90> ± desvío y el punto elegido para `fg_vs_t.png` se imprimen por stdout: van al costado
+  de la figura (presentación) o en el caption (informe), nunca en la leyenda.
 
 Uso:  python3 plot_t90.py
 """
@@ -98,7 +99,7 @@ def main() -> None:
         fig, ax = plt.subplots()
         xs = [r["value"] for r in rows]
         ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1,
-                   label=f"mesa vacía ({empty_mean:.1f} ± {empty_std:.1f} s)")
+                   label="mesa vacía")
         ax.errorbar(xs, [r["t90_mean_s"] for r in rows], yerr=[r["t90_std_s"] for r in rows],
                     color=DATA_COLOR, marker="o", linestyle="--", linewidth=1.0,
                     label="con obstáculos")
@@ -107,8 +108,8 @@ def main() -> None:
         ax.legend(loc="best")
         save_figure(fig, f"t90_{name}.png")
 
-    print(f"  mejor: {best[1]} con <t_90> = {best[0]:.2f} s")
-    plot_fg([("mesa vacía", SWEEPS / "empty" / "s1"), (best[1], best[2] / "s1")])
+    print(f"  mejor: {best[1]} con <t_90> = {best[0]:.2f} s  (curva 'con obstáculos' de fg_vs_t.png)")
+    plot_fg([("mesa vacía", SWEEPS / "empty" / "s1"), ("con obstáculos", best[2] / "s1")])
 
 
 if __name__ == "__main__":
