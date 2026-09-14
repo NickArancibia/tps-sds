@@ -86,14 +86,14 @@ def main() -> None:
     events = [r["events_mean"] for r in rows]
 
     fig, ax = plt.subplots()
-    ax.errorbar(ns, means, yerr=stds, color="tab:blue", marker="o", linestyle="--",
-                linewidth=1.0)
+    ax.errorbar(ns, means, yerr=stds, color="tab:blue", ecolor="tab:red", marker="o",
+                markersize=4, linestyle="--", linewidth=1.0, capsize=3)
     loglog_axes(ax, ns, means, LABEL_N, "Tiempo de ejecución (s)")
     save_figure(fig, "time_vs_n.png")
 
     fig, ax = plt.subplots()
-    ax.errorbar(ns, means, yerr=stds, color="tab:blue", marker="o", linestyle="--",
-                linewidth=1.0)
+    ax.errorbar(ns, means, yerr=stds, color="tab:blue", ecolor="tab:red", marker="o",
+                markersize=4, linestyle="--", linewidth=1.0, capsize=3)
     ax.set_xticks(ns)
     ax.set_xlabel(LABEL_N)
     ax.set_ylabel("Tiempo de ejecución (s)")
