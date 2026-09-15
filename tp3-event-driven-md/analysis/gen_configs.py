@@ -24,6 +24,17 @@ Cada barrido varía UNA variable y deja fijo el resto, para poder graficar <t_90
 - `dome`: abombamiento de esquina a esquina sobre cada pared larga (arco por (0,0), (L/2,h),
   (L,0)) relleno de discos; queda una lente libre en el medio. Variable: h.
 - `dome_wall`: `dome` más una pared de discos de R = 0.02 en x = L/2 que parte la lente en dos.
+- `c_gate`: `corridor_smooth` más una pared de discos R = 0.02 en x = L/2 (como en `dome_wall`,
+  vía `_wall`) que corta el corredor al medio: la mesa queda partida en dos mitades independientes,
+  cada una con su arco al fondo de un corredor sin salida. Variable: altura h del corredor.
+- `multi_barrier`: varias `barrier` (radio fijo R = 0.02) pegadas entre sí y centradas en L/2: un
+  bloque de k columnas contiguas que come más área del medio sin partir la mesa en más de dos
+  mitades. Variable: cantidad de columnas k.
+- `multi_barrier_rows_k`: `multi_barrier` (bloque de k columnas) más n filas horizontales (sin
+  diagonal, R igual a la del bloque) que ocupan todo el largo disponible en cada compartimento,
+  variando tanto k (9..14) como n (1..5): grilla k × n. (Incluye el caso k = 12 fijo variando
+  solo n, que antes era el barrido aparte `multi_barrier_rows` — se sacó por redundante: mismas
+  configuraciones y mismos resultados que el slice k = 12 de este barrido.)
 
 Escribe `output/sweeps/<barrido>/<punto>/config.txt` (formato Config.txt: `x y R` por línea) y
 `output/sweeps/index.json` con, por punto, el nombre de la variable y su valor.
@@ -184,6 +195,18 @@ def dome_wall():
     yield from dome(wall=0.02)
 
 
+def c_gate():
+    """`corridor_smooth` (bandas superior e inferior de discos grandes, cuñas y huecos alisados
+    con discos R/4, dejando un corredor central de altura h alineado con los arcos) más `barrier`
+    (pared de discos chicos R = 0.02 en x = L/2, sin hueco) que corta ese corredor al medio: la
+    mesa queda partida en dos mitades independientes, cada una con su arco al fondo de un corredor
+    sin salida (la "C"). `_wall` calcula el hueco libre a partir de los discos de la banda que
+    quedan cerca de x = L/2, igual que en `dome_wall`. Variable: altura h del corredor (mismos n
+    que `corridor_smooth`)."""
+    for label, var_name, value, obs in _corridor(smooth=True):
+        yield label, var_name, value, obs + _wall(obs, 0.02)
+
+
 def fill_dead_zone(obs: list, inside, limit=None, grid: float = 0.0025,
                    eps: float = 1e-5) -> list:
     """Agrega discos (greedy) hasta que en la región `inside(x, y)` no pueda insertarse ninguna
@@ -283,6 +306,65 @@ def barrier():
             [(L / 2, y, radius) for y in ys]
 
 
+def _barrier_at(x0: float, radius: float) -> list:
+    """Una barrera como en `barrier`, pero centrada en x0 en vez de L/2."""
+    count = math.ceil((W - 2 * radius) / (2 * radius + R_BALL)) + 1
+    return [(x0, radius + (W - 2 * radius) * i / (count - 1), radius) for i in range(count)]
+
+
+def multi_barrier():
+    """Varias `barrier` (radio fijo R = 0.02) pegadas una a la otra y centradas en x = L/2 (en vez
+    de una sola columna): un bloque de k columnas contiguas (separación entre centros = 2R,
+    discos tangentes entre columnas) que come más área del medio a medida que crece k, pero sigue
+    partiendo la mesa en solo dos mitades (cada una con su arco), a diferencia de repartir las
+    barreras a lo largo de x. Variable: cantidad de columnas k."""
+    radius, eps = 0.02, 1e-4
+    step = 2 * radius + eps          # separación entre columnas > 2R (evita solapar por redondeo)
+    for k in range(1, 23):           # k = 23 ya no deja lugar para ubicar las 100 partículas
+        obs = [pt for i in range(k)
+               for pt in _barrier_at(L / 2 + (i - (k - 1) / 2) * step, radius)]
+        yield f"k{k:02d}", "Cantidad de columnas pegadas", k, obs
+
+
+def _rows_block(k: int, n: int) -> list:
+    """`multi_barrier` (bloque de k columnas) más n filas horizontales de discos del mismo radio
+    que las columnas (R = 0.02) en cada compartimento libre, apiladas desde cada pared larga hacia
+    el centro (sin diagonal). Como las filas van lejos de la altura del arco, arrancan pegadas a la
+    pared corta (x = radio) en vez de dejar el margen de `_funnel_arms`, y se reparten parejo hasta
+    pegar con el bloque, así que ocupan todo el largo disponible en x."""
+    radius, eps = 0.02, 1e-4
+    step = 2 * radius + eps
+    block = [pt for i in range(k) for pt in _barrier_at(L / 2 + (i - (k - 1) / 2) * step, radius)]
+    block_half = (k - 1) * step / 2 + radius
+    x1 = L / 2 - block_half                       # borde interno del compartimento izquierdo
+
+    # Las filas van pegadas a la pared larga (lejos de la altura del arco), así que arrancan
+    # tocando la pared corta (x = radius) en vez de dejar el margen x_near de `_funnel_arms`.
+    span = (x1 - radius - eps) - radius        # centros: de `radius` a pegado al bloque
+    ncols = int(span / step) + 1               # piso: separación >= step, nunca se solapan
+    leftover = span - (ncols - 1) * step        # < step; se reparte a ambos lados para centrar
+    xs = [radius + leftover / 2 + i * step for i in range(ncols)]
+
+    obs = list(block)
+    for j in range(n):
+        y_bottom = radius + j * step
+        y_top = W - radius - j * step
+        for x in xs:
+            obs += [(x, y_bottom, radius), (x, y_top, radius),
+                    (L - x, y_bottom, radius), (L - x, y_top, radius)]
+    return obs
+
+
+def multi_barrier_rows_k():
+    """`_rows_block` variando tanto el tamaño k del bloque central (9..14, en vez de k = 12 fijo
+    como en `multi_barrier_rows`) como la cantidad de filas n por lado (1..5): una grilla k × n,
+    36 configuraciones (algunas combinaciones de k y n altos no dejan ubicar las 100 partículas y
+    se generan igual; `run_sweeps`/`plot_t90` las va a contar como no alcanzadas)."""
+    for k in range(9, 15):
+        for n in range(1, 6):
+            yield f"k{k:02d}_n{n:02d}", "Columnas k / filas n", (k, n), _rows_block(k, n)
+
+
 def main() -> None:
     index = {}
     for name, gen in [("single_x", single_x()), ("single_R", single_r()),
@@ -292,8 +374,11 @@ def main() -> None:
                       ("funnel_filled", funnel_filled()), ("funnel_open", funnel_open()),
                       ("funnel_open_dy", funnel_open_dy()),
                       ("bumps", bumps()), ("dome", dome()), ("dome_wall", dome_wall()),
+                      ("c_gate", c_gate()),
                       ("corridor", corridor()),
-                      ("corridor_smooth", corridor_smooth()), ("barrier", barrier())]:
+                      ("corridor_smooth", corridor_smooth()), ("barrier", barrier()),
+                      ("multi_barrier", multi_barrier()),
+                      ("multi_barrier_rows_k", multi_barrier_rows_k())]:
         index[name] = []
         for label, var_name, value, obs in gen:
             path = SWEEPS / name / label

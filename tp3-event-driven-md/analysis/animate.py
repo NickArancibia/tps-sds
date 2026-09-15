@@ -12,6 +12,7 @@ Uso:  python3 animate.py <run_dir> [--fps 30] [--speed 1.0] [--t0 0] [--t1 tf] [
 from __future__ import annotations
 
 import argparse
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -23,6 +24,19 @@ from common import TP_ROOT, use_style
 import matplotlib.pyplot as plt  # noqa: E402  (common configura el backend)
 
 FRESH, USED, OBSTACLE, GOAL = "tab:blue", "tab:red", "0.35", "tab:green"
+
+
+def ensure_ffmpeg() -> None:
+    """matplotlib escribe el mp4 con el binario de ffmpeg: si no está en el PATH, usa el que trae
+    `imageio-ffmpeg` (ver requirements.txt)."""
+    if shutil.which("ffmpeg"):
+        return
+    try:
+        import imageio_ffmpeg
+    except ImportError:
+        raise SystemExit("Falta ffmpeg: 'pip install -r analysis/requirements.txt' "
+                         "(trae imageio-ffmpeg) o instalarlo en el sistema.")
+    plt.rcParams["animation.ffmpeg_path"] = imageio_ffmpeg.get_ffmpeg_exe()
 
 
 def load_static(run_dir: Path):
@@ -106,6 +120,7 @@ def main() -> None:
         print(f"  {out}")
         return
 
+    ensure_ffmpeg()
     writer = FFMpegWriter(fps=args.fps, bitrate=2500)
     with writer.saving(fig, out, dpi=120):
         for t in frame_times:
