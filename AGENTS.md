@@ -76,7 +76,7 @@ Estas reglas aplican a toda figura, esté en una presentación o en un informe:
 
 - **Ejes**: siempre con leyenda/título en ambos ejes, preferentemente en **palabras** (no símbolos), con **unidades entre paréntesis** usando abreviaturas del sistema MKS: (s), (m), (kg), etc.
 - **Sin títulos**: las figuras **no** llevan título dentro (en presentaciones tampoco caption; en informes va caption debajo). La información de configuración fija —modelo, densidad, parámetros— va **al costado de la figura** (presentación) o en el caption (informe), nunca dentro de la figura ni de la leyenda.
-- **Leyendas**: **sin título** y **sin aclaraciones**. Cada entrada dice **únicamente qué representa esa curva/color**: el valor del parámetro que la distingue (`ρ = 2`, `η = 0.5 rad`) o un nombre corto (`mesa vacía`, `con obstáculos`). **Prohibido** meter en una entrada de leyenda: resultados numéricos (`22.2 ± 2.1 s`), estadísticos, cantidad de realizaciones, rutas/nombres de archivo o directorio (`single_R/R0.330`), unidades de configuración fija, o texto explicativo. Todo eso va al costado de la figura / caption. Si el script conoce esos valores, los imprime por stdout para copiarlos allí; no los pone en `label=`.
+- **Leyendas**: **sin aclaraciones**. Cada entrada dice **únicamente qué representa esa curva/color**: el valor del parámetro que la distingue o un nombre corto (`mesa vacía`, `con obstáculos`). Cuando todas las entradas varían el **mismo** parámetro, **no repetir el símbolo en cada entrada** (`η = 0.5`, `η = 1.0`, ...): el símbolo y su unidad van **una sola vez** como título de la leyenda (`η (rad)`) y las entradas llevan solo el valor (`0.5`, `1.0`). Ese es el único título de leyenda permitido. **Prohibido** meter en una entrada de leyenda: resultados numéricos (`22.2 ± 2.1 s`), estadísticos, cantidad de realizaciones, rutas/nombres de archivo o directorio (`single_R/R0.330`), unidades de configuración fija, o texto explicativo. Todo eso va al costado de la figura / caption. Si el script conoce esos valores, los imprime por stdout para copiarlos allí; no los pone en `label=`.
 - **Ubicación de la leyenda**: colocar la leyenda en una zona vacía del gráfico, de modo que **no tape curvas ni barras de error**. Usar `loc="best"` como default y ajustar manualmente por figura cuando siga tapando datos.
 - **Tipografía**: el tamaño de fuente de letras y números dentro de las figuras debe ser similar al del texto que las rodea (en presentaciones, mínimo 20).
 - **Notación científica**: potencias de 10 con supraíndice (10⁻¹, 10⁰, 10¹, 10²). **Prohibido** usar `1E2`, `10^2` o similares. Toda cantidad lleva sus unidades.
@@ -85,6 +85,8 @@ Estas reglas aplican a toda figura, esté en una presentación o en un informe:
 - **Escalas**: si los datos varían en varios órdenes de magnitud, usar escala **log-log o semilogarítmica** en el eje que corresponda; una escala lineal que aplasta las diferencias no es aceptable.
 - **Escala logarítmica**: usar notación científica en los labels y asegurarse de que los labels de los ejes estén **equiespaciados**. No incluir rayitas (ticks) intermedias que no vayan a tener label.
 - **Barras de error**: todo gráfico de promedios lleva barras de error con su cálculo de desvío. Si un punto presenta un desvío mucho mayor que el resto (outlier), **avisar** en lugar de graficarlo sin más.
+- **Tamaño de la barra de error — chequeo de consistencia**: la barra de error de "input vs. observable" tiene que ser **comparable a la fluctuación que se ve en la evolución temporal** del mismo observable en el estacionario. Si la curva temporal oscila ±0.1 y la barra mide ±0.005, el cálculo está mal (ver 8.3). Hacer este chequeo a ojo antes de entregar.
+- **Sin texto explicativo dentro de la figura**: no agregar anotaciones/aclaraciones en texto sobre el gráfico; lo que haga falta va al costado (presentación) o en el caption (informe).
 - **Ajustes**: cuando se ajusta una función teórica a los resultados, mostrar cómo se halló el mejor ajuste (según lo explicado en la Teórica 0, ej.: mínimo del error cuadrático en función del parámetro de ajuste).
 - **Estado estacionario**: en gráficos de evolución temporal, identificar cuándo se pasa del estado inicial (transitorio) al estado estacionario. El criterio es **a ojo**: dibujar una **recta vertical** que pase por el punto a partir del cual empieza el régimen estacionario, para que quede claramente marcado.
 
@@ -192,34 +194,51 @@ Basado en la "Guía para Redacción de Informe" de la cátedra. Los informes son
 - [ ] ¿PDF de presentación sin animaciones embebidas, con fotograma + link?
 - [ ] ¿Conclusiones basadas solo en resultados mostrados?
 - [ ] ¿Se verificó no repetir errores corregidos en TPs anteriores?
+- [ ] ¿Las barras de error son comparables a la fluctuación visible en la evolución temporal (no desvío de promedios ni σ/√n)?
+- [ ] ¿El inicio del estacionario sale de la curva (mínimo tiempo en régimen) y es el mismo en todas las diapositivas/figuras?
+- [ ] ¿Hay introducción, ningún acrónimo sin definir, y el link de animaciones se copia bien desde el PDF?
 
 ## 8. Errores frecuentes en devoluciones de la cátedra
 
-Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4). Revisar antes de entregar.
+Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de la devolución propia del TP2 (G2, nota 6/10; los ítems marcados **[TP2]** costaron puntos). Revisar antes de entregar.
 
 ### 8.1 Modelo vs. Simulaciones
 - Los **escenarios/sistemas particulares** (geometrías, casos a estudiar) van en **Simulaciones**, NO en Modelo. El Modelo es solo ecuaciones generales.
 - Un **observable** (energía, polarización, etc.) es post-proceso: NO es parte del Modelo y NO se calcula "durante" la simulación en la descripción del modelo.
 - NO poner información de resultados en Simulaciones (ej.: el tiempo elegido como estado estacionario; se justifica en Resultados).
 - El tiempo final `t_f` se elige tal que el **observable estudiado** llegue al estacionario (no se conoce a priori). Los parámetros de integración (Δt, etc.) se informan con bajo protagonismo, dentro de un bullet "Parámetros de simulación" al final.
+- **[TP2] Qué va en "Parámetros de simulación" y no en "Parámetros fijos del sistema"**: `Δt`, el modelo o variante de regla usada, número de realizaciones, `t_f`. Los parámetros fijos del sistema son solo magnitudes físicas/geométricas (`N`, `L`, `v`, `r_c`, ...).
+- **[TP2] No agregar aclaraciones triviales** en la definición del sistema (ej.: "las partículas son puntuales"): sobra y ocupa espacio.
+- **[TP2] Estado estacionario**: el inicio del estacionario se determina **mirando la evolución temporal** y se toma como el **mínimo tiempo** a partir del cual el observable ya está en régimen (marcado con recta vertical). **Prohibido fijarlo arbitrariamente** (ej.: "última mitad, `t ≥ T/2`") sin justificarlo con la curva. El promedio estacionario se calcula desde ese tiempo, no desde un valor cómodo.
+- **[TP2] Coherencia entre diapositivas**: el inicio del estacionario declarado en Simulaciones/definición del observable tiene que ser **el mismo** que se marca en las figuras de evolución de Resultados. Distintos valores en distintas diapositivas es una observación directa del corrector.
 
 ### 8.2 Observables y consistencia
 - Las figuras deben medir **exactamente** los observables definidos; si el eje no respeta la definición, no mostrarlo.
 - Toda evolución temporal debe cerrar con el **escalar** que la caracteriza (ej.: promedio en el estacionario), no solo marcar el inicio del estacionario.
+- **[TP2] Esquema del observable**: si el observable requiere un procedimiento no trivial (ej.: identificar el cluster más grande, contar vecinos), incluir un **dibujo/esquema** de cómo se identifica, junto a la definición matemática.
 - **Notación uniforme**: no reusar un símbolo para dos cosas (ej.: `L` para tamaño y para partícula líder; `r` vs `r_c`). Mantener el mismo nombre en ecuaciones, diagramas y parámetros fijos.
 - La **cantidad de realizaciones** no es un parámetro variable de estudio: indicarla en "Parámetros de simulación", no como input barrido.
 
 ### 8.3 Gráficos
 - **Curvas que se tapan**: dibujar la que tapa por **detrás** (menor zorder) y usar **colores independientes/distinguibles** (azul, rojo, negro); evitar combinaciones que se confunden (verde/naranja).
 - Con varias realizaciones, mostrar **barras de error**.
+- **[TP2] Cálculo del desvío — error repetido en 4 figuras**: en el TP2 se calculó, para cada seed, el **promedio temporal** del observable en el estacionario y luego el **desvío estándar entre seeds de esos promedios**. Ese desvío es artificialmente chico (promediar en el tiempo suprime la fluctuación, y encima decrece con la cantidad de pasos) y **no representa la variación real** del observable en el estacionario, que sí se ve en la evolución temporal. La cátedra lo marcó como **"hay un error en el cálculo del desvío"**. Lo correcto: la barra de error debe reflejar la **fluctuación del observable en el estacionario**. Calcular el desvío estándar (ddof=1) sobre **todos los valores instantáneos** del observable en el estacionario, **agrupando (pooling) los pasos temporales estacionarios de todas las realizaciones**; equivalentemente, desvío temporal por realización y luego promedio de esos desvíos entre realizaciones. NUNCA desvío de promedios ni error estándar de la media (`σ/√n`) como barra de error salvo que el enunciado lo pida explícitamente. Aplicar el chequeo de consistencia de la sección 3 (barra vs. fluctuación visible en la evolución).
 - Marcar máximos/puntos de interés con **línea vertical** u otro indicador, e informar el valor (ej.: el N del máximo).
 - Al afirmar una recta/ajuste, mostrar un **ejemplo de ajuste** sobre los datos.
 - Para asociar un parámetro a su color, considerar **escala de color tipo gradiente**.
 - NO duplicar en tablas datos que ya están en los gráficos.
+- **[TP2] Aprovechar el espacio**: cada figura ocupa el **máximo espacio disponible** en la diapositiva. Una figura chica con media diapositiva vacía es una observación segura. Esquemas ilustrativos (geometría, sistema) también grandes.
 
 ### 8.4 Animaciones
 - El sujeto de interés (ej.: líder) debe estar **centrado**, no en el borde.
 - Animaciones **grandes** y legibles; NO en formato "shorts" (dificulta ir y venir); título preciso ("Animaciones", no descripciones vagas).
+- **[TP2] El link tiene que poder copiarse del PDF**: escribir la URL como texto plano (`\url{...}` en LaTeX, sin caracteres especiales que se conviertan al copiar) y **verificar copiándola desde el PDF final** antes de enviar. Durante la presentación en vivo, reproducir las animaciones a **tamaño grande** (pantalla completa o casi).
 
 ### 8.5 Conclusiones
 - **Cuantificar** explícitamente cada afirmación; si se compara (ej.: entre densidades), que exista un gráfico que muestre esa comparación.
+
+### 8.6 Estructura y redacción (presentación e informe)
+- **[TP2] Diapositiva de Introducción**: la presentación arranca con una introducción al sistema real (qué se estudia y por qué), no directamente con el modelo. Ver 5.3, punto 1.
+- **[TP2] Sin acrónimos no definidos**: todo acrónimo (`PBC`, `CIM`, `MD`, ...) se escribe completo la primera vez que aparece ("condiciones periódicas de contorno (PBC)") o directamente no se usa. Aplica a presentación e informe por separado (son autocontenidos).
+- **[TP2] Cifras significativas en el informe**: los valores promedio se reportan con **los decimales que el error permite** (`0.83 ± 0.04`, no `0.8312 ± 0.0413`). Observación textual: "en P7 se ponen más decimales de los correctos". El formato "valor ± error" en tablas de texto fue aceptado; el exceso de decimales, no. Redondear el error a 1 cifra significativa (2 si empieza en 1) y el valor al mismo decimal; el script que genera la tabla debe hacerlo automáticamente.
+- Lo que la cátedra marcó como **bien** en TP2 y hay que mantener: títulos de sección como diapositivas separadas, cantidad de diapositivas, extensión y presentación general del informe, formato "valor ± error".
