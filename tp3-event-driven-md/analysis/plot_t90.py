@@ -5,7 +5,12 @@ realización (scripts/run_sweeps.sh).
 Observable: t_90 = primer instante en que N_g(t)/N ≥ 0.9. Se promedia entre realizaciones
 (seeds distintas); la barra de error es el desvío estándar muestral. Si en alguna realización no
 se alcanza 0.9 antes de t_f, `t90` es null en run.json: esa realización se cuenta aparte
-(columna `no_alcanzado`) y NO entra en el promedio.
+(columna `no_alcanzado`) y NO entra en el promedio. Si el motor no pudo ubicar las N partículas
+(config demasiado llena) no hay run.json: columna `no_generado`.
+
+Barridos de una variable: una curva. Barridos en grilla (`value` = [k, n], hoy solo
+`multi_barrier_rows_k`): x = n, una curva por k con el símbolo k como título de leyenda; el csv
+lleva columnas k, n.
 
 Salidas:
 - `analysis/out/t90_<barrido>.csv`: variable, realizaciones, <t_90>, desvío, no alcanzados.
@@ -13,11 +18,15 @@ Salidas:
   Su <t_90> ± desvío y el punto elegido para `fg_vs_t.png` se imprimen por stdout: van al costado
   de la figura (presentación) o en el caption (informe), nunca en la leyenda.
 
-Uso:  python3 plot_t90.py
+Uso:  python3 plot_t90.py [--grid-k 14,15,16,17] [--fg-config multi_barrier/k16]
+      (--grid-k: qué curvas k dibujar en los barridos en grilla; el csv lleva todas.
+       --fg-config: configuración de la curva 'con obstáculos' de fg_vs_t.png; default la de
+       menor <t_90>)
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 
@@ -33,16 +42,19 @@ EMPTY_COLOR, DATA_COLOR = "tab:red", "tab:blue"
 
 
 def t90_stats(run_dir):
-    """(<t_90>, desvío, alcanzados, no alcanzados) sobre los s*/run.json de run_dir."""
-    values, missing = [], 0
-    for run_json in sorted(run_dir.glob("s*/run.json")):
-        t90 = load_run_meta(run_json.parent)["t90"]
+    """(<t_90>, desvío, alcanzados, no alcanzados, no generados) sobre los s*/ de run_dir."""
+    values, missing, failed = [], 0, 0
+    for seed_dir in sorted(run_dir.glob("s*")):
+        if not (seed_dir / "run.json").exists():
+            failed += 1
+            continue
+        t90 = load_run_meta(seed_dir)["t90"]
         if t90 is None:
             missing += 1
         else:
             values.append(t90)
     mean, std = mean_std(values) if values else (float("nan"), float("nan"))
-    return mean, std, len(values), missing
+    return mean, std, len(values), missing, failed
 
 
 def write_csv(name: str, rows: list[dict]) -> None:
@@ -54,7 +66,7 @@ def write_csv(name: str, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def plot_fg(run_dirs: list[tuple[str, object]]) -> None:
+def plot_fg(run_dirs: list[tuple[str, object]], name: str) -> None:
     fig, ax = plt.subplots()
     for (label, run_dir), color in zip(run_dirs, (EMPTY_COLOR, DATA_COLOR)):
         meta = load_run_meta(run_dir)
@@ -69,47 +81,86 @@ def plot_fg(run_dirs: list[tuple[str, object]]) -> None:
     ax.set_xlabel(LABEL_TIME)
     ax.set_ylabel("Fracción de partículas usadas")
     ax.set_ylim(0, 1)
-    ax.legend(loc="lower right")
-    save_figure(fig, "fg_vs_t.png")
+    if len(run_dirs) > 1:
+        ax.legend(loc="lower right")
+    save_figure(fig, name)
+
+
+def plot_curve(ax, xs, rows, **kw):
+    ax.errorbar(xs, [r["t90_mean_s"] for r in rows], yerr=[r["t90_std_s"] for r in rows],
+                marker="o", linestyle="--", linewidth=1.0, **kw)
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--grid-k", type=lambda s: {int(v) for v in s.split(",")}, default=None)
+    ap.add_argument("--fg-config", default=None,
+                    help="<barrido>/<punto> para la curva 'con obstáculos' de fg_vs_t.png "
+                         "(default: el de menor <t_90>)")
+    args = ap.parse_args()
     with open(SWEEPS / "index.json") as fh:
         index = json.load(fh)
     use_style()
 
-    empty_mean, empty_std, empty_n, empty_missing = t90_stats(SWEEPS / "empty")
+    empty_mean, empty_std, empty_n, empty_missing, _ = t90_stats(SWEEPS / "empty")
     print(f"  mesa vacía: <t_90> = {empty_mean:.2f} ± {empty_std:.2f} s "
           f"({empty_n} realizaciones, {empty_missing} no alcanzaron 0.9)")
 
     best = (empty_mean, "mesa vacía", SWEEPS / "empty")
     for name, points in index.items():
+        grid = isinstance(points[0]["value"], list)
+        if not any(next((SWEEPS / name / p["label"]).glob("s*"), None) for p in points):
+            print(f"  {name}: sin corridas en output/sweeps, se saltea (csv y figura previos quedan)")
+            continue
         rows = []
         for p in points:
             run_dir = SWEEPS / name / p["label"]
-            mean, std, n, missing = t90_stats(run_dir)
-            rows.append({"value": p["value"], "K": p["K"], "runs": n, "t90_mean_s": mean,
-                         "t90_std_s": std, "no_alcanzado": missing})
+            mean, std, n, missing, failed = t90_stats(run_dir)
+            key = dict(zip(("k", "n"), p["value"])) if grid else {"value": p["value"]}
+            rows.append({**key, "K": p["K"], "runs": n, "t90_mean_s": mean,
+                         "t90_std_s": std, "no_alcanzado": missing, "no_generado": failed})
             print(f"  {name}/{p['label']:8s} <t_90> = {mean:6.2f} ± {std:5.2f} s"
-                  f"  ({n} ok, {missing} no)")
+                  f"  ({n} ok, {missing} no, {failed} sin generar)")
             if n and mean < best[0]:
                 best = (mean, f"{name}/{p['label']}", run_dir)
         write_csv(name, rows)
 
         fig, ax = plt.subplots()
-        xs = [r["value"] for r in rows]
-        ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1,
-                   label="mesa vacía")
-        ax.errorbar(xs, [r["t90_mean_s"] for r in rows], yerr=[r["t90_std_s"] for r in rows],
-                    color=DATA_COLOR, marker="o", linestyle="--", linewidth=1.0,
-                    label="con obstáculos")
-        ax.set_xlabel(points[0]["variable"])
+        empty_line = ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1,
+                                label="mesa vacía")
+        if grid:
+            # n = 0 filas = el bloque solo (barrido `multi_barrier`, si está corrido): así la
+            # curva arranca en la configuración de partida.
+            ks = sorted({r["k"] for r in rows if args.grid_k is None or r["k"] in args.grid_k})
+            cmap = plt.get_cmap("viridis")
+            for i, k in enumerate(ks):
+                sub = [r for r in rows if r["k"] == k and r["runs"]]
+                block_dir = SWEEPS / "multi_barrier" / f"k{k:02d}"
+                if next(block_dir.glob("s*"), None):
+                    mean, std, n, _, _ = t90_stats(block_dir)
+                    if n:
+                        sub.insert(0, {"n": 0, "t90_mean_s": mean, "t90_std_s": std})
+                plot_curve(ax, [r["n"] for r in sub], sub,
+                           color=cmap(0.85 * i / max(1, len(ks) - 1)), label=f"k = {k}")
+            ax.set_xlabel("Cantidad de filas por lado")
+            ax.xaxis.get_major_locator().set_params(integer=True)
+            ax.legend(loc="upper left", ncol=2)
+        else:
+            done = [r for r in rows if r["runs"]]
+            plot_curve(ax, [r["value"] for r in done], done, color=DATA_COLOR,
+                       label="con obstáculos")
+            ax.set_xlabel(points[0]["variable"])
+            ax.legend(loc="best")
         ax.set_ylabel("Tiempo al 90 % de goles (s)")
-        ax.legend(loc="best")
         save_figure(fig, f"t90_{name}.png")
 
-    print(f"  mejor: {best[1]} con <t_90> = {best[0]:.2f} s  (curva 'con obstáculos' de fg_vs_t.png)")
-    plot_fg([("mesa vacía", SWEEPS / "empty" / "s1"), ("con obstáculos", best[2] / "s1")])
+    print(f"  mejor: {best[1]} con <t_90> = {best[0]:.2f} s")
+    fg_dir = SWEEPS / args.fg_config if args.fg_config else best[2]
+    print(f"  fg_vs_t.png: mesa vacía vs {fg_dir.relative_to(SWEEPS)} (seed 1); "
+          f"fg_vs_t_empty.png: solo mesa vacía")
+    plot_fg([("mesa vacía", SWEEPS / "empty" / "s1")], "fg_vs_t_empty.png")
+    plot_fg([("mesa vacía", SWEEPS / "empty" / "s1"), ("con obstáculos", fg_dir / "s1")],
+            "fg_vs_t.png")
 
 
 if __name__ == "__main__":

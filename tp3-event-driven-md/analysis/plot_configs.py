@@ -1,7 +1,10 @@
 """Esquema de configuraciones de obstáculos (formato Config.txt) sobre la mesa, con los arcos.
 
 Uso:  python3 plot_configs.py <config.txt> [<config.txt> ...] [--out nombre.png]
-Con varios archivos arma una grilla de paneles, rotulados con la ruta relativa a output/sweeps.
+                              [--labels "h = 0.20 m" ...] [--cols 3]
+Con varios archivos arma una grilla de paneles. Rótulo de cada panel: `--labels` (uno por
+archivo, para figuras de presentación: solo el valor de la variable) o, por default, la ruta
+relativa a output/sweeps (uso interno).
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 L, W, D = 1.20, 0.68, 0.20
 
 
-def draw(ax, config: Path, title: str) -> None:
+def draw(ax, config: Path, title: str, fontsize: float = 9) -> None:
     obs = np.loadtxt(config, ndmin=2)
     ax.set_xlim(0, L)
     ax.set_ylim(0, W)
@@ -32,29 +35,38 @@ def draw(ax, config: Path, title: str) -> None:
                 solid_capstyle="butt")
     for x, y, r in obs:
         ax.add_patch(Circle((x, y), r, facecolor="0.35", edgecolor="none"))
-    ax.text(0.5, -0.04, title, transform=ax.transAxes, ha="center", va="top", fontsize=9)
+    if title:
+        ax.text(0.5, -0.04, title, transform=ax.transAxes, ha="center", va="top",
+                fontsize=fontsize)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("configs", nargs="+", type=Path)
     ap.add_argument("--out", default="configs.png")
+    ap.add_argument("--labels", nargs="*", default=None)
+    ap.add_argument("--cols", type=int, default=3)
     args = ap.parse_args()
+    if args.labels is not None and len(args.labels) != len(args.configs):
+        raise SystemExit("--labels: uno por archivo de configuración")
 
     use_style()
     n = len(args.configs)
-    cols = min(3, n)
+    cols = min(args.cols, n)
     rows = math.ceil(n / cols)
     fig, axes = plt.subplots(rows, cols, figsize=(3.2 * cols, 2.1 * rows), squeeze=False)
     for ax in axes.flat:
         ax.axis("off")
-    for ax, cfg in zip(axes.flat, args.configs):
+    for i, (ax, cfg) in enumerate(zip(axes.flat, args.configs)):
         ax.axis("on")
-        try:
-            title = str(cfg.resolve().relative_to(OUTPUT / "sweeps").parent)
-        except ValueError:
-            title = cfg.stem
-        draw(ax, cfg, title)
+        if args.labels is not None:
+            draw(ax, cfg, args.labels[i], fontsize=13)
+        else:
+            try:
+                title = str(cfg.resolve().relative_to(OUTPUT / "sweeps").parent)
+            except ValueError:
+                title = cfg.stem
+            draw(ax, cfg, title)
     save_figure(fig, args.out)
 
 

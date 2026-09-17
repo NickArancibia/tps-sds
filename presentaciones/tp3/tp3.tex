@@ -1,0 +1,356 @@
+%% tp3.tex — Presentacion SdS TP3: dinamica molecular regida por eventos (billar-metegol)
+%%
+%% Compilar desde presentaciones/tp3/:  pdflatex tp3.tex   (dos veces)
+%% Estilo: ../sdsbeamer.sty (por \input@path, sin symlink).
+%% Figuras: ../../tp3-event-driven-md/analysis/figures/  y  figuras/ (locales: fotogramas)
+%% Animaciones: fotograma + link (el PDF de entrega no lleva video embebido).
+%%
+%% Duracion: 13 min. Estado: 1.1 y 1.2 armados; 1.3 (DCM / D) pendiente (marcado TODO).
+%% Hilo del 1.2 (una familia por bloque, cada una motiva la siguiente):
+%%   corredor -> disco central -> bloque de columnas -> bloque + filas -> config elegida.
+
+\documentclass[aspectratio=169]{beamer}
+\makeatletter\def\input@path{{../}}\makeatother
+\usepackage{sdsbeamer}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\microtypesetup{expansion=false}
+
+\graphicspath{{../../tp3-event-driven-md/analysis/figures/}{figuras/}}
+
+% Fotograma fijo representativo + enlace explicito debajo (GuiaPresentaciones 2.4.8).
+\newcommand{\yt}[1]{\href{https://youtu.be/#1}{\texttt{youtu.be/#1}}}
+\newcommand{\animbox}[3]{%
+  \centering
+  \includegraphics[width=0.9\linewidth]{#1}\par\vspace{0.3em}
+  {\small #2}\par\vspace{0.15em}
+  {\scriptsize #3}\par
+}
+\newcommand{\figura}[1]{%
+  \centering
+  \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{#1}%
+}
+% Parametros de simulacion del punto 1.2 (al costado de cada figura). N, t_f y realizaciones
+% ya estan en Simulaciones; aca solo lo que distingue a la figura.
+\newcommand{\paramsdoce}{$t_f = 100\uni{s}$\\[0.3em] 100 realizaciones}
+
+\title{Billar-metegol: dinámica molecular regida por eventos}
+\subtitle{Simulación de Sistemas - ITBA}
+\author[Grupo 2]{%
+  Arancibia Nicolás -- Legajo 64481\\
+  Morantes Agustín -- Legajo 61306\\
+  Ronda Agustín -- Legajo 64507}
+\institute[ITBA]{Grupo 2 --- Comisión S2 --- Instituto Tecnológico de Buenos Aires}
+\date{28 de septiembre de 2026}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% ==========================================================================
+\section{Introducción}
+% Sistema real + modelo general. < 1 min, max 3 diapositivas.
+% ==========================================================================
+
+\begin{frame}{Sistema real}
+  \begin{columns}[c]
+    \begin{column}{0.55\textwidth}
+      \begin{itemize}
+        \item Mesa rectangular con un arco en cada extremo y obstáculos fijos.
+        \item Pelotas que se mueven libremente y chocan elásticamente entre sí,
+          con los obstáculos y con las paredes.
+        \item Una pelota ``convierte'' la primera vez que toca un arco; después
+          sigue en juego.
+        \item Pregunta: ¿qué disposición de obstáculos hace que el 90\,\% de las
+          pelotas convierta lo antes posible?
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \centering
+      % Esquema de la mesa: arcos verdes, obstaculos grises, frescas azules, usadas rojas.
+      \begin{tikzpicture}[scale=4.2, >=Stealth]
+        \draw[thick] (0,0) rectangle (1.2,0.68);
+        \draw[green!60!black, line width=3pt] (0,0.24) -- (0,0.44);
+        \draw[green!60!black, line width=3pt] (1.2,0.24) -- (1.2,0.44);
+        \fill[black!60] (0.6,0.34) circle (0.10);
+        \fill[black!60] (0.3,0.55) circle (0.05);
+        \fill[black!60] (0.9,0.13) circle (0.05);
+        \foreach \x/\y/\a in {0.15/0.2/30, 0.45/0.6/200, 0.8/0.5/-60, 1.05/0.3/150, 0.35/0.12/80}
+          {\fill[blue] (\x,\y) circle (0.0175); \draw[->,blue,thick] (\x,\y) -- ++(\a:0.08);}
+        \foreach \x/\y/\a in {0.2/0.45/-40, 0.95/0.6/220}
+          {\fill[red] (\x,\y) circle (0.0175); \draw[->,red,thick] (\x,\y) -- ++(\a:0.08);}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Modelo: esferas duras}
+  Entre eventos, movimiento rectilíneo uniforme:
+  $\;\vect{r}_i(t) = \vect{r}_i(t_0) + \vect{v}_i\,(t - t_0)$
+  \vspace{0.2em}
+  \small
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      {\color{structure}\large Tiempo al próximo choque}\par\vspace{0.5em}
+      Pared en $x_p$:
+      \[
+        t = \frac{x_p \mp r_i - x_i}{v_{x,i}}
+      \]
+      Partícula $j$ ($\sigma = r_i + r_j$, $\Delta\vect{r} = \vect{r}_j - \vect{r}_i$):
+      \begin{align*}
+        t_c &= -\frac{\Delta\vect{v}\cdot\Delta\vect{r} + \sqrt{d}}{\Delta\vect{v}\cdot\Delta\vect{v}}\\
+        d   &= (\Delta\vect{v}\cdot\Delta\vect{r})^2 - (\Delta\vect{v}\cdot\Delta\vect{v})(\Delta\vect{r}\cdot\Delta\vect{r} - \sigma^2)
+      \end{align*}
+      {\small Sin choque si $\Delta\vect{v}\cdot\Delta\vect{r} \ge 0$ o $d < 0$.\\
+      Obstáculo fijo: $\vect{v}_j = \vect{0}$, $\sigma = r_i + R_k$.}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      {\color{structure}\large Después del choque (elástico)}\par\vspace{0.5em}
+      Pared: se invierte la componente normal.\par\vspace{0.3em}
+      Partícula $j$:
+      \begin{align*}
+        J &= \frac{2\,m_i m_j\,(\Delta\vect{v}\cdot\Delta\vect{r})}{\sigma\,(m_i + m_j)}\\
+        \vect{v}_i' &= \vect{v}_i + \frac{J}{m_i}\,\frac{\Delta\vect{r}}{\sigma},
+        \qquad
+        \vect{v}_j' = \vect{v}_j - \frac{J}{m_j}\,\frac{\Delta\vect{r}}{\sigma}
+      \end{align*}
+      Obstáculo ($m_j \to \infty$), reflexión especular:
+      \[
+        \vect{v}_i' = \vect{v}_i - 2\,(\vect{v}_i\cdot\hat{\vect{e}}_n)\,\hat{\vect{e}}_n
+      \]
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ==========================================================================
+\section{Implementación}
+% Solo el motor. Sin post-proceso ni I/O.
+% ==========================================================================
+
+\begin{frame}[t]{Motor: cola de eventos}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.56\textwidth}
+      \small
+      \begin{enumerate}\setlength{\itemsep}{1pt}
+        \item Para cada partícula, predecir el próximo choque contra paredes, obstáculos y
+          las demás partículas; encolar cada evento con su instante $t$.
+        \item Sacar el evento de menor $t$. Si alguna de sus partículas chocó después de
+          predecirlo, descartarlo (\emph{contador de colisiones}).
+        \item Avanzar todas las partículas hasta $t$ (MRU).
+        \item Aplicar el choque. Pared corta con $|y - W/2| \le d/2$ y partícula fresca:
+          gol, pasa a usada.
+        \item Re-predecir solo los eventos de las partículas involucradas; volver a 2.
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \centering
+      \begin{tikzpicture}[>=Stealth, font=\footnotesize, node distance=0.22cm,
+          caja/.style={draw, rounded corners, align=center, inner sep=2.5pt, minimum width=3.2cm}]
+        \node[caja] (pq) {Cola de eventos\\ $(t,\ i,\ j,\ n_i,\ n_j)$};
+        \node[caja, below=of pq] (pop) {Mínimo $t$\\ ¿$n_i$, $n_j$ vigentes?};
+        \node[caja, below=of pop] (adv) {Avanzar todo a $t$};
+        \node[caja, below=of adv] (col) {Choque + gol\\ $n_i{+}{+}$, $n_j{+}{+}$};
+        \node[caja, below=of col] (pred) {Predecir $i$, $j$};
+        \draw[->] (pq) -- (pop);
+        \draw[->] (pop) -- node[right]{sí} (adv);
+        \draw[->] (adv) -- (col);
+        \draw[->] (col) -- (pred);
+        \draw[->] (pred.east) -- ++(0.5,0) |- (pq.east);
+        \draw[->] (pop.west) -- ++(-0.4,0) node[left]{no} |- (pq.west);
+      \end{tikzpicture}\\[0.6em]
+      {\small Fin: $t \ge t_f$ o (opcional) $F_g \ge 0.9$.}\\[0.4em]
+      {\scriptsize\itshape Cola de prioridad binaria, invalidación perezosa:\\
+      Sedgewick y Wayne, \emph{Algorithms}, 4.\textsuperscript{a} ed. (2011)}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ==========================================================================
+\section{Simulaciones}
+% ==========================================================================
+
+\begin{frame}{Sistema}
+  \begin{columns}[c]
+    \begin{column}{0.46\textwidth}
+      \centering
+      \begin{tikzpicture}[scale=3.2, >=Stealth]
+        \draw[thick] (0,0) rectangle (1.2,0.68);
+        \draw[green!60!black, line width=3pt] (0,0.24) -- (0,0.44);
+        \draw[green!60!black, line width=3pt] (1.2,0.24) -- (1.2,0.44);
+        \draw[<->] (0,-0.06) -- (1.2,-0.06) node[midway, below, font=\small] {$L = 1.20\uni{m}$};
+        \draw[<->] (1.27,0) -- (1.27,0.68) node[midway, right, font=\small] {$W = 0.68\uni{m}$};
+        \draw[<->] (-0.06,0.24) -- (-0.06,0.44) node[midway, left, font=\small] {$d$};
+        \fill[black!60] (0.6,0.34) circle (0.10);
+        \draw[->] (0.6,0.34) -- ++(40:0.10) node[pos=1.2, font=\small] {$R_k$};
+        \fill[blue] (0.25,0.5) circle (0.0175);
+        \draw[->,blue,thick] (0.25,0.5) -- ++(-20:0.09) node[right, font=\small, black] {$v_0$};
+        \fill[red] (0.95,0.2) circle (0.0175);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.52\textwidth}
+      \textbf{Fijos}
+      \begin{itemize}
+        \item $L = 1.20\uni{m}$, $W = 0.68\uni{m}$, arcos $d = 0.20\uni{m}$
+        \item $r = 0.0175\uni{m}$, $m = 0.025\uni{kg}$, $v_0 = 1\uni{m/s}$
+        \item Posiciones iniciales al azar sin solapar; dirección $\sim U[0, 2\pi)$
+      \end{itemize}
+      \textbf{Variables}
+      \begin{itemize}
+        \item Punto 1.1 (mesa vacía): $N = 25$ a $400$
+        \item Punto 1.2 ($N = 100$): configuración de obstáculos $\{(x_k, y_k, R_k)\}$,
+          una familia por vez con un solo parámetro libre
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Observables}
+  \begin{itemize}
+    \item \textbf{Tiempo de ejecución}: tiempo de reloj del lazo de eventos.
+    \item \textbf{Goles}: $N_g(t)$ acumulados; $F_g(t) = N_g(t)/N$.
+    \item \textbf{Tiempo al 90\,\%}: $t_{90} = \min\{t : F_g(t) \ge 0.9\}$;
+      $\langle t_{90} \rangle \pm$ desvío estándar entre realizaciones.
+  \end{itemize}
+  \vspace{0.6em}
+  \textbf{Parámetros de simulación}
+  \begin{itemize}
+    \item 1.1: $t_f = 30\uni{s}$, 20 realizaciones por $N$, una máquina virtual de Java
+      caliente.
+    \item 1.2: $N = 100$, $t_f = 100\uni{s}$, 100 realizaciones por configuración.
+    \item Una semilla distinta por realización.
+  \end{itemize}
+\end{frame}
+
+% ==========================================================================
+\section{Resultados}
+% Por familia: configuraciones -> animacion -> <t_90> vs variable.
+% ==========================================================================
+
+\begin{frame}{Tiempo de ejecución vs $N$}
+  \figuraparam{time_vs_n.png}{%
+    Mesa vacía\\[0.3em]
+    $t_f = 30\uni{s}$\\[0.3em]
+    20 realizaciones
+  }
+\end{frame}
+
+\begin{frame}{Mesa vacía}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \animbox{snapshot_empty.png}{}{\yt{PENDIENTE}}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{fg_vs_t_empty.png}\\[0.2em]
+      {\small Una realización}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Corredor: configuraciones}
+  \figuraparam[0.7\textwidth]{pres_configs_corridor.png}{%
+    Variable: altura $h$ del corredor
+  }
+\end{frame}
+
+\begin{frame}{Corredor: animación}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \animbox{snapshot_corr020.png}{$h = 0.20\uni{m}$}{\yt{PENDIENTE}}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \animbox{snapshot_corr038.png}{$h = 0.38\uni{m}$}{\yt{PENDIENTE}}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Corredor: $\langle t_{90} \rangle$ vs altura}
+  \figuraparam{t90_corridor.png}{\paramsdoce}
+\end{frame}
+
+\begin{frame}{Disco central: configuraciones}
+  \figuraparam[0.7\textwidth]{pres_configs_single_R.png}{%
+    Variable: radio $R$
+  }
+\end{frame}
+
+\begin{frame}{Disco central: $\langle t_{90} \rangle$ vs radio}
+  \figuraparam{t90_single_R.png}{\paramsdoce}
+\end{frame}
+
+\begin{frame}{Bloque central: configuraciones}
+  \figuraparam[0.7\textwidth]{pres_configs_multi_barrier.png}{%
+    Discos de $R = 0.02\uni{m}$\\[0.3em]
+    Variable: cantidad de columnas $k$
+  }
+\end{frame}
+
+\begin{frame}{Bloque central: animación}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \animbox{snapshot_mb_k01.png}{$k = 1$}{\yt{PENDIENTE}}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \animbox{snapshot_mb_k16.png}{$k = 16$}{\yt{PENDIENTE}}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Bloque central: $\langle t_{90} \rangle$ vs cantidad de columnas}
+  \figuraparam{t90_multi_barrier.png}{\paramsdoce}
+\end{frame}
+
+\begin{frame}{Bloque central con filas: configuraciones}
+  \figuraparam[0.7\textwidth]{pres_configs_multi_barrier_rows.png}{%
+    Discos de $R = 0.02\uni{m}$\\[0.3em]
+    Variables: columnas $k$,\\ filas por lado $n$
+  }
+\end{frame}
+
+\begin{frame}{Bloque central con filas: $\langle t_{90} \rangle$ vs filas}
+  \figuraparam{t90_multi_barrier_rows_k.png}{\paramsdoce}
+\end{frame}
+
+\begin{frame}{Configuración elegida}
+  \figuraparam[0.72\textwidth]{pres_config_elegida.png}{%
+    $k = 17$, $n = 1$\\[0.3em]
+    $K = 245$ discos de $R = 0.02\uni{m}$
+  }
+\end{frame}
+
+% TODO 1.3: DCM(t) de una realización por configuración (mesa vacía, corredor, disco,
+% bloque), curva E(c) con su mínimo, D vs <t_90>.
+
+% ==========================================================================
+\section{Conclusiones}
+% Solo lo que está en las figuras de Resultados. Cuantificar.
+% ==========================================================================
+
+\begin{frame}{Conclusiones}
+  \begin{itemize}
+    \item El tiempo de ejecución crece como $\sim N^3$ en el rango estudiado: de
+      $2\ten{-3}\uni{s}$ ($N = 25$) a $16\uni{s}$ ($N = 400$) para $30\uni{s}$ simulados.
+    \item Angostar la mesa a un corredor alineado con los arcos empeora, y más cuanto más
+      angosto: de $21.7 \pm 2.2\uni{s}$ (vacía) a $47 \pm 6\uni{s}$ con $h = 0.20\uni{m}$.
+    \item Un disco central mejora monótonamente con el radio: $16.0 \pm 2.0\uni{s}$ con
+      $R = 0.33\uni{m}$, el máximo posible.
+    \item Partir la mesa con una columna no cambia nada ($21 \pm 3\uni{s}$); ensanchar el
+      bloque central sí: meseta de $14.3$ a $14.8\uni{s}$ para $k = 15$ a $19$. Más ancho
+      ($k \ge 21$) vuelve a subir.
+    \item Una o dos filas cortas en los compartimentos bajan otro $0.5\uni{s}$ (de $14.5$ a
+      $14.0\uni{s}$ promediando $k = 15$ a $17$); con tres o más empeora.
+    \item Elegida: $k = 17$, $n = 1$: $\langle t_{90}\rangle = 13.7 \pm 1.7\uni{s}$, un
+      37\,\% menos que la mesa vacía.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[plain]
+  \centering
+  \vfill
+  {\Huge Muchas gracias}
+  \vfill
+\end{frame}
+
+\end{document}

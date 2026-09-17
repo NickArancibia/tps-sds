@@ -32,9 +32,10 @@ Cada barrido varía UNA variable y deja fijo el resto, para poder graficar <t_90
   mitades. Variable: cantidad de columnas k.
 - `multi_barrier_rows_k`: `multi_barrier` (bloque de k columnas) más n filas horizontales (sin
   diagonal, R igual a la del bloque) que ocupan todo el largo disponible en cada compartimento,
-  variando tanto k (9..14) como n (1..5): grilla k × n. (Incluye el caso k = 12 fijo variando
-  solo n, que antes era el barrido aparte `multi_barrier_rows` — se sacó por redundante: mismas
-  configuraciones y mismos resultados que el slice k = 12 de este barrido.)
+  variando tanto k (9..17: cubre el mínimo de `multi_barrier`, k = 16, y sus vecinos) como n
+  (1..5): grilla k × n. (Incluye el caso k = 12 fijo variando solo n, que antes era el barrido
+  aparte `multi_barrier_rows` — se sacó por redundante: mismas configuraciones y mismos
+  resultados que el slice k = 12 de este barrido.)
 
 Escribe `output/sweeps/<barrido>/<punto>/config.txt` (formato Config.txt: `x y R` por línea) y
 `output/sweeps/index.json` con, por punto, el nombre de la variable y su valor.
@@ -356,11 +357,11 @@ def _rows_block(k: int, n: int) -> list:
 
 
 def multi_barrier_rows_k():
-    """`_rows_block` variando tanto el tamaño k del bloque central (9..14, en vez de k = 12 fijo
-    como en `multi_barrier_rows`) como la cantidad de filas n por lado (1..5): una grilla k × n,
-    36 configuraciones (algunas combinaciones de k y n altos no dejan ubicar las 100 partículas y
-    se generan igual; `run_sweeps`/`plot_t90` las va a contar como no alcanzadas)."""
-    for k in range(9, 15):
+    """`_rows_block` variando tanto el tamaño k del bloque central (9..17: el mínimo de
+    `multi_barrier` está en k = 16) como la cantidad de filas n por lado (1..5): una grilla k × n,
+    45 configuraciones (algunas combinaciones de k y n altos no dejan ubicar las 100 partículas y
+    se generan igual; `run_sweeps`/`plot_t90` las va a contar como no generadas)."""
+    for k in range(9, 18):
         for n in range(1, 6):
             yield f"k{k:02d}_n{n:02d}", "Columnas k / filas n", (k, n), _rows_block(k, n)
 
