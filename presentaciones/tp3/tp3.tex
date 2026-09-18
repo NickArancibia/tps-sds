@@ -30,9 +30,8 @@
   \centering
   \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{#1}%
 }
-% Parametros de simulacion del punto 1.2 (al costado de cada figura). N, t_f y realizaciones
-% ya estan en Simulaciones; aca solo lo que distingue a la figura.
-\newcommand{\paramsdoce}{$t_f = 100\uni{s}$\\[0.3em] 100 realizaciones}
+% Parametros de simulacion del punto 1.2 (al costado de cada figura).
+\newcommand{\paramsdoce}{20 realizaciones}
 
 \title{Billar-metegol: dinámica molecular regida por eventos}
 \subtitle{Simulación de Sistemas - ITBA}
@@ -51,10 +50,10 @@
 
 % ==========================================================================
 \section{Introducción}
-% Sistema real + modelo general. < 1 min, max 3 diapositivas.
+% Sistema + modelo general. < 1 min, max 3 diapositivas.
 % ==========================================================================
 
-\begin{frame}{Sistema real}
+\begin{frame}{Sistema}
   \begin{columns}[c]
     \begin{column}{0.55\textwidth}
       \begin{itemize}
@@ -213,20 +212,47 @@
     \item \textbf{Tiempo al 90\,\%}: $t_{90} = \min\{t : F_g(t) \ge 0.9\}$;
       $\langle t_{90} \rangle \pm$ desvío estándar entre realizaciones.
   \end{itemize}
-  \vspace{0.6em}
+  \vspace{0.4em}
   \textbf{Parámetros de simulación}
   \begin{itemize}
     \item 1.1: $t_f = 30\uni{s}$, 20 realizaciones por $N$, una máquina virtual de Java
       caliente.
-    \item 1.2: $N = 100$, $t_f = 100\uni{s}$, 100 realizaciones por configuración.
+    \item 1.2: $N = 100$, cada corrida hasta su $t_{90}$, 20 realizaciones por
+      configuración; estado guardado cada 25 eventos.
     \item Una semilla distinta por realización.
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Configuraciones: disco central}
+  \figuraparam[0.78\textwidth]{pres_configs_single_R.png}{%
+    Variable: radio $R$
+  }
+\end{frame}
+
+\begin{frame}{Configuraciones: bloque central}
+  \figuraparam[0.78\textwidth]{pres_configs_multi_barrier.png}{%
+    Discos de $R = 0.02\uni{m}$\\[0.3em]
+    Variable: cantidad de columnas $k$
+  }
+\end{frame}
+
+\begin{frame}{Configuraciones: bloque central con filas}
+  \figuraparam[0.78\textwidth]{pres_configs_multi_barrier_rows.png}{%
+    Discos de $R = 0.02\uni{m}$\\[0.3em]
+    Variables: columnas $k$,\\ filas por lado $n$
+  }
+\end{frame}
+
 % ==========================================================================
 \section{Resultados}
-% Por familia: configuraciones -> animacion -> <t_90> vs variable.
+% Por familia: animacion -> <t_90> vs variable (configuraciones en Simulaciones).
 % ==========================================================================
+
+\begin{frame}{Mesa vacía}
+  \centering
+  \includegraphics[width=0.62\linewidth]{snapshot_empty.png}\par\vspace{0.6em}
+  {\large \yt{PENDIENTE}}\par
+\end{frame}
 
 \begin{frame}{Tiempo de ejecución vs $N$}
   \figuraparam{time_vs_n.png}{%
@@ -236,55 +262,8 @@
   }
 \end{frame}
 
-\begin{frame}{Mesa vacía}
-  \begin{columns}[c,onlytextwidth]
-    \begin{column}{0.5\textwidth}
-      \animbox{snapshot_empty.png}{}{\yt{PENDIENTE}}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \centering
-      \includegraphics[width=\linewidth]{fg_vs_t_empty.png}\\[0.2em]
-      {\small Una realización}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Corredor: configuraciones}
-  \figuraparam[0.7\textwidth]{pres_configs_corridor.png}{%
-    Variable: altura $h$ del corredor
-  }
-\end{frame}
-
-\begin{frame}{Corredor: animación}
-  \begin{columns}[c,onlytextwidth]
-    \begin{column}{0.5\textwidth}
-      \animbox{snapshot_corr020.png}{$h = 0.20\uni{m}$}{\yt{PENDIENTE}}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \animbox{snapshot_corr038.png}{$h = 0.38\uni{m}$}{\yt{PENDIENTE}}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Corredor: $\langle t_{90} \rangle$ vs altura}
-  \figuraparam{t90_corridor.png}{\paramsdoce}
-\end{frame}
-
-\begin{frame}{Disco central: configuraciones}
-  \figuraparam[0.7\textwidth]{pres_configs_single_R.png}{%
-    Variable: radio $R$
-  }
-\end{frame}
-
 \begin{frame}{Disco central: $\langle t_{90} \rangle$ vs radio}
   \figuraparam{t90_single_R.png}{\paramsdoce}
-\end{frame}
-
-\begin{frame}{Bloque central: configuraciones}
-  \figuraparam[0.7\textwidth]{pres_configs_multi_barrier.png}{%
-    Discos de $R = 0.02\uni{m}$\\[0.3em]
-    Variable: cantidad de columnas $k$
-  }
 \end{frame}
 
 \begin{frame}{Bloque central: animación}
@@ -302,13 +281,6 @@
   \figuraparam{t90_multi_barrier.png}{\paramsdoce}
 \end{frame}
 
-\begin{frame}{Bloque central con filas: configuraciones}
-  \figuraparam[0.7\textwidth]{pres_configs_multi_barrier_rows.png}{%
-    Discos de $R = 0.02\uni{m}$\\[0.3em]
-    Variables: columnas $k$,\\ filas por lado $n$
-  }
-\end{frame}
-
 \begin{frame}{Bloque central con filas: $\langle t_{90} \rangle$ vs filas}
   \figuraparam{t90_multi_barrier_rows_k.png}{\paramsdoce}
 \end{frame}
@@ -316,12 +288,10 @@
 \begin{frame}{Configuración elegida}
   \figuraparam[0.72\textwidth]{pres_config_elegida.png}{%
     $k = 17$, $n = 1$\\[0.3em]
-    $K = 245$ discos de $R = 0.02\uni{m}$
+    $K = 245$ discos de $R = 0.02\uni{m}$\\[0.6em]
+    $\langle t_{90} \rangle = 13.6 \pm 1.8\uni{s}$
   }
 \end{frame}
-
-% TODO 1.3: DCM(t) de una realización por configuración (mesa vacía, corredor, disco,
-% bloque), curva E(c) con su mínimo, D vs <t_90>.
 
 % ==========================================================================
 \section{Conclusiones}
@@ -332,17 +302,15 @@
   \begin{itemize}
     \item El tiempo de ejecución crece como $\sim N^3$ en el rango estudiado: de
       $2\ten{-3}\uni{s}$ ($N = 25$) a $16\uni{s}$ ($N = 400$) para $30\uni{s}$ simulados.
-    \item Angostar la mesa a un corredor alineado con los arcos empeora, y más cuanto más
-      angosto: de $21.7 \pm 2.2\uni{s}$ (vacía) a $47 \pm 6\uni{s}$ con $h = 0.20\uni{m}$.
-    \item Un disco central mejora monótonamente con el radio: $16.0 \pm 2.0\uni{s}$ con
-      $R = 0.33\uni{m}$, el máximo posible.
+    \item Un disco central mejora monótonamente con el radio: de $22.2 \pm 2.1\uni{s}$
+      (vacía) a $16.1 \pm 2.0\uni{s}$ con $R = 0.33\uni{m}$, el máximo posible.
     \item Partir la mesa con una columna no cambia nada ($21 \pm 3\uni{s}$); ensanchar el
-      bloque central sí: meseta de $14.3$ a $14.8\uni{s}$ para $k = 15$ a $19$. Más ancho
+      bloque central sí: meseta de $14.5$ a $15.4\uni{s}$ para $k = 13$ a $19$. Más ancho
       ($k \ge 21$) vuelve a subir.
-    \item Una o dos filas cortas en los compartimentos bajan otro $0.5\uni{s}$ (de $14.5$ a
+    \item Una o dos filas cortas en los compartimentos bajan otro $1.0\uni{s}$ (de $15.0$ a
       $14.0\uni{s}$ promediando $k = 15$ a $17$); con tres o más empeora.
-    \item Elegida: $k = 17$, $n = 1$: $\langle t_{90}\rangle = 13.7 \pm 1.7\uni{s}$, un
-      37\,\% menos que la mesa vacía.
+    \item Elegida: $k = 17$, $n = 1$: $\langle t_{90}\rangle = 13.6 \pm 1.8\uni{s}$, un
+      38\,\% menos que la mesa vacía.
   \end{itemize}
 \end{frame}
 

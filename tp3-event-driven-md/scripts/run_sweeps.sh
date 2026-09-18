@@ -2,8 +2,13 @@
 # Punto 1.2: <t_90> por configuración de obstáculos. Corre cada config de output/sweeps/*/*/config.txt
 # (generadas por analysis/gen_configs.py) más la mesa vacía, con N = 100, t_f = 100 s (el t_max de
 # la competencia) y --stop-at-t90, una seed distinta por realización. Escribe
-# output/sweeps/<barrido>/<punto>/s<seed>/{goals.csv,run.json,...} y output/sweeps/empty/s<seed>/.
-# Sin dynamic.txt (para el DCM del punto 1.3 se corre aparte con --every 1).
+# output/sweeps/<barrido>/<punto>/s<seed>/{goals.csv,run.json,dynamic.txt,...} y
+# output/sweeps/empty/s<seed>/.
+#
+# dynamic.txt se guarda cada EVERY = 25 eventos (~2-10 MB por corrida): alcanza para el DCM del
+# punto 1.3 (analysis/dcm.py usa los instantes de los bloques, ~10-20 por seed en la ventana de
+# ajuste) y para cualquier observable nuevo sin volver a correr. Para animar hace falta --every 1
+# (corridas aparte en output/anim/).
 #
 # Las corridas van en paralelo (acá no se mide tiempo de ejecución).
 #
@@ -17,6 +22,7 @@ SWEEPS="$ROOT/output/sweeps"
 SEEDS="${1:-20}"
 JOBS="${2:-8}"
 TF=100
+EVERY=25
 
 if [[ ! -f "$JAR" ]]; then
     echo "No existe $JAR: compilar con 'mvn package' desde la raíz del repo" >&2
@@ -29,7 +35,7 @@ fi
 
 run_one() {
     local out="$1" seed="$2" cfg="$3"
-    local args=(--N 100 --tf "$TF" --seed "$seed" --stop-at-t90 --out "$out")
+    local args=(--N 100 --tf "$TF" --seed "$seed" --stop-at-t90 --every "$EVERY" --out "$out")
     [[ "$cfg" != "-" ]] && args+=(--obstacles "$cfg")
     mkdir -p "$(dirname "$out")"
     if ! java -jar "$JAR" "${args[@]}" >"$out.log" 2>&1; then
@@ -39,7 +45,7 @@ run_one() {
     rm -f "$out.log"
 }
 export -f run_one
-export JAR TF
+export JAR TF EVERY
 
 {
     for seed in $(seq 1 "$SEEDS"); do

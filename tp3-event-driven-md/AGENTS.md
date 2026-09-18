@@ -89,13 +89,16 @@ Todo está en `../docs/Teorica_3.md`; lo esencial:
     de eventos (punto 1.1), energía cinética inicial y final (validación: debe ser constante).
   - `static.txt`: N, L, W, d, r, m, obstáculos. `dynamic.txt`: bloques `t` + `x y vx vy estado` por
     partícula (formato de cátedra `../AGENTS.md` §2.2 con **estado/color por bloque**, porque
-    cambia en el tiempo). **Solo con `--every`**: los barridos de 1.1 y 1.2 no lo escriben.
-    Tamaño: 30 s con N = 100 y `--every 1` ≈ 10 MB (2.5·10⁴ bloques).
+    cambia en el tiempo). **Solo con `--every`**. Tamaño: ~4 KB por bloque con N = 100.
+  - **Regla (2026-09-18)**: los barridos del 1.2 guardan `dynamic.txt` con `--every 25`
+    (~8 MB por corrida) para poder calcular cualquier observable nuevo (DCM incluido) sin
+    volver a correr. `--every 1` solo para las corridas de animación. Con `--every 0` (como se
+    corrió al principio) hubo que re-correr para el 1.3: no repetir.
 - **Seeds**: una distinta por realización (regla del repo).
 - **Estimación de costo**: con N = 100, v₀ = 1 m/s, r = 0.0175 m, fracción de área ≈ 0.10, el
   camino libre medio es ~0.08 m → ~10 choques/s por partícula → ~10³ eventos/s de simulación.
-  30 s ≈ 3·10⁴ eventos; 100 s ≈ 10⁵. Guardar cada evento en `dynamic.txt` sería ~60 MB por
-  corrida: usar `--every k` con k > 1 salvo para la corrida del DCM/animación.
+  30 s ≈ 3·10⁴ eventos; 100 s ≈ 10⁵. Guardar cada evento en `dynamic.txt` es ~400 MB por
+  corrida de 30 s: `--every 1` solo para animar.
 - **Punto 1.1**: elegir un rango de N (ej. 25 … 400) acotado por la densidad: la fracción de
   área `N π r² / (L W)` debe quedar bien por debajo de ~0.5 para que la inserción aleatoria
   converja.
@@ -171,60 +174,57 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   **20 realizaciones por configuración son baratas**; el punto 1.1 con N ≥ 400 es lo único lento.
 
 
-## 5. Estado del post-proceso (2026-09-16)
+## 5. Estado del post-proceso (2026-09-18)
 
 - **1.1 hecho**: `scripts/run_time_vs_n.sh 20` → `analysis/plot_time_vs_n.py` →
   `time_vs_n.png` (log-log), `time_vs_n_linear.png`, `events_vs_n.png`. Tiempo ~N³ (eventos ~N²
   × O(N) por evento), se empina para N ≥ 300 (fracción de área ≥ 0.35). Barras de error ≤ 9 %,
   menores que el símbolo.
-- **Animaciones**: `analysis/animate.py <run_dir>` (requiere `--every 1`; muestrea a fps fijo
-  avanzando el último bloque en MRU). Demos en `output/anim/{empty,obst}/anim.mp4`.
-- **1.2 barridos corridos** (`tf = 100`, `--stop-at-t90`, 8 en paralelo):
-  `analysis/gen_configs.py` (docstring: descripción de cada familia) →
-  `output/sweeps/<barrido>/<punto>/config.txt` + `index.json`; `scripts/run_sweeps.sh 20 8`;
-  `analysis/plot_t90.py [--grid-k 14,15,16,17] [--fg-config multi_barrier/k16]` →
-  `t90_<barrido>.png`, `fg_vs_t.png`, `analysis/out/t90_<barrido>.csv` (columna `runs` =
-  realizaciones; salta los barridos sin corridas locales). Barra de error = desvío entre seeds
-  de `t_90` (ddof=1; acá el observable es un escalar por realización, no una evolución
-  temporal).
-- **Realizaciones (2026-09-16)**: las familias de la presentación (`empty`, `corridor`,
-  `single_R`, `multi_barrier`, `multi_barrier_rows_k` k = 14..17 n ≤ 4) tienen **100 seeds**
-  (1..100); el resto 20. Motivo: con 20 seeds (SE ≈ 0.4 s) el fondo de `multi_barrier` no se
-  resolvía y los csv que había en git para `multi_barrier*` (k = 16 → 13.7) **no se reproducen**
-  con el jar y seeds 1..20 (dan 14.8; `barrier` R0.02 sí reproduce exactamente `multi_barrier`
-  k = 1 = 21.06, así que aquellas corridas usaron otras seeds o otro motor). Mesa vacía (100
-  seeds): **21.7 ± 2.2 s**.
+- **Animaciones**: `analysis/animate.py <run_dir> [--fps 60]` (requiere `--every 1`; muestrea
+  a fps fijo avanzando el último bloque en MRU). Videos hechos (60 fps, tiempo real, 30 s, seed
+  1, N = 100) en `output/anim/{empty,corr020,corr038,mb_k01,mb_k16,elegida}/anim.mp4`; el
+  `dynamic.txt` de cada una (~100–400 MB) se conserva para regenerar fotogramas.
+- **1.2 barridos** (`tf = 100`, `--stop-at-t90`, `--every 25`, **20 seeds** 1..20, 8 en
+  paralelo; `scripts/run_sweeps.sh` ya tiene esos defaults): `analysis/gen_configs.py` genera
+  **solo las 4 familias de la presentación** (`corridor` 4 puntos, `single_R` 9,
+  `multi_barrier` k = 1..22, `multi_barrier_rows_k` k = 14..17 × n = 1..4) →
+  `output/sweeps/<barrido>/<punto>/config.txt` + `index.json`; `analysis/plot_t90.py
+  --grid-k 14,15,16,17` → `t90_<barrido>.png`, `analysis/out/t90_<barrido>.csv`. Barra de
+  error = desvío entre seeds de `t_90` (ddof=1; el observable es un escalar por realización).
+  Decisión 2026-09-18: se bajó de 100 a 20 realizaciones (el enunciado pide ≥ 5; 100 era
+  desproporcionado) y se borraron las familias exploratorias (single_x, mirror, grid_K,
+  funnel*, bumps, dome*, barrier, corridor_smooth, c_gate) de `output/`, `gen_configs.py` y
+  `analysis/{out,figures}`. Sus resultados quedan solo en la lista de hipótesis de abajo.
+  El motor es determinista por seed: los `t_90` de las seeds 1..20 son los mismos que antes.
+  Total `output/`: ~9 GB (sweeps 7.7 GB, anim 1.5 GB).
+- Mesa vacía (20 seeds): **22.2 ± 2.1 s**.
 - **Bloque central (`multi_barrier`)**: bloque macizo centrado en `x = L/2` de k columnas
   verticales pegadas (separación entre centros `2R + 10⁻⁴`) de 13 discos R = 0.02 m cada una
-  (gap entre superficies < 2r: no pasan partículas). Curva vs k (100 seeds): 21.1 (k = 1,
-  ≈ vacía) baja hasta una **meseta k = 15..19 (14.3–14.8 s, diferencias < SE ≈ 0.2 s)**, k = 16
-  → 14.4 ± 1.8 (K = 208, ancho 0.64 m, compartimentos de ~0.28 m), y sube (k = 21: 17.7; k = 22:
-  22.7; k = 23 no deja ubicar las 100 partículas).
-- **Configuración elegida (2026-09-16): `multi_barrier_rows_k` k = 17, n = 1 → `<t_90>` =
-  13.7 ± 1.7 s** (K = 245, 100 seeds): bloque de 17 columnas más una fila de discos R = 0.02
-  pegada a cada pared larga en cada compartimento. Config =
+  (gap entre superficies < 2r: no pasan partículas). Curva vs k (20 seeds): 21.1 (k = 1,
+  ≈ vacía) baja hasta una **meseta k = 13..19 (14.5–15.4 s, diferencias < SE ≈ 0.4 s)** y sube
+  (k = 21: 17.7; k = 22: 23.4; k = 23 no deja ubicar las 100 partículas).
+- **Configuración elegida: `multi_barrier_rows_k` k = 17, n = 1 → `<t_90>` = 13.6 ± 1.8 s**
+  (K = 245, 20 seeds): bloque de 17 columnas más una fila de discos R = 0.02 pegada a cada
+  pared larga en cada compartimento. Config =
   `output/sweeps/multi_barrier_rows_k/k17_n01/config.txt` (regenerable con `gen_configs.py`);
   **falta copiarla a `Config.txt` de entrega**.
-- Ranking por familia (mejor punto de cada una, `<t_90>` en s; 100 seeds donde se indica):
-  - `multi_barrier_rows_k` (100 seeds, k = 14..17): **1 o 2 filas bajan ~0.5 s** respecto del
-    bloque solo, consistente en los 4 k (n = 0 → n = 1: 14.9→14.2, 14.7→13.9, 14.4→14.2,
-    14.6→13.7); pooling k = 15..17: bloque 14.54 ± 1.82 (300 corridas) vs n ≤ 2 13.98 ± 1.70
-    (600), diferencia 0.56 s con SE 0.13 (4 SE). Entre k17_n01 (13.7), k15_n01/n02 (13.9/13.8)
-    no hay diferencia resoluble. n = 3 empeora (15.4–16.5), n = 4 supera la vacía. La figura
-    incluye n = 0 (bloque solo) por k.
-  - `single_R` (100 seeds, disco centrado): monótono decreciente con R, 22.0 (R = 0.025) →
-    16.0 ± 2.0 (0.33).
-  - `single_x_R0.30`: 16.3 en x = 0.55 ≈ centrado; mucho peor cerca del arco (49 en x = 0.30).
-  - `dome_wall` (abombado + pared central): 17.9; `bumps`: 18.4; `dome`: 18.7.
-  - `single_x` (R = 0.10): peor cerca del arco (29.3 en x = 0.15), ≈ vacía desde x ≥ 0.30.
-  - `mirror_x` / `mirror_R` (dos discos frente a los arcos): siempre peor que vacía; R = 0.25 →
-    79.8, R = 0.30 ninguna realización alcanza 0.9.
-  - `grid_K` (área fija repartida en K discos): empeora con K (20.8 → 26.1).
-  - `funnel*` (embudos hacia los arcos): 24–36, todas peores; `funnel_open_dy` empeora al
-    acercar las hileras al eje.
-  - `corridor` (100 seeds), `corridor_smooth`, `c_gate` (mesa rellena salvo un corredor
-    central): 22.7 (h = 0.38) → 47 ± 6 (h = 0.20); empeora al angostar el corredor.
-- **Hipótesis probadas y descartadas** (20 seeds cada una):
+- Ranking por familia (mejor punto de cada una, `<t_90>` en s, 20 seeds salvo indicación):
+  - `multi_barrier_rows_k` (k = 14..17): **1 o 2 filas bajan ~1 s** respecto del bloque solo;
+    pooling k = 15..17: bloque 15.0 ± 1.6 (60 corridas) vs n ≤ 2 14.0 ± 1.7 (120), diferencia
+    1.0 s con SE 0.26. Entre k17_n01 (13.6), k15_n01/n02 (13.7/13.7) no hay diferencia
+    resoluble. n = 3 empeora (15.5–16.8), n = 4 supera la vacía. La figura incluye n = 0
+    (bloque solo) por k.
+  - `single_R` (disco centrado): monótono decreciente con R, 21.6 (R = 0.025) → 16.1 ± 2.0
+    (0.33).
+  - `corridor` (mesa rellena salvo un corredor central): 22.5 (h = 0.38) → 46 ± 5 (h = 0.20);
+    empeora al angostar el corredor.
+  - Familias exploradas y descartadas (borradas; valores con 20 seeds de entonces):
+    `single_x_R0.30` 16.3 en x = 0.55 ≈ centrado, 49 en x = 0.30; `dome_wall` 17.9; `bumps`
+    18.4; `dome` 18.7; `single_x` (R = 0.10) 29.3 en x = 0.15, ≈ vacía desde x ≥ 0.30;
+    `mirror_x`/`mirror_R` siempre peor que vacía (R = 0.25 → 79.8; R = 0.30 ninguna alcanza
+    0.9); `grid_K` empeora con K (20.8 → 26.1); `funnel*` 24–36; `corridor_smooth`/`c_gate`
+    como `corridor` o peor.
+- **Hipótesis probadas y descartadas**:
   - "t_90 ∝ área libre" → `corridor` es peor cuanto menos área libre. Falso.
   - "lo que importa es partir la mesa" → `barrier` (una columna, k = 1): 20.3–21.1 ≈ vacía.
     La partición sola no hace nada.
@@ -233,19 +233,34 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
     centro) sin dejar bolsillos, y hay un óptimo: pasado k ≈ 19 la densidad en cada mitad sube
     tanto que `t_90` vuelve a crecer. Hipótesis mecanística **no probada todavía** (no decirla
     como conclusión): `t_90 ~ ℓ²/D` con ℓ la distancia a recorrer hasta el arco y D el
-    coeficiente de difusión, que baja con la densidad; el 1.3 (D por configuración) es la
-    prueba natural: corredor → D chico y ℓ = L; bloque → D chico pero ℓ ≈ 0.28 m.
+    coeficiente de difusión, que baja con la densidad.
     `analysis/plot_configs.py [--labels ... --cols n]` dibuja configs (con `--labels` sin
     rutas, para diapositivas: `pres_configs_*.png`); `animate.py --snapshot t` guarda un PNG.
-- Ninguna realización dejó de alcanzar 0.9 antes de 100 s salvo `mirror_R` R = 0.30 y
-  `multi_barrier_rows_k` con n = 5 (k ≥ 13) o n = 4 (k = 17, 79/100) (no se pueden ubicar las
-  100 partículas; `plot_t90` las cuenta en `no_generado`).
-- **Presentación** (2026-09-16): `../presentaciones/tp3/tp3.tex` (compila, 26 diapositivas),
-  hilo del 1.2: corredor → disco central → bloque de columnas → bloque + filas → elegida.
-  Texto al costado de las figuras: solo parámetros que no estén ya en Simulaciones (nada de
-  explicaciones ni conclusiones: eso se dice en vivo). Fotogramas en
-  `../presentaciones/tp3/figuras/` (de `output/anim/{empty,corr020,corr038,mb_k01,mb_k16}`,
-  corridas con `--every 1`, seed 1, `tf = 30`). Links de YouTube = `PENDIENTE`.
-- **Pendiente**: copiar `Config.txt` (k17_n01); 1.3 (DCM con `--every 1` por configuración:
-  mide D vs t_90); videos (`animate.py`) de empty / corr020 / corr038 / mb_k01 / mb_k16 (+ la
-  elegida, falta correrla con `--every 1`) y subirlos; guion con tiempos (13 min).
+- Ninguna realización dejó de alcanzar 0.9 antes de 100 s; `multi_barrier_rows_k` k17_n04
+  (15/20) y k16_n04 (1/20) no pudieron ubicar las 100 partículas (`plot_t90` las cuenta en
+  `no_generado`).
+- **Presentación**: `../presentaciones/tp3/tp3.tex` (compila, 23 páginas), hilo del 1.2:
+  corredor → disco central → bloque de columnas → bloque + filas → elegida. Texto al costado
+  de las figuras: solo parámetros que no estén ya en Simulaciones (nada de explicaciones ni
+  conclusiones: eso se dice en vivo). Fotogramas en `../presentaciones/tp3/figuras/`
+  (`animate.py --snapshot` sobre `output/anim/*`). Links de YouTube = `PENDIENTE`.
+- **1.3 calculado pero NO revisado ni en git (2026-09-18)**: `analysis/dcm.py`, `dcm_*.png`,
+  `D_vs_t90.png`, `out/dcm_D.csv` y `out/dcm/` están sin commitear hasta que el grupo lo
+  analice; la presentación de momento no tiene diapositivas del 1.3 (ni observable de
+  difusión). Lo que hay: `analysis/dcm.py [--t0 0.3 --t1 0.8]` lee
+  los `dynamic.txt` (`--every 25`) de **las mismas corridas del 1.2** (52 configuraciones × 20
+  seeds) y evalúa el DCM en los instantes de los bloques (sin interpolar; ~10–20 puntos por seed
+  en la ventana). Curvas cacheadas en `analysis/out/dcm/*.csv` (t ≤ 3 s; sin cache tarda ~4
+  min). DCM(t) tiene tramo balístico hasta ~0.3 s, régimen lineal y saturación por
+  confinamiento: ventana de ajuste común [0.3, 0.8] s, marcada en `dcm_vs_t.png`. Ajuste
+  `DCM = c·t` por mínimo de E(c) (`dcm_E_c.png`), D = c/4. Resultados (`analysis/out/dcm_D.csv`,
+  D en m²/s, 20 seeds): vacía 0.025 ± 0.002; corredor 0.0119 (h = 0.38) → 0.0050 (h = 0.20);
+  disco 0.024 (R = 0.025) → 0.0093 (0.33); bloque 0.020 (k = 1) → 0.0074 (k = 16) → 0.0021
+  (k = 22); elegida k17_n01 0.0053 ± 0.0005. **No hay correlación global D vs <t_90>**
+  (Pearson r = 0.13, Spearman 0.26 sobre 52 configs): todo obstáculo baja D, pero el corredor
+  sube t_90 y el disco/bloque lo bajan (`D_vs_t90.png`, un símbolo por familia). Consistente
+  con la hipótesis ℓ²/D de arriba, que sigue sin probarse directamente: no afirmarla.
+- **Pendiente**: revisar y sumar el 1.3 (observable de difusión en Simulaciones + 3
+  diapositivas + conclusión); copiar `Config.txt` (k17_n01); subir los videos y reemplazar los
+  `PENDIENTE`; diapositiva de animación de la elegida (hoy solo config estática); guion con
+  tiempos (13 min).
