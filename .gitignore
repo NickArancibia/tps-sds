@@ -548,3 +548,6 @@ pyrightconfig.json
 
 # Output de simulaciones (no se entrega)
 output/
+
+# Cache de curvas DCM (regenerable desde output/sweeps/*/dynamic.txt con analysis/dcm.py)
+tp3-event-driven-md/analysis/out/dcm/
