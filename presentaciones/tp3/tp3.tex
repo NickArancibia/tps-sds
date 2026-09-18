@@ -5,7 +5,7 @@
 %% Figuras: ../../tp3-event-driven-md/analysis/figures/  y  figuras/ (locales: fotogramas)
 %% Animaciones: fotograma + link (el PDF de entrega no lleva video embebido).
 %%
-%% Duracion: 13 min. Estado: 1.1 y 1.2 armados; 1.3 (DCM / D) pendiente (marcado TODO).
+%% Duracion: 13 min. Estado: 1.1, 1.2 y 1.3 (DCM / D) armados.
 %% Hilo del 1.2 (una familia por bloque, cada una motiva la siguiente):
 %%   corredor -> disco central -> bloque de columnas -> bloque + filas -> config elegida.
 
@@ -30,8 +30,6 @@
   \centering
   \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{#1}%
 }
-% Parametros de simulacion del punto 1.2 (al costado de cada figura).
-\newcommand{\paramsdoce}{20 realizaciones}
 
 \title{Billar-metegol: dinámica molecular regida por eventos}
 \subtitle{Simulación de Sistemas - ITBA}
@@ -58,12 +56,10 @@
     \begin{column}{0.55\textwidth}
       \begin{itemize}
         \item Mesa rectangular con un arco en cada extremo y obstáculos fijos.
-        \item Pelotas que se mueven libremente y chocan elásticamente entre sí,
-          con los obstáculos y con las paredes.
-        \item Una pelota ``convierte'' la primera vez que toca un arco; después
+        \item Partículas con masa que se mueven libremente y chocan elásticamente entre
+          sí, con los obstáculos y con las paredes.
+        \item Una partícula marca gol la primera vez que toca un arco; después
           sigue en juego.
-        \item Pregunta: ¿qué disposición de obstáculos hace que el 90\,\% de las
-          pelotas convierta lo antes posible?
       \end{itemize}
     \end{column}
     \begin{column}{0.43\textwidth}
@@ -197,9 +193,9 @@
       \end{itemize}
       \textbf{Variables}
       \begin{itemize}
-        \item Punto 1.1 (mesa vacía): $N = 25$ a $400$
-        \item Punto 1.2 ($N = 100$): configuración de obstáculos $\{(x_k, y_k, R_k)\}$,
-          una familia por vez con un solo parámetro libre
+        \item Mesa vacía: $N = 25$ a $400$
+        \item Minimización de $t_{90}$ ($N = 100$): configuración de obstáculos
+          $\{(x_k, y_k, R_k)\}$
       \end{itemize}
     \end{column}
   \end{columns}
@@ -211,15 +207,10 @@
     \item \textbf{Goles}: $N_g(t)$ acumulados; $F_g(t) = N_g(t)/N$.
     \item \textbf{Tiempo al 90\,\%}: $t_{90} = \min\{t : F_g(t) \ge 0.9\}$;
       $\langle t_{90} \rangle \pm$ desvío estándar entre realizaciones.
-  \end{itemize}
-  \vspace{0.4em}
-  \textbf{Parámetros de simulación}
-  \begin{itemize}
-    \item 1.1: $t_f = 30\uni{s}$, 20 realizaciones por $N$, una máquina virtual de Java
-      caliente.
-    \item 1.2: $N = 100$, cada corrida hasta su $t_{90}$, 20 realizaciones por
-      configuración; estado guardado cada 25 eventos.
-    \item Una semilla distinta por realización.
+    \item \textbf{Difusión}: $\mathrm{DCM}(t) = \frac{1}{N}\sum_i |\vect{r}_i(t) - \vect{r}_i(0)|^2$;
+      ajuste $\mathrm{DCM} = c\,t$ en $[0, t_{\mathrm{fin}}]$ minimizando
+      $E(c) = \sum_j (\mathrm{DCM}_j - c\,t_j)^2$; $D = c/4$.
+      $\langle D \rangle \pm$ desvío estándar entre realizaciones.
   \end{itemize}
 \end{frame}
 
@@ -255,15 +246,11 @@
 \end{frame}
 
 \begin{frame}{Tiempo de ejecución vs $N$}
-  \figuraparam{time_vs_n.png}{%
-    Mesa vacía\\[0.3em]
-    $t_f = 30\uni{s}$\\[0.3em]
-    20 realizaciones
-  }
+  \figura{time_vs_n.png}
 \end{frame}
 
 \begin{frame}{Disco central: $\langle t_{90} \rangle$ vs radio}
-  \figuraparam{t90_single_R.png}{\paramsdoce}
+  \figuraparam{t90_single_R.png}{Mejor configuración:\\[0.3em] $R = 0.33\uni{m}$}
 \end{frame}
 
 \begin{frame}{Bloque central: animación}
@@ -278,11 +265,15 @@
 \end{frame}
 
 \begin{frame}{Bloque central: $\langle t_{90} \rangle$ vs cantidad de columnas}
-  \figuraparam{t90_multi_barrier.png}{\paramsdoce}
+  \figuraparam{t90_multi_barrier.png}{Mejor configuración:\\[0.3em] $k = 18$}
 \end{frame}
 
 \begin{frame}{Bloque central con filas: $\langle t_{90} \rangle$ vs filas}
-  \figuraparam{t90_multi_barrier_rows_k.png}{\paramsdoce}
+  \figuraparam{t90_multi_barrier_rows_k.png}{Mejor configuración:\\[0.3em] $k = 17$, $n = 1$}
+\end{frame}
+
+\begin{frame}{Mejor configuración de cada familia}
+  \figura{t90_best.png}
 \end{frame}
 
 \begin{frame}{Configuración elegida}
@@ -291,6 +282,17 @@
     $K = 245$ discos de $R = 0.02\uni{m}$\\[0.6em]
     $\langle t_{90} \rangle = 13.6 \pm 1.8\uni{s}$
   }
+\end{frame}
+
+\begin{frame}{Difusión: DCM vs tiempo}
+  \figuraparam{dcm_vs_t.png}{%
+    Una realización\\[0.3em]
+    Mejor configuración de cada familia
+  }
+\end{frame}
+
+\begin{frame}{Coeficiente de difusión vs $\langle t_{90} \rangle$}
+  \figura{D_vs_t90.png}
 \end{frame}
 
 % ==========================================================================
@@ -311,6 +313,9 @@
       $14.0\uni{s}$ promediando $k = 15$ a $17$); con tres o más empeora.
     \item Elegida: $k = 17$, $n = 1$: $\langle t_{90}\rangle = 13.6 \pm 1.8\uni{s}$, un
       38\,\% menos que la mesa vacía.
+    \item Todo obstáculo baja $D$ de $0.021$ a $0.003$--$0.005\uni{m^2/s}$, pero $D$ no ordena
+      a $\langle t_{90}\rangle$: el disco difunde más ($0.0053$) que el bloque con filas
+      ($0.0041\uni{m^2/s}$) y tarda más ($16.1$ vs $13.6\uni{s}$).
   \end{itemize}
 \end{frame}
 

@@ -17,6 +17,8 @@ Salidas:
 - `analysis/figures/t90_<barrido>.png`: <t_90> vs variable; mesa vacía como recta horizontal.
   Su <t_90> ± desvío y el punto elegido para `fg_vs_t.png` se imprimen por stdout: van al costado
   de la figura (presentación) o en el caption (informe), nunca en la leyenda.
+- `analysis/figures/t90_best.png`: barras con el mejor punto (menor <t_90>) de cada familia más
+  la mesa vacía; qué punto es cada barra se imprime por stdout (va al costado de la figura).
 
 Uso:  python3 plot_t90.py [--grid-k 14,15,16,17] [--fg-config multi_barrier/k16]
       (--grid-k: qué curvas k dibujar en los barridos en grilla; el csv lleva todas.
@@ -39,6 +41,13 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 SWEEPS = OUTPUT / "sweeps"
 EMPTY_COLOR, DATA_COLOR = "tab:red", "tab:blue"
+
+
+# Nombre corto de cada familia (eje de t90_best.png) y su color, el mismo que usa dcm.py.
+FAMILY_NAMES = {"single_R": "disco central", "multi_barrier": "bloque central",
+                "multi_barrier_rows_k": "bloque con filas"}
+FAMILY_COLORS = {"mesa vacía": "tab:red", "disco central": "tab:blue",
+                 "bloque central": "tab:green", "bloque con filas": "tab:orange"}
 
 
 def t90_stats(run_dir):
@@ -107,6 +116,8 @@ def main() -> None:
           f"({empty_n} realizaciones, {empty_missing} no alcanzaron 0.9)")
 
     best = (empty_mean, "mesa vacía", SWEEPS / "empty")
+    # Mejor punto de cada familia: (nombre para el eje, <t_90>, desvío, punto) para t90_best.png.
+    best_by_family = [("mesa vacía", empty_mean, empty_std, "")]
     for name, points in index.items():
         grid = isinstance(points[0]["value"], list)
         if not any(next((SWEEPS / name / p["label"]).glob("s*"), None) for p in points):
@@ -124,6 +135,11 @@ def main() -> None:
             if n and mean < best[0]:
                 best = (mean, f"{name}/{p['label']}", run_dir)
         write_csv(name, rows)
+        top = min((rp for rp in zip(rows, points) if rp[0]["runs"]),
+                  key=lambda rp: rp[0]["t90_mean_s"], default=None)
+        if top:
+            best_by_family.append((FAMILY_NAMES.get(name, name), top[0]["t90_mean_s"],
+                                   top[0]["t90_std_s"], top[1]["label"]))
 
         fig, ax = plt.subplots()
         empty_line = ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1,
@@ -155,10 +171,23 @@ def main() -> None:
         save_figure(fig, f"t90_{name}.png")
 
     print(f"  mejor: {best[1]} con <t_90> = {best[0]:.2f} s")
+
+    # --- barras: mejor configuración de cada familia --------------------------------------
+    fig, ax = plt.subplots()
+    xs = np.arange(len(best_by_family))
+    ax.bar(xs, [b[1] for b in best_by_family], yerr=[b[2] for b in best_by_family],
+           color=[FAMILY_COLORS.get(b[0], DATA_COLOR) for b in best_by_family],
+           capsize=4, width=0.6)
+    ax.set_xticks(xs, [b[0].replace(" ", "\n", 1) if len(b[0]) > 12 else b[0]
+                       for b in best_by_family])
+    ax.set_ylabel("Tiempo al 90 % de goles (s)")
+    save_figure(fig, "t90_best.png")
+    print("  t90_best.png (mejor punto por familia; va al costado de la figura):")
+    for name, mean, std, label in best_by_family:
+        print(f"    {name:18s} {label:8s} <t_90> = {mean:5.1f} ± {std:3.1f} s")
+
     fg_dir = SWEEPS / args.fg_config if args.fg_config else best[2]
-    print(f"  fg_vs_t.png: mesa vacía vs {fg_dir.relative_to(SWEEPS)} (seed 1); "
-          f"fg_vs_t_empty.png: solo mesa vacía")
-    plot_fg([("mesa vacía", SWEEPS / "empty" / "s1")], "fg_vs_t_empty.png")
+    print(f"  fg_vs_t.png: mesa vacía vs {fg_dir.relative_to(SWEEPS)} (seed 1)")
     plot_fg([("mesa vacía", SWEEPS / "empty" / "s1"), ("con obstáculos", fg_dir / "s1")],
             "fg_vs_t.png")
 
