@@ -207,7 +207,8 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   (K = 245, 20 seeds): bloque de 17 columnas más una fila de discos R = 0.02 pegada a cada
   pared larga en cada compartimento. Config =
   `output/sweeps/multi_barrier_rows_k/k17_n01/config.txt` (regenerable con `gen_configs.py`);
-  **falta copiarla a `Config.txt` de entrega**.
+  copiada a **`tp3-event-driven-md/Config.txt`** (entrega, 245 líneas; 2026-09-25, verificada:
+  la seed 1 con `--obstacles Config.txt` da el mismo t_90 = 16.726222 s que el barrido).
 - Ranking por familia (mejor punto de cada una, `<t_90>` en s, 20 seeds salvo indicación):
   - `multi_barrier_rows_k` (k = 14..17): **1 o 2 filas bajan ~1 s** respecto del bloque solo;
     pooling k = 15..17: bloque 15.0 ± 1.6 (60 corridas) vs n ≤ 2 14.0 ± 1.7 (120), diferencia
@@ -261,7 +262,7 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   sube t_90 y el disco/bloque lo bajan (`D_vs_t90.png`, un símbolo por familia). Consistente
   con la hipótesis ℓ²/D de arriba, que sigue sin probarse directamente: no afirmarla.
 - **Pendiente**: revisar y sumar el 1.3 (observable de difusión en Simulaciones + 3
-  diapositivas + conclusión); copiar `Config.txt` (k17_n01); subir los videos y reemplazar los
+  diapositivas + conclusión); subir los videos y reemplazar los
   `PENDIENTE`; diapositiva de animación de la elegida (hoy solo config estática); guion con
   tiempos (13 min).
 
@@ -285,11 +286,59 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   JVM por corrida) y dan otros tiempos. Para rehacer figuras sin pisar el csv:
   `plot_time_vs_n.py --from-csv`.
 
-- `analysis/plot_goals.py <run_dir> --out <png>`: N_g(t) de una corrida sin `--stop-at-t90`,
-  con t_90 marcado. `goals_disco.png` (sale de `output/anim/disco_R033`, seed 1, 30 s;
-  t_90 = 16.9 s, igual que la seed 1 del barrido) está en la presentación como "Disco central:
-  goles vs tiempo", antes de "<t_90> vs radio".
+- `analysis/plot_goals.py <run_dir>... --labels ... --out <png>`: F_g(t) = N_g/N de una o varias
+  corridas sin `--stop-at-t90` (una curva por corrida, color de su familia), con F_g = 0.9 y el
+  t_90 de cada una marcados sobre los ejes. En la presentación: `fg_empty_disco.png` (mesa vacía
+  y disco R = 0.33 m, `output/anim/{empty,disco_R033}`, seed 1, 30 s; t_90 = 22.9 y 16.9 s,
+  iguales a la seed 1 de sus barridos), antes de "<t_90> vs radio". Historia: primero era N_g(t)
+  (`goals_disco.png`), después F_g en dos diapositivas separadas (`fg_empty.png`,
+  `fg_disco.png`); el 2026-09-25 se unieron en una.
 - `analysis/dcm_rows_best_k.py`: igual que `D_vs_t90_multi_barrier.png` pero para el bloque con
   filas, un punto por n con su mejor k (n = 0 → k18, 1 → k17, 2 → k15, 3 → k14, 4 → k14; t_fin a
   ojo en `BEST`) → `D_vs_t90_rows_best_k.png`, `out/dcm_D_rows_best_k.csv`. **No está en la
   presentación** (solo para mirar).
+
+## 7. Cambios del 2026-09-25 (segunda devolución interna)
+
+- Diapositivas: Sistema (intro) sin la frase de goles ni "con obstáculos y paredes"; Modelo:
+  "Movimiento de partículas" (MRU vectorial, sin texto de definiciones) + "Choques elásticos" con
+  la notación de la Teórica 3 pero **con primas** (no superíndices a/d): partícula–partícula con
+  J, J_x, J_y y las cuatro componentes v'; obstáculo con v' = R(−α) S(c_n, c_t) R(α) v (c = 1,
+  sin desarrollar matrices); pared "se invierte la componente normal". Sin fórmulas de tiempo al
+  próximo choque ni nota de definiciones (Δr, σ, masa): el grupo las pidió fuera. En el
+  diagrama del motor "Predecir choques de i y j"; Sistema (Simulaciones): esquema a la izquierda
+  y todo el texto a la derecha (renglones recortados para que entre); "Observables" (N_g, F_g,
+  t_90, tiempo de ejecución, con esquema azul → arco → roja, sin texto de definición de gol) y
+  "Observables: difusión" (DCM con esquema de desplazamiento, D); conclusiones recortadas a 3.
+- Figuras: el valor destacado va **en el eje**, no al costado. `common.mark_on_axis` agrega un
+  tick con color propio y saca los ticks automáticos que se pisarían; `common.mark_point_x`
+  marca el mejor punto (recta punteada negra hasta el eje horizontal + tick en negrita; **sin
+  anillo/círculo alrededor del punto**: pedido explícito del grupo). `plot_t90.py` lo usa en
+  `t90_<barrido>.png` (el mejor punto se calcula, no se
+  escribe a mano) y `plot_goals.py` marca t_90 y 0.9 sobre los ejes.
+- Eje de <t_90> en todas las figuras = `common.LABEL_T90` ("⟨t₉₀⟩ (s)"), también como eje x de
+  `D_vs_t90*.png`. Eje de D en `D_vs_t90*.png` en escala log con rótulos solo en décadas
+  (`common.log_yaxis`). **No usar el factor ×10⁻³ arriba del eje** (offset de matplotlib): el
+  grupo lo rechazó.
+- `t90_<barrido>.png`: la recta de la mesa vacía lleva banda sombreada de ± 1 desvío entre
+  realizaciones (es un promedio, igual que los puntos).
+
+## 8. Cambios del 2026-09-25 (tercera devolución interna)
+
+- Choques contra obstáculo: el código (`Collisions.bounceObstacle`) usa `v' = v − 2 (v·ê_n) ê_n`,
+  no las matrices; es algebraicamente idéntico a `R(−α) S(1, 1) R(α) v` (chequeado numéricamente,
+  diferencia ~10⁻¹⁵). No se cambió el código (cambiaría el redondeo y, por caos, todos los t_90
+  por seed). **Decisión del grupo**: la diapositiva "Modelo" muestra **solo la forma del motor**
+  (`v − 2 (v·ê_n) ê_n`), sin el operador de matrices de la §7. Partícula–partícula (J) y paredes
+  coinciden con el código.
+- Error de D revisado: un ajuste `DCM = c·t` por realización, `D = c*/4`, promedio y desvío
+  estándar (ddof = 1) entre las 20 realizaciones; sin dividir por √n. Recalculado aparte: coincide.
+- `dcm_vs_t.png`: recortado a t ≤ 12 s, figura ancha (8 × 3.9), rectas `c*·t` de la seed 1 en
+  [0, t_fin] (negras de trazos) y t_fin con punteada del color de la curva. Diapositiva sin texto.
+- Diapositivas: Sistema (Simulaciones) sin dirección ~U, sin "arcos" ni "Parámetros de
+  simulación", esquema más grande; Observables dice que el observable es `<t_90>` sobre 20
+  realizaciones y el tiempo de ejecución promedio sobre 20 realizaciones de 30 s simulados;
+  Difusión explica el ajuste por E(c); F_g(t) mesa vacía vs disco sin texto al costado.
+- **Eje de D lineal desde 0** (reemplaza la escala log de la §7) en `D_vs_t90.png`,
+  `D_vs_t90_multi_barrier.png`, `D_vs_k_multi_barrier.png` y `D_vs_t90_rows_best_k.png`; rótulo
+  `common.LABEL_D` = "⟨D⟩ (m²/s)", igual que ⟨t₉₀⟩. Se borró `common.log_yaxis` (sin uso).

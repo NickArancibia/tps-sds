@@ -14,7 +14,10 @@ lleva columnas k, n.
 
 Salidas:
 - `analysis/out/t90_<barrido>.csv`: variable, realizaciones, <t_90>, desvío, no alcanzados.
-- `analysis/figures/t90_<barrido>.png`: <t_90> vs variable; mesa vacía como recta horizontal.
+- `analysis/figures/t90_<barrido>.png`: <t_90> vs variable; mesa vacía como recta horizontal
+  (<t_90>) con banda sombreada de ± 1 desvío entre realizaciones;
+  el mejor punto (menor <t_90>) se marca con una recta vertical hasta el eje horizontal, con su
+  valor como tick.
   Su <t_90> ± desvío y el punto elegido para `fg_vs_t.png` se imprimen por stdout: van al costado
   de la figura (presentación) o en el caption (informe), nunca en la leyenda.
 - `analysis/figures/t90_best.png`: barras con el mejor punto (menor <t_90>) de cada familia más
@@ -34,8 +37,8 @@ import json
 
 import numpy as np
 
-from common import (LABEL_TIME, OUT_DIR, OUTPUT, load_goals, load_run_meta, mean_std,
-                    save_figure, use_style)
+from common import (LABEL_T90, LABEL_TIME, OUT_DIR, OUTPUT, load_goals, load_run_meta,
+                    mark_point_x, mean_std, save_figure, use_style)
 
 import matplotlib.pyplot as plt  # noqa: E402
 
@@ -88,7 +91,7 @@ def plot_fg(run_dirs: list[tuple[str, object]], name: str) -> None:
             ax.axvline(meta["t90"], color=color, linestyle=":", linewidth=1)
     ax.axhline(0.9, color="0.4", linestyle="--", linewidth=0.8)
     ax.set_xlabel(LABEL_TIME)
-    ax.set_ylabel("Fracción de partículas usadas")
+    ax.set_ylabel("Fracción de goles")
     ax.set_ylim(0, 1)
     if len(run_dirs) > 1:
         ax.legend(loc="lower right")
@@ -142,13 +145,16 @@ def main() -> None:
                                    top[0]["t90_std_s"], top[1]["label"]))
 
         fig, ax = plt.subplots()
-        empty_line = ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1,
-                                label="mesa vacía")
+        # Mesa vacía: <t_90> (recta) ± desvío entre realizaciones (banda, por detrás de todo).
+        ax.axhspan(empty_mean - empty_std, empty_mean + empty_std, color=EMPTY_COLOR,
+                   alpha=0.12, linewidth=0, zorder=0)
+        ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1, label="mesa vacía")
         if grid:
             # n = 0 filas = el bloque solo (barrido `multi_barrier`, si está corrido): así la
             # curva arranca en la configuración de partida.
             ks = sorted({r["k"] for r in rows if args.grid_k is None or r["k"] in args.grid_k})
             cmap = plt.get_cmap("viridis")
+            shown_best = None  # (<t_90>, n) del mejor punto dibujado
             for i, k in enumerate(ks):
                 sub = [r for r in rows if r["k"] == k and r["runs"]]
                 block_dir = SWEEPS / "multi_barrier" / f"k{k:02d}"
@@ -156,18 +162,24 @@ def main() -> None:
                     mean, std, n, _, _ = t90_stats(block_dir)
                     if n:
                         sub.insert(0, {"n": 0, "t90_mean_s": mean, "t90_std_s": std})
-                plot_curve(ax, [r["n"] for r in sub], sub,
-                           color=cmap(0.85 * i / max(1, len(ks) - 1)), label=f"k = {k}")
+                color = cmap(0.85 * i / max(1, len(ks) - 1))
+                plot_curve(ax, [r["n"] for r in sub], sub, color=color, label=f"k = {k}")
+                top_k = min(sub, key=lambda r: r["t90_mean_s"])
+                if shown_best is None or top_k["t90_mean_s"] < shown_best[0]:
+                    shown_best = (top_k["t90_mean_s"], top_k["n"])
             ax.set_xlabel("Cantidad de filas por lado")
             ax.xaxis.get_major_locator().set_params(integer=True)
             ax.legend(loc="upper left", ncol=2)
+            mark_point_x(ax, shown_best[1], shown_best[0], f"{shown_best[1]:g}")
         else:
             done = [r for r in rows if r["runs"]]
             plot_curve(ax, [r["value"] for r in done], done, color=DATA_COLOR,
                        label="con obstáculos")
             ax.set_xlabel(points[0]["variable"])
             ax.legend(loc="best")
-        ax.set_ylabel("Tiempo al 90 % de goles (s)")
+            top_row = min(done, key=lambda r: r["t90_mean_s"])
+            mark_point_x(ax, top_row["value"], top_row["t90_mean_s"], f"{top_row['value']:g}")
+        ax.set_ylabel(LABEL_T90)
         save_figure(fig, f"t90_{name}.png")
 
     print(f"  mejor: {best[1]} con <t_90> = {best[0]:.2f} s")
@@ -180,7 +192,7 @@ def main() -> None:
            capsize=4, width=0.6)
     ax.set_xticks(xs, [b[0].replace(" ", "\n", 1) if len(b[0]) > 12 else b[0]
                        for b in best_by_family])
-    ax.set_ylabel("Tiempo al 90 % de goles (s)")
+    ax.set_ylabel(LABEL_T90)
     save_figure(fig, "t90_best.png")
     print("  t90_best.png (mejor punto por familia; va al costado de la figura):")
     for name, mean, std, label in best_by_family:

@@ -57,9 +57,7 @@
       \begin{itemize}
         \item Mesa rectangular con un arco en cada extremo y obstáculos fijos.
         \item Partículas con masa que se mueven libremente y chocan elásticamente entre
-          sí, con los obstáculos y con las paredes.
-        \item Una partícula marca gol la primera vez que toca un arco; después
-          sigue en juego.
+          sí.
       \end{itemize}
     \end{column}
     \begin{column}{0.43\textwidth}
@@ -82,39 +80,40 @@
 \end{frame}
 
 \begin{frame}{Modelo: partículas con masa}
-  Entre eventos, movimiento rectilíneo uniforme:
-  $\;\vect{r}_i(t) = \vect{r}_i(t_0) + \vect{v}_i\,(t - t_0)$
-  \vspace{0.2em}
+  % Choques tal como los calcula el motor (Collisions.java): impulso J entre partículas,
+  % reflexión v - 2 (v·ê_n) ê_n contra obstáculo (bounceObstacle) e inversión en paredes.
+  \setlength{\jot}{1pt}
+  \begin{itemize}\setlength{\itemsep}{0.3em}
+    \item Movimiento de partículas:
+      \[
+        \vect{r}_i(t) = \vect{r}_i(t_0) + \vect{v}_i\,(t - t_0)
+      \]
+    \item Choques elásticos:
+  \end{itemize}
   \small
+  \setlength{\abovedisplayskip}{3pt}\setlength{\belowdisplayskip}{3pt}
+  \setlength{\abovedisplayshortskip}{3pt}\setlength{\belowdisplayshortskip}{3pt}
   \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.5\textwidth}
-      {\color{structure}\large Tiempo al próximo choque}\par\vspace{0.5em}
-      Pared en $x_p$:
-      \[
-        t = \frac{x_p \mp r_i - x_i}{v_{x,i}}
-      \]
-      Partícula $j$ ($\sigma = r_i + r_j$, $\Delta\vect{r} = \vect{r}_j - \vect{r}_i$):
-      \begin{align*}
-        t_c &= -\frac{\Delta\vect{v}\cdot\Delta\vect{r} + \sqrt{d}}{\Delta\vect{v}\cdot\Delta\vect{v}}\\
-        d   &= (\Delta\vect{v}\cdot\Delta\vect{r})^2 - (\Delta\vect{v}\cdot\Delta\vect{v})(\Delta\vect{r}\cdot\Delta\vect{r} - \sigma^2)
-      \end{align*}
-      {\small Sin choque si $\Delta\vect{v}\cdot\Delta\vect{r} \ge 0$ o $d < 0$.\\
-      Obstáculo fijo: $\vect{v}_j = \vect{0}$, $\sigma = r_i + R_k$.}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      {\color{structure}\large Después del choque (elástico)}\par\vspace{0.5em}
-      Pared: se invierte la componente normal.\par\vspace{0.3em}
-      Partícula $j$:
-      \begin{align*}
-        J &= \frac{2\,m_i m_j\,(\Delta\vect{v}\cdot\Delta\vect{r})}{\sigma\,(m_i + m_j)}\\
-        \vect{v}_i' &= \vect{v}_i + \frac{J}{m_i}\,\frac{\Delta\vect{r}}{\sigma},
-        \qquad
+    \begin{column}{0.42\textwidth}
+      \textbf{Partícula $i$ -- partícula $j$}
+      \begin{gather*}
+        J = \frac{2\,m_i m_j\,(\Delta\vect{v}\cdot\Delta\vect{r})}{\sigma\,(m_i + m_j)}\\
+        \vect{v}_i' = \vect{v}_i + \frac{J}{m_i}\,\frac{\Delta\vect{r}}{\sigma}, \qquad
         \vect{v}_j' = \vect{v}_j - \frac{J}{m_j}\,\frac{\Delta\vect{r}}{\sigma}
-      \end{align*}
-      Obstáculo ($m_j \to \infty$), reflexión especular:
+      \end{gather*}
+    \end{column}
+    \begin{column}{0.34\textwidth}
+      \textbf{Partícula -- obstáculo fijo}
       \[
-        \vect{v}_i' = \vect{v}_i - 2\,(\vect{v}_i\cdot\hat{\vect{e}}_n)\,\hat{\vect{e}}_n
+        \vect{v}' = \vect{v} - 2\,(\vect{v}\cdot\hat{\vect{e}}_n)\,\hat{\vect{e}}_n
       \]
+      {\footnotesize $\hat{\vect{e}}_n$: versor normal al choque, del centro del obstáculo al
+      de la partícula.}
+    \end{column}
+    \begin{column}{0.20\textwidth}
+      \textbf{Partícula -- pared}\par\vspace{0.6em}
+      Vertical:\\ $(v_x, v_y) \to (-v_x, v_y)$\par\vspace{0.5em}
+      Horizontal:\\ $(v_x, v_y) \to (v_x, -v_y)$
     \end{column}
   \end{columns}
 \end{frame}
@@ -137,7 +136,7 @@
     \node[caja]  (vig)  at (11.2, 0)   {¿$n_i$, $n_j$\\ vigentes?};
     \node[caja]  (adv)  at (11.2, -3)  {Avanzar todas\\ a $t$};
     \node[caja]  (col)  at (7.4, -3)   {Choque\\ ¿Hay gol?\\ $n_i{+}{+}$, $n_j{+}{+}$};
-    \node[caja]  (pred) at (3.5, -3)   {Predecir\\ solo $i$ y $j$};
+    \node[caja]  (pred) at (3.5, -3)   {Predecir choques\\ de $i$ y $j$};
     \node[caja, minimum height=0.9cm] (fin) at (7.4, 2.3) {Fin};
     \draw[->] (ini) -- (pred0);
     \draw[->] (pred0) -- (pq);
@@ -166,55 +165,98 @@
 
 \begin{frame}{Sistema}
   \begin{columns}[c]
-    \begin{column}{0.37\textwidth}
+    \begin{column}{0.54\textwidth}
       \centering
-      \begin{tikzpicture}[scale=3.2, >=Stealth]
+      \begin{tikzpicture}[scale=5.0, >=Stealth]
         \draw[thick] (0,0) rectangle (1.2,0.68);
         \draw[green!60!black, line width=3pt] (0,0.24) -- (0,0.44);
         \draw[green!60!black, line width=3pt] (1.2,0.24) -- (1.2,0.44);
-        \draw[<->] (0,-0.06) -- (1.2,-0.06) node[midway, below, font=\small] {$L$};
-        \draw[<->] (1.27,0) -- (1.27,0.68) node[midway, right, font=\small] {$W$};
-        \draw[<->] (-0.06,0.24) -- (-0.06,0.44) node[midway, left, font=\small] {$d$};
+        \draw[<->] (0,-0.05) -- (1.2,-0.05) node[midway, below] {$L$};
+        \draw[<->] (1.25,0) -- (1.25,0.68) node[midway, right] {$W$};
+        \draw[<->] (-0.05,0.24) -- (-0.05,0.44) node[midway, left] {$d$};
         \fill[black!60] (0.6,0.34) circle (0.10);
-        \draw[->] (0.6,0.34) -- ++(40:0.10) node[pos=1, anchor=south west, inner sep=2pt, font=\small] {$R_k$};
+        \draw[->] (0.6,0.34) -- ++(40:0.10) node[pos=1, anchor=south west, inner sep=2pt] {$R_k$};
         \fill[blue] (0.25,0.5) circle (0.0175);
-        \draw[->,blue,thick] (0.25,0.5) -- ++(-20:0.09) node[right, font=\small, black] {$v_0$};
+        \draw[->,blue,thick] (0.25,0.5) -- ++(-20:0.09) node[right, black] {$v_0$};
         \fill[red] (0.95,0.2) circle (0.0175);
+        \draw[->,red,thick] (0.95,0.2) -- ++(140:0.09);
       \end{tikzpicture}
     \end{column}
-    \begin{column}{0.60\textwidth}
-      \small
+    \begin{column}{0.44\textwidth}
       \textbf{Fijos}
-      \begin{itemize}\setlength{\itemsep}{1pt}
-        \item $L = 1.20\uni{m}$, $W = 0.68\uni{m}$, arcos $d = 0.20\uni{m}$
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item $L = 1.20\uni{m}$, $W = 0.68\uni{m}$, $d = 0.20\uni{m}$
         \item $r = 0.0175\uni{m}$, $m = 0.025\uni{kg}$, $v_0 = 1\uni{m/s}$
-        \item Posiciones al azar sin solapar; dirección $\sim U[0, 2\pi)$
+        \item Posiciones iniciales al azar
       \end{itemize}
+      \vspace{0.5em}
       \textbf{Variables}
-      \begin{itemize}\setlength{\itemsep}{1pt}
+      \begin{itemize}\setlength{\itemsep}{2pt}
         \item Mesa vacía: 7 valores de $N$ entre 25 y 400
-        \item Con obstáculos ($N = 100$): configuración
-          $\{(x_k, y_k, R_k)\}$
-      \end{itemize}
-      \textbf{Parámetros de simulación}
-      \begin{itemize}\setlength{\itemsep}{1pt}
-        \item 20 realizaciones por punto
-        \item Tiempo simulado: $30\uni{s}$ (mesa vacía); hasta el 90\,\% de goles,
-          máximo $100\uni{s}$ (con obstáculos)
+        \item Con obstáculos: $N = 100$, obstáculos $(x_k, y_k, R_k)$
       \end{itemize}
     \end{column}
   \end{columns}
 \end{frame}
 
 \begin{frame}{Observables}
-  \begin{itemize}
-    \item \textbf{Tiempo de ejecución}: tiempo de reloj del lazo de eventos.
-    \item \textbf{Goles}: $N_g(t)$ acumulados; $F_g(t) = N_g(t)/N$.
-    \item \textbf{Tiempo al 90\,\%}: $t_{90} = \min\{t : F_g(t) \ge 0.9\}$.
-    \item \textbf{Desplazamiento cuadrático medio}:
-      $\mathrm{DCM}(t) = \frac{1}{N}\sum_i |\vect{r}_i(t) - \vect{r}_i(0)|^2$.
-    \item \textbf{Difusión}: ajuste lineal $\mathrm{DCM} = 4\,D\,t$ en $[0, t_{\mathrm{fin}}]$.
-  \end{itemize}
+  \begin{columns}[c]
+    \begin{column}{0.58\textwidth}
+      \begin{itemize}\setlength{\itemsep}{0.8em}
+        \item $N_g(t)$: cantidad de goles acumulados.
+        \item $F_g(t) = N_g(t)/N$.
+        \item \textbf{Tiempo al 90\,\%}: $t_{90} = \min\{t : F_g(t) \ge 0.9\}$.
+        \item \textbf{Observable}: $\langle t_{90} \rangle$, promedio de $t_{90}$ sobre 20
+          realizaciones.
+        \item \textbf{Tiempo de ejecución}: promedio sobre 20 realizaciones de $30\uni{s}$
+          simulados.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      \centering
+      % Gol: la particula azul llega al arco (verde) y sale roja.
+      \begin{tikzpicture}[scale=2.9, >=Stealth]
+        \draw[thick] (0,0) -- (0,1.6);
+        \draw[green!60!black, line width=3pt] (0,0.5) -- (0,1.1);
+        \draw[dashed, gray] (1.15,1.42) -- (0.07,0.8) -- (1.15,0.18);
+        \draw[gray] (0.07,0.8) circle (0.07);
+        \fill[blue] (1.15,1.42) circle (0.07);
+        \draw[->,blue,thick] (1.15,1.42) -- ++(210:0.3);
+        \fill[red] (1.15,0.18) circle (0.07);
+        \draw[->,red,thick] (1.15,0.18) -- ++(-30:0.3);
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Observables: difusión}
+  \begin{columns}[c]
+    \begin{column}{0.52\textwidth}
+      \begin{itemize}\setlength{\itemsep}{0.8em}
+        \item \textbf{Desplazamiento cuadrático medio}:
+          \[
+            \mathrm{DCM}(t) = \frac{1}{N}\sum_{i=1}^{N} |\vect{r}_i(t) - \vect{r}_i(0)|^2
+          \]
+        \item \textbf{Difusión}: $\mathrm{DCM} = 4\,D\,t$. Se marca a ojo el tramo
+          $[0, t_{\mathrm{fin}}]$ del ajuste lineal y $D$ minimiza
+          $\sum_j [\mathrm{DCM}(t_j) - 4\,D\,t_j]^2$. Promedio sobre 20 realizaciones.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \centering
+      % Trayectoria de una particula entre choques y su desplazamiento neto.
+      \begin{tikzpicture}[scale=3.0, >=Stealth]
+        \draw[gray, thick] (0,0) -- (0.3,0.35) -- (0.05,0.7) -- (0.55,0.9) -- (0.75,0.45)
+          -- (1.1,1.05) -- (1.4,0.75);
+        \draw[blue] (0,0) circle (0.04);
+        \node[below left, font=\small] at (0,0) {$\vect{r}_i(0)$};
+        \fill[blue] (1.4,0.75) circle (0.04);
+        \node[right, font=\small] at (1.45,0.75) {$\vect{r}_i(t)$};
+        \draw[->, red, thick, dashed] (0.04,0.02) -- node[sloped, below, font=\small]
+          {$|\vect{r}_i(t) - \vect{r}_i(0)|$} (1.36,0.73);
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \begin{frame}{Configuraciones: disco central}
@@ -263,24 +305,20 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{Disco central: goles vs tiempo}
-  \figuraparam{goals_disco.png}{%
-    $R = 0.33\uni{m}$\\[0.3em]
-    Una realización\\[0.6em]
-    Línea vertical:\\ $t_{90} = 16.9\uni{s}$
-  }
+\begin{frame}{Mesa vacía vs disco central: fracción de goles vs tiempo}
+  \figura{fg_empty_disco.png}
 \end{frame}
 
 \begin{frame}{Disco central: $\langle t_{90} \rangle$ vs radio}
-  \figuraparam{t90_single_R.png}{Mejor configuración:\\[0.3em] $R = 0.33\uni{m}$}
+  \figura{t90_single_R.png}
 \end{frame}
 
 \begin{frame}{Bloque central: $\langle t_{90} \rangle$ vs cantidad de columnas}
-  \figuraparam{t90_multi_barrier.png}{Mejor configuración:\\[0.3em] $k = 18$}
+  \figura{t90_multi_barrier.png}
 \end{frame}
 
 \begin{frame}{Bloque central con filas: $\langle t_{90} \rangle$ vs filas}
-  \figuraparam{t90_multi_barrier_rows_k.png}{Mejor configuración:\\[0.3em] $k = 17$, $n = 1$}
+  \figura{t90_multi_barrier_rows_k.png}
 \end{frame}
 
 \begin{frame}{Mejor configuración de cada familia}
@@ -296,17 +334,15 @@
 \end{frame}
 
 \begin{frame}{Difusión: DCM vs tiempo}
-  \figuraparam{dcm_vs_t.png}{%
-    Una realización\\[0.3em]
-    Mejor configuración de cada familia
-  }
+  \centering
+  \includegraphics[width=\linewidth,height=0.9\textheight,keepaspectratio]{dcm_vs_t.png}
 \end{frame}
 
-\begin{frame}{Coeficiente de difusión vs $\langle t_{90} \rangle$}
+\begin{frame}{$\langle D \rangle$ vs $\langle t_{90} \rangle$}
   \figura{D_vs_t90.png}
 \end{frame}
 
-\begin{frame}{Bloque central: coeficiente de difusión vs $\langle t_{90} \rangle$}
+\begin{frame}{Bloque central: $\langle D \rangle$ vs $\langle t_{90} \rangle$}
   \figura{D_vs_t90_multi_barrier.png}
 \end{frame}
 
@@ -317,14 +353,11 @@
 
 \begin{frame}{Conclusiones}
   \begin{itemize}
-    \item Se puede reducir el tiempo de realizar 90 goles respecto de la mesa vacía utilizando
-      distintas configuraciones de obstáculos.
-    \item Un espacio más comprimido hacia los arcos mejora $\langle t_{90} \rangle$, pero demasiada
-      compresión no permite que las partículas que ya anotaron salgan del arco y el tiempo
-      requerido vuelve a aumentar.
-    \item Mientras más espacio haya para el movimiento de las partículas, mayor es el DCM y, por
-      lo tanto, mayor es el coeficiente de difusión $D$.
-    \item En general, a mayor coeficiente de difusión $D$, mayor $\langle t_{90} \rangle$.
+    \item Distintas configuraciones de obstáculos reducen $\langle t_{90} \rangle$ respecto de la
+      mesa vacía.
+    \item Comprimir el espacio mejora $\langle t_{90} \rangle$; demasiada compresión lo vuelve a
+      aumentar.
+    \item A mayor espacio, mayor movimiento de las partículas: mayor DCM y mayor $D$.
   \end{itemize}
 \end{frame}
 

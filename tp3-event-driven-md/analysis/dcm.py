@@ -24,8 +24,9 @@ y `analysis/out/t90_<barrido>.csv` para el <t_90> de cada punto.
 
 Salidas:
 - `analysis/out/dcm_D.csv`: barrido, punto, variable, valor, t_fin, seeds, D, desvío, <t_90>, desvío.
-- `analysis/figures/dcm_vs_t.png`: DCM(t) de una realización (seed 1) por configuración, con
-  una recta vertical de trazos del color de cada curva en su t_fin.
+- `analysis/figures/dcm_vs_t.png`: DCM(t) de una realización (seed 1) por configuración hasta
+  t = 12 s, con la recta ajustada c*·t de esa realización en [0, t_fin] y una recta vertical
+  punteada del color de cada curva en su t_fin.
 - `analysis/figures/dcm_fit.png`: DCM(t) de la mesa vacía con la recta c*·t ajustada y su t_fin.
 - `analysis/figures/dcm_E_c.png`: E(c) con su mínimo, para la mesa vacía.
 - `analysis/figures/D_vs_t90.png`: <D> vs <t_90>, un símbolo por configuración, barras en ambos
@@ -44,7 +45,8 @@ from pathlib import Path
 import numpy as np
 
 from animate import load_dynamic, load_static
-from common import LABEL_TIME, OUT_DIR, OUTPUT, mean_std, save_figure, use_style
+from common import (LABEL_D, LABEL_T90, LABEL_TIME, OUT_DIR, OUTPUT, mean_std, save_figure,
+                    use_style)
 
 import matplotlib.pyplot as plt  # noqa: E402
 
@@ -152,19 +154,29 @@ def main() -> None:
         writer = csv.DictWriter(fh, fieldnames=list(results[0]))
         writer.writeheader()
         writer.writerows(results)
-    # --- DCM(t) de la seed 1 de cada configuración, con su t_fin marcado ----------------------
-    fig, ax = plt.subplots()
+    # --- DCM(t) de la seed 1 de cada configuración, con su recta ajustada c*·t en [0, t_fin] ----
+    # Recortada en T_PLOT: después solo hay saturación, que ya se ve antes.
+    T_PLOT = 12.0
+    fig, ax = plt.subplots(figsize=(8.0, 3.9))
     y_max = 0.0
     for family, label, name, _marker, color in SHOWN:
         ts, dcm = curves[(family, label)]
-        ax.plot(ts, dcm, color=color, label=name, linewidth=1.2)
-        ax.axvline(FIT_END[(family, label)], color=color, linestyle="--", linewidth=1)
-        y_max = max(y_max, dcm.max())
+        t_end = FIT_END[(family, label)]
+        m = ts <= T_PLOT
+        ax.plot(ts[m], dcm[m], color=color, label=name, linewidth=1.2, zorder=1)
+        ax.axvline(t_end, color=color, linestyle=":", linewidth=1.2, zorder=2)
+        t_fit = np.array([0.0, t_end])
+        ax.plot(t_fit, fit_c(ts, dcm, t_end) * t_fit, color="black", linestyle="--",
+                linewidth=1.4, zorder=3, label="ajuste lineal" if family == "empty" else None)
+        y_max = max(y_max, dcm[m].max())
     ax.set_xlabel(LABEL_TIME)
     ax.set_ylabel("Desplazamiento cuadrático medio (m²)")
-    ax.set_xlim(0, None)
+    ax.set_xlim(0, T_PLOT)
     ax.set_ylim(0, 1.05 * y_max)
-    ax.legend(loc="center right", bbox_to_anchor=(0.99, 0.55))
+    handles, names = ax.get_legend_handles_labels()
+    order = [i for i, n in enumerate(names) if n != "ajuste lineal"] + [names.index("ajuste lineal")]
+    ax.legend([handles[i] for i in order], [names[i] for i in order],
+              loc="center right", bbox_to_anchor=(0.99, 0.55))
     save_figure(fig, "dcm_vs_t.png")
 
     # --- DCM(t) de la mesa vacía con la recta ajustada (par de dcm_E_c.png) ---------------------
@@ -200,8 +212,9 @@ def main() -> None:
     for (family, label, name, marker, color), r in zip(SHOWN, results):
         ax.errorbar(r["t90_mean_s"], r["D_m2_s"], xerr=r["t90_std_s"], yerr=r["D_std_m2_s"],
                     marker=marker, color=color, linestyle="none", capsize=3, label=name)
-    ax.set_xlabel("Tiempo al 90 % de goles (s)")
-    ax.set_ylabel("Coeficiente de difusión (m²/s)")
+    ax.set_xlabel(LABEL_T90)
+    ax.set_ylabel(LABEL_D)
+    ax.set_ylim(0, None)
     ax.legend(loc="best")
     save_figure(fig, "D_vs_t90.png")
 

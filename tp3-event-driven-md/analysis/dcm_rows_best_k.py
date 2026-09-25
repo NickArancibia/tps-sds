@@ -22,7 +22,7 @@ import csv
 import matplotlib as mpl
 import numpy as np
 
-from common import OUT_DIR, mean_std, save_figure, use_style
+from common import LABEL_D, LABEL_T90, OUT_DIR, mean_std, save_figure, use_style
 from dcm import cached_dcm, fit_c, seed_dirs, t90_table
 
 import matplotlib.pyplot as plt  # noqa: E402
@@ -68,8 +68,9 @@ def main() -> None:
     cbar = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax)
     cbar.set_label("Cantidad de filas por lado n")
     cbar.set_ticks(ns)
-    ax.set_xlabel("Tiempo al 90 % de goles (s)")
-    ax.set_ylabel("Coeficiente de difusión (m²/s)")
+    ax.set_xlabel(LABEL_T90)
+    ax.set_ylabel(LABEL_D)
+    ax.set_ylim(0, None)
     save_figure(fig, "D_vs_t90_rows_best_k.png")
 
 

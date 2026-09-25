@@ -25,7 +25,7 @@ import csv
 
 import numpy as np
 
-from common import (LABEL_N, OUT_DIR, OUTPUT, load_run_meta, mean_std, save_figure,
+from common import (LABEL_N, OUT_DIR, OUTPUT, load_run_meta, log_ticks, mean_std, save_figure,
                     use_style)
 
 import matplotlib.pyplot as plt  # noqa: E402  (common configura el backend)
@@ -56,11 +56,6 @@ def write_csv(rows: list[dict]) -> None:
         writer.writeheader()
         writer.writerows(rows)
     print(f"  {path.relative_to(OUT_DIR.parent.parent)}")
-
-
-def log_ticks(lo: float, hi: float) -> list[float]:
-    """Potencias de 10 que cubren [lo, hi] (rótulos equiespaciados, sin marcas intermedias)."""
-    return [10.0 ** k for k in range(int(np.floor(np.log10(lo))), int(np.ceil(np.log10(hi))) + 1)]
 
 
 def loglog_axes(ax, ns, values, xlabel: str, ylabel: str) -> None:

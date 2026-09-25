@@ -25,7 +25,8 @@ import csv
 import matplotlib as mpl
 import numpy as np
 
-from common import LABEL_TIME, OUT_DIR, mean_std, save_figure, use_style
+from common import (LABEL_D, LABEL_T90, LABEL_TIME, OUT_DIR, mean_std, save_figure,
+                    use_style)
 from dcm import cached_dcm, fit_c, seed_dirs, t90_table
 
 import matplotlib.pyplot as plt  # noqa: E402
@@ -88,8 +89,9 @@ def main() -> None:
     cbar = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax)
     cbar.set_label("Cantidad de columnas k")
     cbar.set_ticks([1, 5, 10, 15, 20, 22])
-    ax.set_xlabel("Tiempo al 90 % de goles (s)")
-    ax.set_ylabel("Coeficiente de difusión (m²/s)")
+    ax.set_xlabel(LABEL_T90)
+    ax.set_ylabel(LABEL_D)
+    ax.set_ylim(0, None)
     save_figure(fig, "D_vs_t90_multi_barrier.png")
 
     # --- <D> vs k -------------------------------------------------------------------------------
@@ -98,7 +100,7 @@ def main() -> None:
                 linestyle="--", linewidth=1.0, capsize=3)
     ax.set_xticks([1, 5, 10, 15, 20, 22])
     ax.set_xlabel("Cantidad de columnas k")
-    ax.set_ylabel("Coeficiente de difusión (m²/s)")
+    ax.set_ylabel(LABEL_D)
     ax.set_ylim(0, None)
     save_figure(fig, "D_vs_k_multi_barrier.png")
 
