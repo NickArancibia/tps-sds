@@ -8,14 +8,19 @@ Salidas:
 - `analysis/out/time_vs_n.csv`: N, realizaciones, tiempo medio (s), desvío (s), eventos medios.
 - `analysis/figures/time_vs_n.png`: tiempo vs N en log-log (los datos cruzan varios órdenes de
   magnitud); las rectas entre puntos son guía para el ojo.
+- `analysis/figures/time_vs_n_loglog.png`: lo mismo con ambos ejes rotulados en potencias de 10
+  (décadas equiespaciadas también en N).
 - `analysis/figures/time_vs_n_linear.png`: lo mismo en escala lineal (comparación).
 - `analysis/figures/events_vs_n.png`: eventos procesados en t_f vs N, log-log.
 
-Uso:  python3 plot_time_vs_n.py
+Uso:  python3 plot_time_vs_n.py [--from-csv]
+      --from-csv: grafica desde `analysis/out/time_vs_n.csv` sin releer ni sobrescribir (para
+      rehacer figuras en una máquina que no tiene las corridas con las que se generó el csv).
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
 
 import numpy as np
@@ -70,11 +75,24 @@ def loglog_axes(ax, ns, values, xlabel: str, ylabel: str) -> None:
     ax.set_ylabel(ylabel)
 
 
+def read_csv() -> list[dict]:
+    with open(OUT_DIR / "time_vs_n.csv", newline="") as fh:
+        return [{"N": int(r["N"]), "runs": int(r["runs"]), "time_mean_s": float(r["time_mean_s"]),
+                 "time_std_s": float(r["time_std_s"]), "events_mean": float(r["events_mean"])}
+                for r in csv.DictReader(fh)]
+
+
 def main() -> None:
-    rows = collect()
-    if not rows:
-        raise SystemExit("No hay corridas en output/time_vs_n: correr scripts/run_time_vs_n.sh")
-    write_csv(rows)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--from-csv", action="store_true")
+    args = ap.parse_args()
+    if args.from_csv:
+        rows = read_csv()
+    else:
+        rows = collect()
+        if not rows:
+            raise SystemExit("No hay corridas en output/time_vs_n: correr scripts/run_time_vs_n.sh")
+        write_csv(rows)
     for r in rows:
         print(f"  N={r['N']:4d}  {r['runs']:2d} corridas  t = {r['time_mean_s']:.3f} ± "
               f"{r['time_std_s']:.3f} s  ({r['events_mean']:.0f} eventos)")
@@ -90,6 +108,15 @@ def main() -> None:
                 markersize=4, linestyle="--", linewidth=1.0, capsize=3)
     loglog_axes(ax, ns, means, LABEL_N, "Tiempo de ejecución (s)")
     save_figure(fig, "time_vs_n.png")
+
+    fig, ax = plt.subplots()
+    ax.errorbar(ns, means, yerr=stds, color="tab:blue", ecolor="tab:red", marker="o",
+                markersize=4, linestyle="--", linewidth=1.0, capsize=3)
+    loglog_axes(ax, ns, means, LABEL_N, "Tiempo de ejecución (s)")
+    xticks = log_ticks(min(ns), max(ns))
+    ax.set_xlim(xticks[0], xticks[-1])
+    ax.set_xticks(xticks, labels=[rf"$10^{{{int(np.log10(t))}}}$" for t in xticks])
+    save_figure(fig, "time_vs_n_loglog.png")
 
     fig, ax = plt.subplots()
     ax.errorbar(ns, means, yerr=stds, color="tab:blue", ecolor="tab:red", marker="o",

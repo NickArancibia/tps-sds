@@ -81,7 +81,7 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{Modelo: esferas duras}
+\begin{frame}{Modelo: partículas con masa}
   Entre eventos, movimiento rectilíneo uniforme:
   $\;\vect{r}_i(t) = \vect{r}_i(t_0) + \vect{v}_i\,(t - t_0)$
   \vspace{0.2em}
@@ -124,41 +124,39 @@
 % Solo el motor. Sin post-proceso ni I/O.
 % ==========================================================================
 
-\begin{frame}[t]{Motor: cola de eventos}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.56\textwidth}
-      \small
-      \begin{enumerate}\setlength{\itemsep}{1pt}
-        \item Para cada partícula, predecir el próximo choque contra paredes, obstáculos y
-          las demás partículas; encolar cada evento con su instante $t$.
-        \item Sacar el evento de menor $t$. Si alguna de sus partículas chocó después de
-          predecirlo, descartarlo (\emph{contador de colisiones}).
-        \item Avanzar todas las partículas hasta $t$ (MRU).
-        \item Aplicar el choque. Pared corta con $|y - W/2| \le d/2$ y partícula fresca:
-          gol, pasa a usada.
-        \item Re-predecir solo los eventos de las partículas involucradas; volver a 2.
-      \end{enumerate}
-    \end{column}
-    \begin{column}{0.42\textwidth}
-      \centering
-      \begin{tikzpicture}[>=Stealth, font=\footnotesize, node distance=0.22cm,
-          caja/.style={draw, rounded corners, align=center, inner sep=2.5pt, minimum width=3.2cm}]
-        \node[caja] (pq) {Cola de eventos\\ $(t,\ i,\ j,\ n_i,\ n_j)$};
-        \node[caja, below=of pq] (pop) {Mínimo $t$\\ ¿$n_i$, $n_j$ vigentes?};
-        \node[caja, below=of pop] (adv) {Avanzar todo a $t$};
-        \node[caja, below=of adv] (col) {Choque + gol\\ $n_i{+}{+}$, $n_j{+}{+}$};
-        \node[caja, below=of col] (pred) {Predecir $i$, $j$};
-        \draw[->] (pq) -- (pop);
-        \draw[->] (pop) -- node[right]{sí} (adv);
-        \draw[->] (adv) -- (col);
-        \draw[->] (col) -- (pred);
-        \draw[->] (pred.east) -- ++(0.5,0) |- (pq.east);
-        \draw[->] (pop.west) -- ++(-0.4,0) node[left]{no} |- (pq.west);
-      \end{tikzpicture}\\[0.6em]
-      {\small Fin: $t \ge t_f$ o (opcional) $F_g \ge 0.9$.}\\[0.4em]
-      {\scriptsize\itshape Cola de prioridad binaria, invalidación perezosa:\\
-      Sedgewick y Wayne, \emph{Algorithms}, 4.\textsuperscript{a} ed. (2011)}
-    \end{column}
+\begin{frame}{Motor: cola de eventos}
+  \begin{columns}[c,onlytextwidth]
+  \begin{column}{0.8\textwidth}
+  \centering
+  \begin{tikzpicture}[>=Stealth, font=\small, scale=0.8, every node/.append style={scale=0.8},
+      caja/.style={draw, rounded corners, align=center, inner sep=5pt, minimum height=1.3cm},
+      clave/.style={caja, fill=blue!10}]
+    \node[caja]  (ini)  at (0, 0)      {Estado inicial\\ $\vect{r}_i,\ \vect{v}_i$};
+    \node[caja]  (pred0) at (3.5, 0)   {Predecir choques\\ de cada partícula $i$};
+    \node[clave] (pq)   at (7.4, 0)    {Cola de eventos\\ $(t,\ i,\ j,\ n_i,\ n_j)$};
+    \node[caja]  (vig)  at (11.2, 0)   {¿$n_i$, $n_j$\\ vigentes?};
+    \node[caja]  (adv)  at (11.2, -3)  {Avanzar todas\\ a $t$};
+    \node[caja]  (col)  at (7.4, -3)   {Choque\\ ¿Hay gol?\\ $n_i{+}{+}$, $n_j{+}{+}$};
+    \node[caja]  (pred) at (3.5, -3)   {Predecir\\ solo $i$ y $j$};
+    \node[caja, minimum height=0.9cm] (fin) at (7.4, 2.3) {Fin};
+    \draw[->] (ini) -- (pred0);
+    \draw[->] (pred0) -- (pq);
+    \draw[->] (pq) -- (vig);
+    \draw[->] (vig) -- node[right, font=\scriptsize] {sí} (adv);
+    \draw[->] (vig.north) -- ++(0,0.5) -| node[pos=0.25, above, font=\scriptsize] {no: descartar}
+      ($(pq.north)+(0.9,0)$);
+    \draw[->] (pq.north) -- node[left, font=\scriptsize, align=right] {fin del tiempo simulado\\ o 90\,\% de goles} (fin);
+    \draw[->] (adv) -- (col);
+    \draw[->] (col) -- (pred);
+    \draw[->] (pred.north) -- ++(0,0.75) -| ($(pq.south)+(-0.9,0)$);
+  \end{tikzpicture}
+  \end{column}
+  \begin{column}{0.2\textwidth}
+    \footnotesize\leftskip=0.5cm
+    $i$, $j$: partículas\\[0.6em]
+    $n_i$: número de choques de la partícula $i$\\[0.6em]
+    $t$: instante del evento
+  \end{column}
   \end{columns}
 \end{frame}
 
@@ -168,34 +166,41 @@
 
 \begin{frame}{Sistema}
   \begin{columns}[c]
-    \begin{column}{0.46\textwidth}
+    \begin{column}{0.37\textwidth}
       \centering
       \begin{tikzpicture}[scale=3.2, >=Stealth]
         \draw[thick] (0,0) rectangle (1.2,0.68);
         \draw[green!60!black, line width=3pt] (0,0.24) -- (0,0.44);
         \draw[green!60!black, line width=3pt] (1.2,0.24) -- (1.2,0.44);
-        \draw[<->] (0,-0.06) -- (1.2,-0.06) node[midway, below, font=\small] {$L = 1.20\uni{m}$};
-        \draw[<->] (1.27,0) -- (1.27,0.68) node[midway, right, font=\small] {$W = 0.68\uni{m}$};
+        \draw[<->] (0,-0.06) -- (1.2,-0.06) node[midway, below, font=\small] {$L$};
+        \draw[<->] (1.27,0) -- (1.27,0.68) node[midway, right, font=\small] {$W$};
         \draw[<->] (-0.06,0.24) -- (-0.06,0.44) node[midway, left, font=\small] {$d$};
         \fill[black!60] (0.6,0.34) circle (0.10);
-        \draw[->] (0.6,0.34) -- ++(40:0.10) node[pos=1.2, font=\small] {$R_k$};
+        \draw[->] (0.6,0.34) -- ++(40:0.10) node[pos=1, anchor=south west, inner sep=2pt, font=\small] {$R_k$};
         \fill[blue] (0.25,0.5) circle (0.0175);
         \draw[->,blue,thick] (0.25,0.5) -- ++(-20:0.09) node[right, font=\small, black] {$v_0$};
         \fill[red] (0.95,0.2) circle (0.0175);
       \end{tikzpicture}
     \end{column}
-    \begin{column}{0.52\textwidth}
+    \begin{column}{0.60\textwidth}
+      \small
       \textbf{Fijos}
-      \begin{itemize}
+      \begin{itemize}\setlength{\itemsep}{1pt}
         \item $L = 1.20\uni{m}$, $W = 0.68\uni{m}$, arcos $d = 0.20\uni{m}$
         \item $r = 0.0175\uni{m}$, $m = 0.025\uni{kg}$, $v_0 = 1\uni{m/s}$
-        \item Posiciones iniciales al azar sin solapar; dirección $\sim U[0, 2\pi)$
+        \item Posiciones al azar sin solapar; dirección $\sim U[0, 2\pi)$
       \end{itemize}
       \textbf{Variables}
-      \begin{itemize}
-        \item Mesa vacía: $N = 25$ a $400$
-        \item Minimización de $t_{90}$ ($N = 100$): configuración de obstáculos
+      \begin{itemize}\setlength{\itemsep}{1pt}
+        \item Mesa vacía: 7 valores de $N$ entre 25 y 400
+        \item Con obstáculos ($N = 100$): configuración
           $\{(x_k, y_k, R_k)\}$
+      \end{itemize}
+      \textbf{Parámetros de simulación}
+      \begin{itemize}\setlength{\itemsep}{1pt}
+        \item 20 realizaciones por punto
+        \item Tiempo simulado: $30\uni{s}$ (mesa vacía); hasta el 90\,\% de goles,
+          máximo $100\uni{s}$ (con obstáculos)
       \end{itemize}
     \end{column}
   \end{columns}
@@ -205,12 +210,10 @@
   \begin{itemize}
     \item \textbf{Tiempo de ejecución}: tiempo de reloj del lazo de eventos.
     \item \textbf{Goles}: $N_g(t)$ acumulados; $F_g(t) = N_g(t)/N$.
-    \item \textbf{Tiempo al 90\,\%}: $t_{90} = \min\{t : F_g(t) \ge 0.9\}$;
-      $\langle t_{90} \rangle \pm$ desvío estándar entre realizaciones.
-    \item \textbf{Difusión}: $\mathrm{DCM}(t) = \frac{1}{N}\sum_i |\vect{r}_i(t) - \vect{r}_i(0)|^2$;
-      ajuste $\mathrm{DCM} = c\,t$ en $[0, t_{\mathrm{fin}}]$ minimizando
-      $E(c) = \sum_j (\mathrm{DCM}_j - c\,t_j)^2$; $D = c/4$.
-      $\langle D \rangle \pm$ desvío estándar entre realizaciones.
+    \item \textbf{Tiempo al 90\,\%}: $t_{90} = \min\{t : F_g(t) \ge 0.9\}$.
+    \item \textbf{Desplazamiento cuadrático medio}:
+      $\mathrm{DCM}(t) = \frac{1}{N}\sum_i |\vect{r}_i(t) - \vect{r}_i(0)|^2$.
+    \item \textbf{Difusión}: ajuste lineal $\mathrm{DCM} = 4\,D\,t$ en $[0, t_{\mathrm{fin}}]$.
   \end{itemize}
 \end{frame}
 
@@ -249,19 +252,27 @@
   \figura{time_vs_n.png}
 \end{frame}
 
-\begin{frame}{Disco central: $\langle t_{90} \rangle$ vs radio}
-  \figuraparam{t90_single_R.png}{Mejor configuración:\\[0.3em] $R = 0.33\uni{m}$}
-\end{frame}
-
-\begin{frame}{Bloque central: animación}
+\begin{frame}{Disco central vs configuración elegida: animación}
   \begin{columns}[c,onlytextwidth]
     \begin{column}{0.5\textwidth}
-      \animbox{snapshot_mb_k01.png}{$k = 1$}{\yt{PENDIENTE}}
+      \animbox{snapshot_disco.png}{}{\yt{PENDIENTE}}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \animbox{snapshot_mb_k16.png}{$k = 16$}{\yt{PENDIENTE}}
+      \animbox{snapshot_elegida.png}{}{\yt{PENDIENTE}}
     \end{column}
   \end{columns}
+\end{frame}
+
+\begin{frame}{Disco central: goles vs tiempo}
+  \figuraparam{goals_disco.png}{%
+    $R = 0.33\uni{m}$\\[0.3em]
+    Una realización\\[0.6em]
+    Línea vertical:\\ $t_{90} = 16.9\uni{s}$
+  }
+\end{frame}
+
+\begin{frame}{Disco central: $\langle t_{90} \rangle$ vs radio}
+  \figuraparam{t90_single_R.png}{Mejor configuración:\\[0.3em] $R = 0.33\uni{m}$}
 \end{frame}
 
 \begin{frame}{Bloque central: $\langle t_{90} \rangle$ vs cantidad de columnas}
@@ -295,6 +306,10 @@
   \figura{D_vs_t90.png}
 \end{frame}
 
+\begin{frame}{Bloque central: coeficiente de difusión vs $\langle t_{90} \rangle$}
+  \figura{D_vs_t90_multi_barrier.png}
+\end{frame}
+
 % ==========================================================================
 \section{Conclusiones}
 % Solo lo que está en las figuras de Resultados. Cuantificar.
@@ -302,20 +317,14 @@
 
 \begin{frame}{Conclusiones}
   \begin{itemize}
-    \item El tiempo de ejecución crece como $\sim N^3$ en el rango estudiado: de
-      $2\ten{-3}\uni{s}$ ($N = 25$) a $16\uni{s}$ ($N = 400$) para $30\uni{s}$ simulados.
-    \item Un disco central mejora monótonamente con el radio: de $22.2 \pm 2.1\uni{s}$
-      (vacía) a $16.1 \pm 2.0\uni{s}$ con $R = 0.33\uni{m}$, el máximo posible.
-    \item Partir la mesa con una columna no cambia nada ($21 \pm 3\uni{s}$); ensanchar el
-      bloque central sí: meseta de $14.5$ a $15.4\uni{s}$ para $k = 13$ a $19$. Más ancho
-      ($k \ge 21$) vuelve a subir.
-    \item Una o dos filas cortas en los compartimentos bajan otro $1.0\uni{s}$ (de $15.0$ a
-      $14.0\uni{s}$ promediando $k = 15$ a $17$); con tres o más empeora.
-    \item Elegida: $k = 17$, $n = 1$: $\langle t_{90}\rangle = 13.6 \pm 1.8\uni{s}$, un
-      38\,\% menos que la mesa vacía.
-    \item Todo obstáculo baja $D$ de $0.021$ a $0.003$--$0.005\uni{m^2/s}$, pero $D$ no ordena
-      a $\langle t_{90}\rangle$: el disco difunde más ($0.0053$) que el bloque con filas
-      ($0.0041\uni{m^2/s}$) y tarda más ($16.1$ vs $13.6\uni{s}$).
+    \item Se puede reducir el tiempo de realizar 90 goles respecto de la mesa vacía utilizando
+      distintas configuraciones de obstáculos.
+    \item Un espacio más comprimido hacia los arcos mejora $\langle t_{90} \rangle$, pero demasiada
+      compresión no permite que las partículas que ya anotaron salgan del arco y el tiempo
+      requerido vuelve a aumentar.
+    \item Mientras más espacio haya para el movimiento de las partículas, mayor es el DCM y, por
+      lo tanto, mayor es el coeficiente de difusión $D$.
+    \item En general, a mayor coeficiente de difusión $D$, mayor $\langle t_{90} \rangle$.
   \end{itemize}
 \end{frame}
 

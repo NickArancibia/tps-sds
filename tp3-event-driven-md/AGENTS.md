@@ -264,3 +264,32 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   diapositivas + conclusión); copiar `Config.txt` (k17_n01); subir los videos y reemplazar los
   `PENDIENTE`; diapositiva de animación de la elegida (hoy solo config estática); guion con
   tiempos (13 min).
+
+## 6. Cambios del 2026-09-24 (devolución interna de la presentación)
+
+- Diapositivas: "Modelo: esferas duras" → "Modelo: partículas con masa"; nueva diapositiva de
+  animación disco central (R = 0.33 m) vs elegida entre "Tiempo de ejecución" y "Disco central:
+  <t_90> vs radio"; se quitó "Bloque central: animación" (k = 1 vs 16). Video nuevo:
+  `output/anim/disco_R033/` (seed 1, 30 s, `--every 1`); fotogramas t = 8 s en
+  `../presentaciones/tp3/figuras/snapshot_{disco,elegida}.png`.
+- `analysis/dcm_multi_barrier.py`: 1.3 para el bloque central, k = 1..22, misma lógica que
+  `dcm.py` (t_fin a ojo por k en `FIT_END`, k = 18 con la misma ventana que `dcm.py`) →
+  `D_vs_t90_multi_barrier.png` (color = k), `D_vs_k_multi_barrier.png`,
+  `dcm_multi_barrier.png` (curvas por realización con el tramo ajustado resaltado),
+  `out/dcm_D_multi_barrier.csv`. `D_vs_t90_multi_barrier.png` está en la presentación después de D vs <t_90> de las mejores de cada familia).
+  Ojo: las curvas DCM son cóncavas casi desde el inicio, así que D depende de t_fin (ventana más
+  larga → D menor); los saltos de D entre k con distinto t_fin son en parte efecto de la ventana.
+- `time_vs_n_loglog.png`: tiempo vs N con ambos ejes en décadas (no está en la presentación).
+  `analysis/out/time_vs_n.csv` viene del modo `--bench` corrido en otra máquina (commit
+  1bb0d95); los `run.json` de `output/time_vs_n/` de esta máquina son de la medición vieja (una
+  JVM por corrida) y dan otros tiempos. Para rehacer figuras sin pisar el csv:
+  `plot_time_vs_n.py --from-csv`.
+
+- `analysis/plot_goals.py <run_dir> --out <png>`: N_g(t) de una corrida sin `--stop-at-t90`,
+  con t_90 marcado. `goals_disco.png` (sale de `output/anim/disco_R033`, seed 1, 30 s;
+  t_90 = 16.9 s, igual que la seed 1 del barrido) está en la presentación como "Disco central:
+  goles vs tiempo", antes de "<t_90> vs radio".
+- `analysis/dcm_rows_best_k.py`: igual que `D_vs_t90_multi_barrier.png` pero para el bloque con
+  filas, un punto por n con su mejor k (n = 0 → k18, 1 → k17, 2 → k15, 3 → k14, 4 → k14; t_fin a
+  ojo en `BEST`) → `D_vs_t90_rows_best_k.png`, `out/dcm_D_rows_best_k.csv`. **No está en la
+  presentación** (solo para mirar).
