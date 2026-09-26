@@ -16,11 +16,12 @@ import java.util.List;
  * @param seed       semilla del generador aleatorio
  * @param every      escribir el estado en dynamic.txt cada tantos eventos (0 = no escribir)
  * @param stopAtT90  cortar la corrida apenas F_g ≥ 0.9
+ * @param live       imprimir las convertidas en cada nueva conversión (modo competencia)
  * @param obstacles  obstáculos fijos (vacío = mesa vacía)
  */
 public record SimulationConfig(int n, double l, double w, double d, double radius, double mass,
                                double v0, double tf, long seed, int every, boolean stopAtT90,
-                               List<Obstacle> obstacles) {
+                               boolean live, List<Obstacle> obstacles) {
 
     public SimulationConfig {
         if (n <= 0) {

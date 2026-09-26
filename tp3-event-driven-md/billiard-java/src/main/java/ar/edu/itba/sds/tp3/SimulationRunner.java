@@ -6,6 +6,7 @@ import ar.edu.itba.sds.tp3.io.RunWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Ejecuta una corrida completa (lazo de eventos + escritura de todos los archivos) en un
@@ -20,6 +21,11 @@ public final class SimulationRunner {
     private SimulationRunner() {
     }
 
+    /**
+     * Con {@code config.live()} imprime una línea por cada nueva conversión (gol) al ocurrir (modo
+     * competencia). Esa impresión se descuenta del tiempo del lazo, igual que la escritura de
+     * archivos, y no modifica el estado de la simulación.
+     */
     public static Result run(final SimulationConfig config, final List<Ball> balls, final Path outDir,
                              final String obstaclesFile, final String initialFile,
                              final boolean verify, final long wallStartNs) throws IOException {
@@ -42,7 +48,8 @@ public final class SimulationRunner {
             while (true) {
                 final double nextEvent = sim.nextEventTime();
                 if (nextEvent >= config.tf()) {
-                    sim.advanceTo(config.tf());
+                    // Sin avanzar hasta tf: el estado final es el del último evento (no se usan
+                    // tiempos que no sean eventos).
                     break;
                 }
                 final BilliardSimulation.Step step = sim.processNextEvent();
@@ -51,6 +58,10 @@ public final class SimulationRunner {
                     final long ioStart = System.nanoTime();
                     if (step.goal()) {
                         goalsWriter.write(step.event().time(), sim.balls().get(step.event().a()).id());
+                        if (config.live()) {
+                            System.out.printf(Locale.US, "convertidas: %3d / %d  (t = %.6f s)%n",
+                                    sim.goals(), config.n(), step.event().time());
+                        }
                     }
                     if (dynamic != null && events % config.every() == 0) {
                         dynamic.writeFrame(sim.time(), sim.balls());

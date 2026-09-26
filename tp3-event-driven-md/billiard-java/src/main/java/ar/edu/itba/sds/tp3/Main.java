@@ -43,6 +43,8 @@ public final class Main {
                                   N se toma del archivo)
               --gen-initial       Solo generar la condición inicial en <out>/initial.txt y salir
               --verify            Chequear solapamientos tras cada evento (lento, para depurar)
+              --live              Modo competencia: imprimir las convertidas en cada nueva conversión
+                                  y al final t_90 (en lugar del resumen completo, que queda en run.json)
 
             Benchmark (punto 1.1, mesa vacía, una sola JVM con calentamiento y orden aleatorio):
               --bench [N1,N2,...] Lista de N a medir                          (default 25,...,400)
@@ -57,7 +59,7 @@ public final class Main {
               static.txt          N, L W d, radio y masa por partícula, obstáculos
               goals.csv           un renglón por gol: tiempo e id de la partícula
               dynamic.txt         (con --every) bloques "t / x y vx vy estado" en los instantes de los
-                                  eventos, incluyendo t = 0 y t = tf
+                                  eventos, incluyendo t = 0 y el último evento antes de tf
               run.json            inputs, t_90, conteo de eventos, energía inicial/final, tiempos
             """;
 
@@ -85,7 +87,7 @@ public final class Main {
             final SimulationConfig base = new SimulationConfig(100, cli.number("L", 1.20),
                     cli.number("W", 0.68), cli.number("d", 0.20), cli.number("r", 0.0175),
                     cli.number("m", 0.025), cli.number("v0", 1.0), cli.number("tf", 30), 0, 0,
-                    false, List.of());
+                    false, false, List.of());
             Benchmark.run(cli.integerList("bench", List.of(25, 50, 100, 150, 200, 300, 400)),
                     cli.integer("seeds", 20), base, cli.number("warmup-s", 30),
                     Path.of(cli.string("out", "output/time_vs_n")));
@@ -108,7 +110,7 @@ public final class Main {
         final SimulationConfig config = new SimulationConfig(n, cli.number("L", 1.20),
                 cli.number("W", 0.68), cli.number("d", 0.20), radius, mass, cli.number("v0", 1.0),
                 cli.number("tf", 30), cli.longValue("seed", 42), cli.integer("every", 0),
-                cli.has("stop-at-t90"), obstacles);
+                cli.has("stop-at-t90"), cli.has("live"), obstacles);
         final Path outDir = Path.of(cli.string("out", defaultOutDir(config)));
 
         if (balls == null) {
@@ -122,10 +124,36 @@ public final class Main {
             return;
         }
 
+        if (config.live()) {
+            System.out.printf(Locale.US, "N = %d, K = %d obstáculos, t_max = %.0f s%s, condición inicial: %s%n",
+                    config.n(), config.obstacles().size(), config.tf(),
+                    config.stopAtT90() ? " (corta en t_90)" : "",
+                    initialFile != null ? shortPath(initialFile) : "seed " + config.seed());
+        }
         final SimulationRunner.Result result = SimulationRunner.run(config, balls, outDir,
                 obstaclesFile, initialFile, cli.has("verify"), wallStart);
+        if (config.live()) {
+            printLiveEnd(config, result.sim());
+            return;
+        }
         printSummary(config, result.sim(), result.energyInitial(), result.loopTimeNs(),
                 System.nanoTime() - wallStart, outDir);
+    }
+
+    /** Últimos dos componentes de la ruta (ej. {@code ci1/initial.txt}), para no ensuciar la salida en vivo. */
+    private static String shortPath(final String file) {
+        final Path p = Path.of(file);
+        final int n = p.getNameCount();
+        return n <= 2 ? file : p.subpath(n - 2, n).toString();
+    }
+
+    private static void printLiveEnd(final SimulationConfig config, final BilliardSimulation sim) {
+        if (sim.reachedT90()) {
+            System.out.printf(Locale.US, "t_90 = %.6f s%n", sim.t90());
+        } else {
+            System.out.printf(Locale.US, "t_90 NO ALCANZADO: %d / %d convertidas a t_max = %.0f s%n",
+                    sim.goals(), config.n(), config.tf());
+        }
     }
 
     private static void printSummary(final SimulationConfig config, final BilliardSimulation sim,

@@ -65,6 +65,6 @@ public final class Benchmark {
 
     private static SimulationConfig withNAndSeed(final SimulationConfig b, final int n, final long seed) {
         return new SimulationConfig(n, b.l(), b.w(), b.d(), b.radius(), b.mass(), b.v0(), b.tf(),
-                seed, 0, false, List.of());
+                seed, 0, false, false, List.of());
     }
 }
