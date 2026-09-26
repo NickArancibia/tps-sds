@@ -16,13 +16,13 @@
 #
 # Uso:
 #   ./scripts/build_zip.sh [salida.zip]      (default: SdS_TP3_2026Q2G${GRUPO}C${COMISION}_Codigo.zip
-#                                             en el directorio actual; GRUPO=02, COMISION=S)
+#                                             en el directorio actual; GRUPO=02, COMISION=S2)
 set -euo pipefail
 
 TP="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$TP/.." && pwd)"
 GRUPO="${GRUPO:-02}"
-COMISION="${COMISION:-S}"
+COMISION="${COMISION:-S2}"
 OUT="${1:-$PWD/SdS_TP3_2026Q2G${GRUPO}C${COMISION}_Codigo.zip}"
 case "$OUT" in /*) ;; *) OUT="$PWD/$OUT" ;; esac
 LIMIT=102400

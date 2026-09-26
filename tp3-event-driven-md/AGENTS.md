@@ -82,8 +82,8 @@ Todo está en `../docs/Teorica_3.md`; lo esencial:
   eventos**, cada `--every k` eventos, como pide textualmente el enunciado ("imprimir el estado
   en cada uno de estos t_i, o mejor cada un número entero de eventos"). No hay salida a intervalo
   fijo: para el DCM se usan los propios instantes de los bloques (el espaciado irregular no afecta
-  el ajuste lineal) y, si hiciera falta un instante intermedio, con `--every 1` la interpolación
-  lineal es exacta.
+  el ajuste lineal). **Nunca se usan instantes intermedios** (ni interpolación, ni avance en MRU,
+  ni búsqueda de tiempos que no sean eventos): lo prohíbe la cátedra (ver §10).
   - `goals.csv`: `t, id` por cada gol (≤ N líneas). De acá salen `N_g(t)`, `F_g(t)` y `t_90`.
   - `run.json`: inputs, seed, `t_90`, cantidad de eventos por tipo, tiempo de ejecución del lazo
     de eventos (punto 1.1), energía cinética inicial y final (validación: debe ser constante).
@@ -180,8 +180,9 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   `time_vs_n.png` (log-log), `time_vs_n_linear.png`, `events_vs_n.png`. Tiempo ~N³ (eventos ~N²
   × O(N) por evento), se empina para N ≥ 300 (fracción de área ≥ 0.35). Barras de error ≤ 9 %,
   menores que el símbolo.
-- **Animaciones**: `analysis/animate.py <run_dir> [--fps 60]` (requiere `--every 1`; muestrea
-  a fps fijo avanzando el último bloque en MRU). Videos hechos (60 fps, tiempo real, 30 s, seed
+- **Animaciones**: `analysis/animate.py <run_dir> [--fps 60]` (requiere `--every 1`). **Versión
+  vieja, reemplazada en §10**: muestreaba a fps fijo avanzando el último bloque en MRU (prohibido).
+  Videos hechos con esa versión, a rehacer (60 fps, tiempo real, 30 s, seed
   1, N = 100) en `output/anim/{empty,corr020,corr038,mb_k01,mb_k16,elegida}/anim.mp4`; el
   `dynamic.txt` de cada una (~100–400 MB) se conserva para regenerar fotogramas.
 - **1.2 barridos** (`tf = 100`, `--stop-at-t90`, `--every 25`, **20 seeds** 1..20, 8 en
@@ -244,7 +245,8 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   corredor → disco central → bloque de columnas → bloque + filas → elegida. Texto al costado
   de las figuras: solo parámetros que no estén ya en Simulaciones (nada de explicaciones ni
   conclusiones: eso se dice en vivo). Fotogramas en `../presentaciones/tp3/figuras/`
-  (`animate.py --snapshot` sobre `output/anim/*`). Links de YouTube = `PENDIENTE`.
+  (`animate.py --snapshot` sobre `output/anim/*`; hechos con la versión vieja, a rehacer: §10).
+  Links de YouTube = `PENDIENTE`.
 - **1.3 calculado pero NO revisado ni en git (2026-09-18)**: `analysis/dcm.py`, `dcm_*.png`,
   `D_vs_t90.png`, `out/dcm_D.csv` y `out/dcm/` están sin commitear hasta que el grupo lo
   analice; la presentación de momento no tiene diapositivas del 1.3 (ni observable de
@@ -408,3 +410,39 @@ Finalizar mostrando una comparación de los mejores ejemplares de cada familia."
   e `index.json` (inofensivo, es determinista, pero deja el índice con solo las 3 familias).
 - Tiempo (13 min): ~12:15 estimado. Si el ensayo se pasa, en orden: reproducir ~8–10 s de cada
   video; sacar "Bloque central: <D> vs <t_90>".
+
+## 10. Cambios del 2026-09-26 (devolución de la cátedra: interpolación y competencia)
+
+- **Regla de la cátedra (textual)**: "en este TP (Event Driven Simulation) no está permitido
+  ningún tipo de interpolación, búsqueda o uso de tiempos que no correspondan a eventos. Ni para
+  animar, ni para ningún otro fin." Además, **el zip de código lleva el motor y el código de las
+  animaciones**.
+- **Auditoría**: violaban la regla `animate.py` (cuadros a fps fijo avanzando en MRU; `--snapshot`
+  en un t exacto) y el motor al cortar por `tf` (`advanceTo(tf)` + último bloque de
+  `dynamic.txt` y `finalTime` en `t = tf`). Están bien: t_90 (tiempo del gol), F_g(t) (escalones
+  en los goles), DCM (solo instantes de bloques; las ventanas de ajuste solo eligen muestras).
+- **`animate.py` reescrito**: cada cuadro es exactamente un bloque de `dynamic.txt` (un evento),
+  con `t`, número de evento y goles en pantalla. `--stride k` (un cuadro cada k bloques; sin él
+  se elige k para que el video dure ≈ (t_fin − t_ini)/speed), `--first/--last` o `--t0/--t1`,
+  `--snapshot t` (primer bloque con t_b ≥ t, informa el t_b usado) o `--snapshot-block b`. La
+  reproducción **no es en tiempo real** (cada cuadro avanza un número fijo de eventos).
+- **Motor**: al cortar por `tf` ya no avanza el estado hasta `tf`; el último bloque y `finalTime`
+  son el último evento. No cambia ningún evento ni t_90.
+- **Pendiente**: rehacer los videos (`YCpG6rdYMtU`, `OzH415fexjk`, `wTY2R0gUhOo`, y
+  `PENDIENTE` de k = 16) y los fotogramas `../presentaciones/tp3/figuras/snapshot_*.png` con el
+  `animate.py` nuevo sobre las corridas `--every 1` de `output/anim/*` de la máquina de Nick
+  (alcanza con re-renderizar, sin volver a simular); subirlos y reemplazar los IDs en `tp3.tex`.
+- **Competencia (punto 1.4)**: la cátedra corre las 5 simulaciones en vivo al comienzo de los
+  13 min y el simulador debe imprimir las convertidas en cada nueva conversión y t_90 al final.
+  Flag `--live` (campo `live` de `SimulationConfig`, como `every` y `stopAtT90`): cabecera de una
+  línea, `convertidas: k / N (t = … s)` por gol y `t_90 = … s` (o "NO ALCANZADO" con las
+  convertidas a t_max); sin `--live` la salida es la de siempre. `scripts/competencia.sh gen |
+  run | all [dir] [seeds…]`: genera las 5 condiciones iniciales, corre con `Config.txt`,
+  `--tf 100 --stop-at-t90 --live` (con `HASTA_TMAX=1` hasta 100 s) y cierra con la tabla de t_90
+  y ⟨t_90⟩ ± desvío (ddof = 1). Las 5 corridas tardan ~3 s en total.
+- **Zip**: `scripts/build_zip.sh` → `SdS_TP3_2026Q2G02CS2_Codigo.zip` (comisión S2): poms,
+  `billiard-java/src`, `CliArgs` de `common` y `analysis/{animate.py, common.py,
+  requirements.txt}`; ~32 KB, compila desde el zip. **Rearmarlo justo antes de entregar.**
+- Tras la competencia se presenta **solo la sección Simulaciones** (foco en las configuraciones,
+  mínimo del resto) y los resultados; los 13 min se reparten entre las 5 corridas y la
+  exposición.
