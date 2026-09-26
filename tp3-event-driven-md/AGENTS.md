@@ -437,7 +437,8 @@ Finalizar mostrando una comparación de los mejores ejemplares de cada familia."
   Flag `--live` (campo `live` de `SimulationConfig`, como `every` y `stopAtT90`): cabecera de una
   línea, `convertidas: k / N (t = … s)` por gol y `t_90 = … s` (o "NO ALCANZADO" con las
   convertidas a t_max); sin `--live` la salida es la de siempre. `scripts/competencia.sh gen |
-  run | all [dir] [seeds…]`: genera las 5 condiciones iniciales, corre con `Config.txt`,
+  run | all [dir] [seeds…]` (o `gen s1 … s5` sin dir; seeds enteras y distintas, validadas):
+  genera las 5 condiciones iniciales, corre con `Config.txt`,
   `--tf 100 --stop-at-t90 --live` (con `HASTA_TMAX=1` hasta 100 s) y cierra con la tabla de t_90
   y ⟨t_90⟩ ± desvío (ddof = 1). Las 5 corridas tardan ~3 s en total.
 - **Zip**: `scripts/build_zip.sh` → `SdS_TP3_2026Q2G02CS2_Codigo.zip` (comisión S2): poms,

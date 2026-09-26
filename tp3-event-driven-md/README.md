@@ -51,7 +51,7 @@ Compila el jar si falta.
 
 ```bash
 # 1) Antes de empezar: generar las 5 condiciones iniciales (seeds distintas; sin seeds usa la hora)
-./scripts/competencia.sh gen output/competencia [s1 s2 s3 s4 s5]   # -> ci1..ci5/initial.txt, seeds.txt
+./scripts/competencia.sh gen [s1 s2 s3 s4 s5]                     # -> output/competencia/ci1..ci5/initial.txt, seeds.txt
 
 # 2) Cuando lo indiquen los docentes: correr las 5
 ./scripts/competencia.sh run output/competencia                   # o: run ini1.txt ... ini5.txt

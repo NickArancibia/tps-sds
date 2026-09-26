@@ -16,10 +16,13 @@
 # Uso:
 #   ./scripts/competencia.sh gen [dir] [seed1 ... seedK]   (default: output/competencia, 5 seeds
 #                                                           distintas a partir de la hora actual)
+#   ./scripts/competencia.sh gen seed1 ... seedK           (seeds elegidas, en output/competencia;
+#                                                           enteras y distintas entre sí)
 #   ./scripts/competencia.sh run [dir]                     (corre <dir>/ci*/initial.txt)
 #   ./scripts/competencia.sh run <ini1> ... <iniK>         (corre archivos x y vx vy dados; salida
 #                                                           en $OUT, default output/competencia)
-#   ./scripts/competencia.sh all [dir] [seed1 ... seedK]   (gen + run, para ensayar)
+#   ./scripts/competencia.sh all [dir] [seed1 ... seedK]   (gen + run, para ensayar; también
+#                                                           all seed1 ... seedK)
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -57,6 +60,13 @@ gen() {
             seeds+=("$((base + i))")
         done
     fi
+    local seen=" "
+    for seed in "${seeds[@]}"; do
+        [[ "$seed" =~ ^-?[0-9]+$ ]] || { echo "Seed inválida: '$seed' (tiene que ser un entero)" >&2; exit 1; }
+        [[ "$seen" != *" $seed "* ]] || { echo "Seed repetida: $seed (cada realización lleva una seed distinta)" >&2; exit 1; }
+        seen+="$seed "
+    done
+    (( ${#seeds[@]} == N_RUNS )) || echo "AVISO: la competencia pide $N_RUNS realizaciones y se pasaron ${#seeds[@]} seeds" >&2
     mkdir -p "$dir"
     : >"$dir/seeds.txt"
     local i=0
@@ -134,8 +144,10 @@ shift
 case "$cmd" in
     gen|all)
         ensure_jar
-        dir="${1:-$ROOT/output/competencia}"
-        if [[ $# -gt 0 ]]; then shift; fi
+        dir="$ROOT/output/competencia"
+        if [[ $# -gt 0 && ! "$1" =~ ^-?[0-9]+$ ]]; then
+            dir="$1"; shift
+        fi
         gen "$dir" "$@"
         if [[ "$cmd" == "all" ]]; then
             inits=()
