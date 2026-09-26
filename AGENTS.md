@@ -200,7 +200,7 @@ Basado en la "Guía para Redacción de Informe" de la cátedra. Los informes son
 
 ## 8. Errores frecuentes en devoluciones de la cátedra
 
-Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de la devolución propia del TP2 (G2, nota 6/10; los ítems marcados **[TP2]** costaron puntos). Revisar antes de entregar.
+Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devoluciones propias del TP2 (G2, nota 6/10; los ítems marcados **[TP2]** costaron puntos) y del TP3 (**[TP3]**). Revisar antes de entregar.
 
 ### 8.1 Modelo vs. Simulaciones
 - Los **escenarios/sistemas particulares** (geometrías, casos a estudiar) van en **Simulaciones**, NO en Modelo. El Modelo es solo ecuaciones generales.
@@ -241,4 +241,5 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de la devolu
 - **[TP2] Diapositiva de Introducción**: la presentación arranca con una introducción al sistema real (qué se estudia y por qué), no directamente con el modelo. Ver 5.3, punto 1.
 - **[TP2] Sin acrónimos no definidos**: todo acrónimo (`PBC`, `CIM`, `MD`, ...) se escribe completo la primera vez que aparece ("condiciones periódicas de contorno (PBC)") o directamente no se usa. Aplica a presentación e informe por separado (son autocontenidos).
 - **[TP2] Cifras significativas en el informe**: los valores promedio se reportan con **los decimales que el error permite** (`0.83 ± 0.04`, no `0.8312 ± 0.0413`). Observación textual: "en P7 se ponen más decimales de los correctos". El formato "valor ± error" en tablas de texto fue aceptado; el exceso de decimales, no. Redondear el error a 1 cifra significativa (2 si empieza en 1) y el valor al mismo decimal; el script que genera la tabla debe hacerlo automáticamente.
+- **[TP3] Exploración de configuraciones / familias**: no presentar más de **tres familias** de configuraciones. Cada familia sigue el esquema usual de 5.3 (animación característica → evolución temporal del observable → input vs. observable) y el estudio **cierra con la comparación de los mejores ejemplares de cada familia** (más la referencia que pida el enunciado). Los esquemas de cada familia van en Simulaciones.
 - Lo que la cátedra marcó como **bien** en TP2 y hay que mantener: títulos de sección como diapositivas separadas, cantidad de diapositivas, extensión y presentación general del informe, formato "valor ± error".

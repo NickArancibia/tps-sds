@@ -6,8 +6,9 @@
 %% Animaciones: fotograma + link (el PDF de entrega no lleva video embebido).
 %%
 %% Duracion: 13 min. Estado: 1.1, 1.2 y 1.3 (DCM / D) armados.
-%% Hilo del 1.2 (una familia por bloque, cada una motiva la siguiente):
-%%   corredor -> disco central -> bloque de columnas -> bloque + filas -> config elegida.
+%% 1.2 (devolucion de la catedra): tres familias, cada una con animacion -> F_g(t) -> <t_90> vs
+%%   variable: disco central -> bloque central -> bloque con filas; cierra con la mejor de cada
+%%   familia y la configuracion elegida. Los esquemas de cada familia van en Simulaciones.
 
 \documentclass[aspectratio=169]{beamer}
 \makeatletter\def\input@path{{../}}\makeatother
@@ -29,6 +30,13 @@
 \newcommand{\figura}[1]{%
   \centering
   \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{#1}%
+}
+% Una sola animacion: fotograma grande + valor de la variable + enlace.
+\newcommand{\animsola}[3]{%
+  \centering
+  \includegraphics[width=0.62\linewidth]{#1}\par\vspace{0.3em}
+  {\small #2}\par\vspace{0.15em}
+  {\large #3}\par
 }
 
 \title{Billar-metegol: dinámica molecular regida por eventos}
@@ -272,7 +280,7 @@
   }
 \end{frame}
 
-\begin{frame}{Configuraciones: bloque central con filas}
+\begin{frame}{Configuraciones: bloque con filas}
   \figuraparam[0.78\textwidth]{pres_configs_multi_barrier_rows.png}{%
     Discos de $R = 0.02\uni{m}$\\[0.3em]
     Variables: columnas $k$,\\ filas por lado $n$
@@ -281,31 +289,28 @@
 
 % ==========================================================================
 \section{Resultados}
-% Por familia: animacion -> <t_90> vs variable (configuraciones en Simulaciones).
+% 1.1, despues el 1.2 por familia: animacion -> F_g(t) -> <t_90> vs variable (esquemas de cada
+% familia en Simulaciones); cierra con la mejor de cada familia y la elegida. Despues el 1.3.
 % ==========================================================================
-
-\begin{frame}{Mesa vacía}
-  \centering
-  \includegraphics[width=0.62\linewidth]{snapshot_empty.png}\par\vspace{0.6em}
-  {\large \yt{YCpG6rdYMtU}}\par
-\end{frame}
 
 \begin{frame}{Tiempo de ejecución vs $N$}
   \figura{time_vs_n.png}
 \end{frame}
 
-\begin{frame}{Disco central vs configuración elegida: animación}
+% --- Disco central ---------------------------------------------------------
+
+\begin{frame}{Disco central: animación}
   \begin{columns}[c,onlytextwidth]
     \begin{column}{0.5\textwidth}
-      \animbox{snapshot_disco.png}{}{\yt{OzH415fexjk}}
+      \animbox{snapshot_empty.png}{Mesa vacía}{\yt{YCpG6rdYMtU}}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \animbox{snapshot_elegida.png}{}{\yt{wTY2R0gUhOo}}
+      \animbox{snapshot_disco.png}{$R = 0.33\uni{m}$}{\yt{OzH415fexjk}}
     \end{column}
   \end{columns}
 \end{frame}
 
-\begin{frame}{Mesa vacía vs disco central: fracción de goles vs tiempo}
+\begin{frame}{Disco central: fracción de goles vs tiempo}
   \figura{fg_empty_disco.png}
 \end{frame}
 
@@ -313,16 +318,44 @@
   \figura{t90_single_R.png}
 \end{frame}
 
+% --- Bloque central --------------------------------------------------------
+
+\begin{frame}{Bloque central: animación}
+  \animsola{snapshot_mb_k16.png}{$k = 16$}{\yt{PENDIENTE}}
+\end{frame}
+
+\begin{frame}{Bloque central: fracción de goles vs tiempo}
+  \figura{fg_multi_barrier.png}
+\end{frame}
+
 \begin{frame}{Bloque central: $\langle t_{90} \rangle$ vs cantidad de columnas}
   \figura{t90_multi_barrier.png}
 \end{frame}
 
-\begin{frame}{Bloque central con filas: $\langle t_{90} \rangle$ vs filas}
+% --- Bloque con filas ------------------------------------------------------
+
+\begin{frame}{Bloque con filas: animación}
+  \animsola{snapshot_elegida.png}{$k = 17$, $n = 1$}{\yt{wTY2R0gUhOo}}
+\end{frame}
+
+\begin{frame}{Bloque con filas: fracción de goles vs tiempo}
+  \figuraparam[0.78\textwidth]{fg_rows.png}{%
+    $k = 17$
+  }
+\end{frame}
+
+\begin{frame}{Bloque con filas: $\langle t_{90} \rangle$ vs filas}
   \figura{t90_multi_barrier_rows_k.png}
 \end{frame}
 
+% --- Cierre del 1.2 --------------------------------------------------------
+
 \begin{frame}{Mejor configuración de cada familia}
-  \figura{t90_best.png}
+  \figuraparam[0.72\textwidth]{t90_best.png}{%
+    Disco central:\\ $R = 0.33\uni{m}$\\[0.5em]
+    Bloque central:\\ $k = 18$\\[0.5em]
+    Bloque con filas:\\ $k = 17$, $n = 1$
+  }
 \end{frame}
 
 \begin{frame}{Configuración elegida}

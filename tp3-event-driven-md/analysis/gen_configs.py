@@ -16,6 +16,7 @@ Escribe `output/sweeps/<barrido>/<punto>/config.txt` (formato Config.txt: `x y R
 `output/sweeps/index.json` con, por punto, el nombre de la variable y su valor.
 
 Uso:  python3 gen_configs.py
+      (sin argumentos ni --help: cualquier llamada reescribe todos los config.txt e index.json)
 """
 
 from __future__ import annotations

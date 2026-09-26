@@ -186,7 +186,7 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   `dynamic.txt` de cada una (~100–400 MB) se conserva para regenerar fotogramas.
 - **1.2 barridos** (`tf = 100`, `--stop-at-t90`, `--every 25`, **20 seeds** 1..20, 8 en
   paralelo; `scripts/run_sweeps.sh` ya tiene esos defaults): `analysis/gen_configs.py` genera
-  **solo las 4 familias de la presentación** (`corridor` 4 puntos, `single_R` 9,
+  **solo las familias de la presentación** (hoy 3, ver §9; `corridor` 4 puntos salió después, `single_R` 9,
   `multi_barrier` k = 1..22, `multi_barrier_rows_k` k = 14..17 × n = 1..4) →
   `output/sweeps/<barrido>/<punto>/config.txt` + `index.json`; `analysis/plot_t90.py
   --grid-k 14,15,16,17` → `t90_<barrido>.png`, `analysis/out/t90_<barrido>.csv`. Barra de
@@ -240,7 +240,7 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
 - Ninguna realización dejó de alcanzar 0.9 antes de 100 s; `multi_barrier_rows_k` k17_n04
   (15/20) y k16_n04 (1/20) no pudieron ubicar las 100 partículas (`plot_t90` las cuenta en
   `no_generado`).
-- **Presentación**: `../presentaciones/tp3/tp3.tex` (compila, 23 páginas), hilo del 1.2:
+- **Presentación** (estado del 2026-09-18; la estructura actual del 1.2 está en §9): `../presentaciones/tp3/tp3.tex` (compila, 23 páginas), hilo del 1.2:
   corredor → disco central → bloque de columnas → bloque + filas → elegida. Texto al costado
   de las figuras: solo parámetros que no estén ya en Simulaciones (nada de explicaciones ni
   conclusiones: eso se dice en vivo). Fotogramas en `../presentaciones/tp3/figuras/`
@@ -342,3 +342,69 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
 - **Eje de D lineal desde 0** (reemplaza la escala log de la §7) en `D_vs_t90.png`,
   `D_vs_t90_multi_barrier.png`, `D_vs_k_multi_barrier.png` y `D_vs_t90_rows_best_k.png`; rótulo
   `common.LABEL_D` = "⟨D⟩ (m²/s)", igual que ⟨t₉₀⟩. Se borró `common.log_yaxis` (sin uso).
+
+## 9. Cambios del 2026-09-25 (devolución de la cátedra sobre el punto 1.2)
+
+Devolución textual: *"a) NO presentar más de tres configuraciones b) Para cada familia de
+configuraciones, seguir el esquema usual de las presentaciones: animación característica,
+evolución temporal de número de partículas convertidas, y luego input vs observable (<t90>).
+Finalizar mostrando una comparación de los mejores ejemplares de cada familia."*
+
+- **(a)** se leyó como "a lo sumo tres **familias**": disco central (`single_R`), bloque central
+  (`multi_barrier`) y bloque con filas (`multi_barrier_rows_k`). El corredor ya no aparece en
+  ninguna figura ni diapositiva (`pres_configs_corridor.png` queda en `analysis/figures/` sin uso).
+- **Resultados del 1.2**, una tanda por familia, en este orden: animación → F_g(t) → <t_90> vs
+  variable. Los esquemas "Configuraciones: …" **se quedan en Simulaciones** (sistema particular,
+  raíz §5.3.3 y §8.1). Cierre: "Mejor configuración de cada familia" (`t90_best.png`, con qué
+  punto es cada barra al costado: R = 0.33 m, k = 18, k = 17 n = 1) y "Configuración elegida".
+  - Disco: animación mesa vacía | R = 0.33 m (absorbe la diapositiva suelta "Mesa vacía"),
+    `fg_empty_disco.png`, `t90_single_R.png`.
+  - Bloque: animación k = 16 (`snapshot_mb_k16.png`; video en `output/anim/mb_k16` de la máquina
+    de Nick, **falta subirlo a YouTube**: `\yt{PENDIENTE}`), `fg_multi_barrier.png` (mesa vacía,
+    k = 16, k = 22), `t90_multi_barrier.png`. Se eligió k = 16 porque ya tenía video: está en la
+    meseta (14.8 vs 14.5 s del mínimo k = 18, diferencia < SE).
+  - Filas: animación de la elegida (k = 17, n = 1), `fg_rows.png` (k = 17, n = 0, 1, 3; "k = 17"
+    al costado), `t90_multi_barrier_rows_k.png`.
+  - Se sacó "Disco central vs configuración elegida: animación" (cada video pasó a su familia).
+    Títulos unificados a "bloque con filas" (como en las figuras). 32 páginas.
+- **F_g(t) por familia** (generadas el 2026-09-26 en la máquina de Agustín): seed 1, mismas
+  opciones que los barridos (`--tf 100 --stop-at-t90 --every 25`), en `output/fg_seed1/{empty,
+  disco_R0.330,mb_k16,mb_k22,mb_k17,rows_k17_n01,rows_k17_n03}` (69 MB). Curvas hasta F_g = 0.9.
+  t_90 de esas corridas: vacía 21.6, disco 16.4, k16 14.3, k22 25.9, k17 13.5, k17_n01 13.2,
+  k17_n03 17.7 s. **No son las mismas trayectorias que los videos** (hechos en la máquina de Nick,
+  vacía seed 1 = 22.9 s): son otra realización del mismo modelo; las tres figuras salen de las
+  mismas corridas, así la mesa vacía es la misma curva en todas. `fg_empty_disco.png` se rehízo
+  así (antes: corridas de 30 s de `output/anim` de Nick). Colores: rojo mesa vacía, azul disco,
+  verde bloque, naranja filas (los de `t90_best`/`D_vs_t90`), negro el extremo "demasiado"
+  (k = 22, n = 3). Comandos (desde `analysis/`, `R=../output/fg_seed1`):
+  ```
+  python3 plot_goals.py $R/empty $R/disco_R0.330 --labels "mesa vacía" "disco central" --out fg_empty_disco.png
+  python3 plot_goals.py $R/empty $R/mb_k16 $R/mb_k22 --labels "mesa vacía" "k = 16" "k = 22" \
+      --colors tab:red tab:green black --out fg_multi_barrier.png
+  python3 plot_goals.py $R/mb_k17 $R/rows_k17_n01 $R/rows_k17_n03 --labels 0 1 3 --legend-title n \
+      --colors tab:green tab:orange black --out fg_rows.png
+  ```
+  `plot_goals.py` ganó `--colors`, `--legend-title` (entradas solo con el valor), escalonado de
+  los rótulos de t_90 que se pisan, eje x +5 % y leyenda `best` para corridas cortadas.
+- **`t90_multi_barrier.png` en verde** (color de la familia): `plot_t90.py --from-csv single_R
+  multi_barrier` rehace las figuras de barridos de una variable desde `analysis/out/t90_*.csv` y la
+  mesa vacía de `analysis/out/dcm_D.csv` (datos de Nick, sin leer `output/sweeps`). Validado:
+  `t90_single_R.png` sale idéntica salvo antialiasing (se dejó la commiteada).
+- **Pendiente**: subir `output/anim/mb_k16/anim.mp4` (máquina de Nick) a YouTube y reemplazar
+  `\yt{PENDIENTE}` en "Bloque central: animación".
+- Copia de la presentación antes de este cambio (commit 2872b88, tex + pdf + fotogramas) en
+  `../presentaciones/tp3_develop/`, para comparar. Si se recompila usa las figuras actuales de
+  `analysis/figures/`: la referencia fiel es su `tp3.pdf`.
+- **Ojo: los barridos de la máquina de Agustín son de otra muestra** (14–18/9, `--every 0`, 100
+  seeds de vacía, `rows_k` solo k = 9..14, sin `single_R`) y no coinciden con los CSV commiteados
+  (bloque k = 15: 14.23 vs 15.35 s). **Verificado el 2026-09-26**: con el motor actual, la misma
+  seed da otra trayectoria en cada máquina (vacía seed 1: 21.582253 vs 22.9 s; `Config.txt` seed 1:
+  13.224576 vs 16.726222 s) y en cada máquina es reproducible (las corridas nuevas repiten los t_90
+  de los barridos locales viejos). Causa probable: punto flotante distinto entre plataformas
+  (ARM vs x86) amplificado por el caos. **No correr `plot_t90.py` ni `dcm*.py` en esa máquina** (pisan figuras y CSV
+  commiteados). `output/anim/multi_barrier_k15` de esa máquina es de la misma generación vieja:
+  no usarlo.
+- `gen_configs.py` no tiene argparse: `--help` lo ejecuta y reescribe `output/sweeps/*/config.txt`
+  e `index.json` (inofensivo, es determinista, pero deja el índice con solo las 3 familias).
+- Tiempo (13 min): ~12:15 estimado. Si el ensayo se pasa, en orden: reproducir ~8–10 s de cada
+  video; sacar "Bloque central: <D> vs <t_90>".

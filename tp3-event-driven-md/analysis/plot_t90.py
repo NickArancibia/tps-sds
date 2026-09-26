@@ -24,9 +24,14 @@ Salidas:
   la mesa vacía; qué punto es cada barra se imprime por stdout (va al costado de la figura).
 
 Uso:  python3 plot_t90.py [--grid-k 14,15,16,17] [--fg-config multi_barrier/k16]
+      python3 plot_t90.py --from-csv single_R multi_barrier
       (--grid-k: qué curvas k dibujar en los barridos en grilla; el csv lleva todas.
        --fg-config: configuración de la curva 'con obstáculos' de fg_vs_t.png; default la de
-       menor <t_90>)
+       menor <t_90>.
+       --from-csv: solo rehace t90_<barrido>.png de barridos de una variable desde
+       `analysis/out/t90_<barrido>.csv`, con la mesa vacía de `analysis/out/dcm_D.csv` (las mismas
+       20 realizaciones), sin leer output/sweeps: sirve en una máquina sin los barridos, cuyas
+       corridas darían otros t_90 por seed. No toca csv ni t90_best.png.)
 """
 
 from __future__ import annotations
@@ -103,16 +108,61 @@ def plot_curve(ax, xs, rows, **kw):
                 marker="o", linestyle="--", linewidth=1.0, **kw)
 
 
+def empty_band(ax, empty_mean: float, empty_std: float) -> None:
+    """Mesa vacía: <t_90> (recta) ± desvío entre realizaciones (banda, por detrás de todo)."""
+    ax.axhspan(empty_mean - empty_std, empty_mean + empty_std, color=EMPTY_COLOR,
+               alpha=0.12, linewidth=0, zorder=0)
+    ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1, label="mesa vacía")
+
+
+def draw_single(ax, name: str, rows: list[dict], variable: str) -> None:
+    """Barrido de una variable: una curva en el color de la familia (el mismo de t90_best.png,
+    D_vs_t90.png y fg_*.png) y el mejor punto marcado."""
+    done = [r for r in rows if r["runs"]]
+    plot_curve(ax, [r["value"] for r in done], done,
+               color=FAMILY_COLORS.get(FAMILY_NAMES.get(name), DATA_COLOR),
+               label="con obstáculos")
+    ax.set_xlabel(variable)
+    ax.legend(loc="best")
+    top_row = min(done, key=lambda r: r["t90_mean_s"])
+    mark_point_x(ax, top_row["value"], top_row["t90_mean_s"], f"{top_row['value']:g}")
+
+
+def plot_from_csv(names: list[str], index: dict) -> None:
+    with open(OUT_DIR / "dcm_D.csv") as fh:
+        empty = next(r for r in csv.DictReader(fh) if r["family"] == "empty")
+    empty_mean, empty_std = float(empty["t90_mean_s"]), float(empty["t90_std_s"])
+    print(f"  mesa vacía (dcm_D.csv): <t_90> = {empty_mean:.2f} ± {empty_std:.2f} s "
+          f"({empty['runs']} realizaciones)")
+    for name in names:
+        if isinstance(index[name][0]["value"], list):
+            raise SystemExit(f"{name}: --from-csv solo para barridos de una variable")
+        with open(OUT_DIR / f"t90_{name}.csv") as fh:
+            rows = [{"value": float(r["value"]), "runs": int(r["runs"]),
+                     "t90_mean_s": float(r["t90_mean_s"]), "t90_std_s": float(r["t90_std_s"])}
+                    for r in csv.DictReader(fh)]
+        fig, ax = plt.subplots()
+        empty_band(ax, empty_mean, empty_std)
+        draw_single(ax, name, rows, index[name][0]["variable"])
+        ax.set_ylabel(LABEL_T90)
+        save_figure(fig, f"t90_{name}.png")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--grid-k", type=lambda s: {int(v) for v in s.split(",")}, default=None)
     ap.add_argument("--fg-config", default=None,
                     help="<barrido>/<punto> para la curva 'con obstáculos' de fg_vs_t.png "
                          "(default: el de menor <t_90>)")
+    ap.add_argument("--from-csv", nargs="+", default=None, metavar="BARRIDO",
+                    help="rehacer t90_<barrido>.png desde analysis/out (sin output/sweeps)")
     args = ap.parse_args()
     with open(SWEEPS / "index.json") as fh:
         index = json.load(fh)
     use_style()
+    if args.from_csv:
+        plot_from_csv(args.from_csv, index)
+        return
 
     empty_mean, empty_std, empty_n, empty_missing, _ = t90_stats(SWEEPS / "empty")
     print(f"  mesa vacía: <t_90> = {empty_mean:.2f} ± {empty_std:.2f} s "
@@ -145,10 +195,7 @@ def main() -> None:
                                    top[0]["t90_std_s"], top[1]["label"]))
 
         fig, ax = plt.subplots()
-        # Mesa vacía: <t_90> (recta) ± desvío entre realizaciones (banda, por detrás de todo).
-        ax.axhspan(empty_mean - empty_std, empty_mean + empty_std, color=EMPTY_COLOR,
-                   alpha=0.12, linewidth=0, zorder=0)
-        ax.axhline(empty_mean, color=EMPTY_COLOR, linestyle="--", linewidth=1, label="mesa vacía")
+        empty_band(ax, empty_mean, empty_std)
         if grid:
             # n = 0 filas = el bloque solo (barrido `multi_barrier`, si está corrido): así la
             # curva arranca en la configuración de partida.
@@ -172,13 +219,7 @@ def main() -> None:
             ax.legend(loc="upper left", ncol=2)
             mark_point_x(ax, shown_best[1], shown_best[0], f"{shown_best[1]:g}")
         else:
-            done = [r for r in rows if r["runs"]]
-            plot_curve(ax, [r["value"] for r in done], done, color=DATA_COLOR,
-                       label="con obstáculos")
-            ax.set_xlabel(points[0]["variable"])
-            ax.legend(loc="best")
-            top_row = min(done, key=lambda r: r["t90_mean_s"])
-            mark_point_x(ax, top_row["value"], top_row["t90_mean_s"], f"{top_row['value']:g}")
+            draw_single(ax, name, rows, points[0]["variable"])
         ax.set_ylabel(LABEL_T90)
         save_figure(fig, f"t90_{name}.png")
 
