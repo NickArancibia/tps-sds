@@ -4,8 +4,9 @@ Regla de la cátedra para este TP (simulación dirigida por eventos): NO se perm
 interpolación, búsqueda o uso de tiempos que no correspondan a eventos, ni para animar ni para
 ningún otro fin. Por eso cada cuadro del video es EXACTAMENTE un bloque de `dynamic.txt`, o sea el
 estado que escribió el motor en el instante de un evento: posiciones y estado (fresca/usada) tal
-cual están en el archivo, sin avanzar en MRU ni interpolar. El tiempo que se muestra en el cuadro
-es el instante t de ese evento.
+cual están en el archivo, sin avanzar en MRU ni interpolar. En pantalla solo se muestra la
+cantidad de goles; el rango de t, los eventos por cuadro (video) o el t y el evento del bloque
+(fotograma) se informan por stdout.
 
 Qué bloques se usan (solo se elige entre los instantes de eventos, nunca se evalúa el estado en
 otro t):
@@ -14,7 +15,7 @@ otro t):
 - Sin `--stride`, k se elige para que el video dure en promedio (t_último − t_primero)/`--speed`
   segundos a `--fps` cuadros por segundo: k = round(bloques / (fps · duración)). Como los eventos
   no están equiespaciados en el tiempo, la reproducción NO es en tiempo real: cada cuadro avanza
-  un número fijo de eventos y un tiempo simulado variable (el t de cada cuadro está en pantalla).
+  un número fijo de eventos y un tiempo simulado variable.
 - `--first/--last` (índices de bloque) o `--t0/--t1` (se usan los bloques con t0 ≤ t ≤ t1)
   recortan el rango.
 - El bloque que el motor escribe al final de una corrida cortada por `--tf` (estado avanzado
@@ -151,8 +152,7 @@ def main() -> None:
         used = s[:, 4] > 0.5
         balls.set_offsets(s[:, :2])
         balls.set_facecolors(np.where(used, USED, FRESH))
-        label.set_text(f"t = {times[b]:.4f} s    evento {events[b]}    "
-                       f"goles = {int(used.sum())}/{n}")
+        label.set_text(f"goles = {int(used.sum())}/{n}")
 
     if args.snapshot is not None or args.snapshot_block is not None:
         if args.snapshot_block is not None:

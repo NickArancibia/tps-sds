@@ -19,24 +19,18 @@
 
 \graphicspath{{../../tp3-event-driven-md/analysis/figures/}{figuras/}}
 
-% Fotograma fijo representativo + enlace explicito debajo (GuiaPresentaciones 2.4.8).
-\newcommand{\yt}[1]{\href{https://youtu.be/#1}{\texttt{youtu.be/#1}}}
-\newcommand{\animbox}[3]{%
-  \centering
-  \includegraphics[width=0.9\linewidth]{#1}\par\vspace{0.3em}
-  {\small #2}\par\vspace{0.15em}
-  {\scriptsize #3}\par
-}
+% Animacion: fotograma fijo representativo + enlace explicito debajo (GuiaPresentaciones 2.4.8).
+% El valor de la variable va en el titulo de la diapositiva ("animación con k = 16").
+% \nolinkurl (no \texttt): los IDs pueden tener "_" y el texto se copia tal cual desde el PDF.
+\newcommand{\yt}[1]{\href{https://youtu.be/#1}{\nolinkurl{youtu.be/#1}}}
 \newcommand{\figura}[1]{%
   \centering
   \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{#1}%
 }
-% Una sola animacion: fotograma grande + valor de la variable + enlace.
-\newcommand{\animsola}[3]{%
+\newcommand{\animsola}[2]{%
   \centering
   \includegraphics[width=0.62\linewidth]{#1}\par\vspace{0.3em}
-  {\small #2}\par\vspace{0.15em}
-  {\large #3}\par
+  {\large #2}\par
 }
 
 \title{Billar-metegol: dinámica molecular regida por eventos}
@@ -293,21 +287,18 @@
 % familia en Simulaciones); cierra con la mejor de cada familia y la elegida. Despues el 1.3.
 % ==========================================================================
 
+\begin{frame}{Mesa vacía: animación}
+  \animsola{snapshot_empty.png}{\yt{f-F4tt34GSQ}}
+\end{frame}
+
 \begin{frame}{Tiempo de ejecución vs $N$}
   \figura{time_vs_n.png}
 \end{frame}
 
 % --- Disco central ---------------------------------------------------------
 
-\begin{frame}{Disco central: animación}
-  \begin{columns}[c,onlytextwidth]
-    \begin{column}{0.5\textwidth}
-      \animbox{snapshot_empty.png}{Mesa vacía}{\yt{YCpG6rdYMtU}}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \animbox{snapshot_disco.png}{$R = 0.33\uni{m}$}{\yt{OzH415fexjk}}
-    \end{column}
-  \end{columns}
+\begin{frame}{Disco central: animación con $R = 0.33\uni{m}$}
+  \animsola{snapshot_disco.png}{\yt{mcVQffvMUSg}}
 \end{frame}
 
 \begin{frame}{Disco central: fracción de goles vs tiempo}
@@ -320,28 +311,26 @@
 
 % --- Bloque central --------------------------------------------------------
 
-\begin{frame}{Bloque central: animación}
-  \animsola{snapshot_mb_k16.png}{$k = 16$}{\yt{PENDIENTE}}
+\begin{frame}{Bloque central: animación con $k = 16$}
+  \animsola{snapshot_mb_k16.png}{\yt{eJKzRjsYy9Q}}
 \end{frame}
 
 \begin{frame}{Bloque central: fracción de goles vs tiempo}
   \figura{fg_multi_barrier.png}
 \end{frame}
 
-\begin{frame}{Bloque central: $\langle t_{90} \rangle$ vs cantidad de columnas}
+\begin{frame}{Bloque central: $\langle t_{90} \rangle$ vs $k$}
   \figura{t90_multi_barrier.png}
 \end{frame}
 
 % --- Bloque con filas ------------------------------------------------------
 
-\begin{frame}{Bloque con filas: animación}
-  \animsola{snapshot_elegida.png}{$k = 17$, $n = 1$}{\yt{wTY2R0gUhOo}}
+\begin{frame}{Bloque con filas: animación con $k = 17$, $n = 1$}
+  \animsola{snapshot_elegida.png}{\yt{EFROUE_83rk}}
 \end{frame}
 
-\begin{frame}{Bloque con filas: fracción de goles vs tiempo}
-  \figuraparam[0.78\textwidth]{fg_rows.png}{%
-    $k = 17$
-  }
+\begin{frame}{Bloque con filas: fracción de goles vs tiempo para $k = 17$}
+  \figura{fg_rows.png}
 \end{frame}
 
 \begin{frame}{Bloque con filas: $\langle t_{90} \rangle$ vs filas}
@@ -351,11 +340,7 @@
 % --- Cierre del 1.2 --------------------------------------------------------
 
 \begin{frame}{Mejor configuración de cada familia}
-  \figuraparam[0.72\textwidth]{t90_best.png}{%
-    Disco central:\\ $R = 0.33\uni{m}$\\[0.5em]
-    Bloque central:\\ $k = 18$\\[0.5em]
-    Bloque con filas:\\ $k = 17$, $n = 1$
-  }
+  \figura{t90_best.png}
 \end{frame}
 
 \begin{frame}{Configuración elegida}

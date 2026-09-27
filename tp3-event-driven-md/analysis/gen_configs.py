@@ -57,7 +57,7 @@ def multi_barrier():
     a medida que crece k, pero sigue partiendo la mesa en solo dos mitades (cada una con su arco).
     Variable: cantidad de columnas k."""
     for k in range(1, 23):           # k = 23 ya no deja lugar para ubicar las 100 partículas
-        yield f"k{k:02d}", "Cantidad de columnas pegadas", k, _block(k)
+        yield f"k{k:02d}", "Cantidad de columnas k", k, _block(k)
 
 
 def _rows_block(k: int, n: int) -> list:

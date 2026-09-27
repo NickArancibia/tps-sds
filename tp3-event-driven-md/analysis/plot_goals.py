@@ -59,6 +59,8 @@ def main() -> None:
                     help="color de cada curva (uno por run_dir); default: el de su familia")
     ap.add_argument("--legend-title", default=None,
                     help="símbolo común a todas las entradas de la leyenda (ej. n)")
+    ap.add_argument("--legend-loc", default=None,
+                    help="ubicación de la leyenda (matplotlib, ej. 'upper left'); default: ver abajo")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     labels = args.labels or [None] * len(args.run_dirs)
@@ -103,7 +105,8 @@ def main() -> None:
         # de t_90 = 22.9 s, fondo opaco para que tape limpio el tramo inferior de esa recta.
         # Cortadas en t_90 (barridos): el último t_90 queda sobre el borde derecho y las rectas
         # de t_90 caen en cualquier lado, así que "best" (evita curvas y rectas dibujadas).
-        ax.legend(loc="best" if truncated else "lower right", title=args.legend_title,
+        ax.legend(loc=args.legend_loc or ("best" if truncated else "lower right"),
+                  title=args.legend_title,
                   handlelength=1.2, handletextpad=0.5, borderaxespad=0.3, framealpha=1)
     save_figure(fig, args.out)
 

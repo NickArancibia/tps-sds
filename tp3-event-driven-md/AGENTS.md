@@ -422,7 +422,7 @@ Finalizar mostrando una comparación de los mejores ejemplares de cada familia."
   `dynamic.txt` y `finalTime` en `t = tf`). Están bien: t_90 (tiempo del gol), F_g(t) (escalones
   en los goles), DCM (solo instantes de bloques; las ventanas de ajuste solo eligen muestras).
 - **`animate.py` reescrito**: cada cuadro es exactamente un bloque de `dynamic.txt` (un evento),
-  con `t`, número de evento y goles en pantalla. `--stride k` (un cuadro cada k bloques; sin él
+  con `t`, número de evento y goles en pantalla (desde el 2026-09-27 **solo goles**, §11). `--stride k` (un cuadro cada k bloques; sin él
   se elige k para que el video dure ≈ (t_fin − t_ini)/speed), `--first/--last` o `--t0/--t1`,
   `--snapshot t` (primer bloque con t_b ≥ t, informa el t_b usado) o `--snapshot-block b`. La
   reproducción **no es en tiempo real** (cada cuadro avanza un número fijo de eventos).
@@ -447,3 +447,41 @@ Finalizar mostrando una comparación de los mejores ejemplares de cada familia."
 - Tras la competencia se presenta **solo la sección Simulaciones** (foco en las configuraciones,
   mínimo del resto) y los resultados; los 13 min se reparten entre las 5 corridas y la
   exposición.
+
+## 11. Cambios del 2026-09-27 (videos sin interpolación y ajustes de diapositivas)
+
+- **Videos rehechos** con el `animate.py` nuevo sobre las corridas `--every 1` de esta máquina
+  (Nick): `python3 animate.py ../output/anim/<run> --fps 60` para `empty`, `disco_R033`,
+  `mb_k16` y `elegida` → `output/anim/<run>/anim.mp4` (≈ 30 s de video, 14/34/41/56 eventos por
+  cuadro). Fotogramas `../presentaciones/tp3/figuras/snapshot_{empty,disco,mb_k16,elegida}.png` con
+  `--snapshot 8` (primer evento con t ≥ 8 s). En pantalla **solo "goles = …/100"** (pedido del
+  grupo: sin t ni número de evento; siguen por stdout). Subidos a YouTube y puestos en `tp3.tex`:
+  mesa vacía `f-F4tt34GSQ`, disco `mcVQffvMUSg`, bloque k = 16 `eJKzRjsYy9Q`, elegida
+  `EFROUE_83rk`. `\yt` usa `\nolinkurl` (un `_` en `\texttt` no compila); texto y URI verificados
+  en el PDF.
+- Diapositivas: "Mesa vacía: animación" sola, antes de "Tiempo de ejecución vs N"; el valor de la
+  variable va en el título ("Disco central: animación con R = 0.33 m", "… con k = 16",
+  "… con k = 17, n = 1", "Bloque con filas: fracción de goles vs tiempo para k = 17"), sin texto
+  debajo ni al costado. "Mejor configuración de cada familia" sin texto al costado. Se borró
+  `\animbox`; `\animsola{fotograma}{link}`.
+- **F_g(t) rehechas en esta máquina con la seed 2** de los barridos locales (`--every 25
+  --stop-at-t90`), reemplazan las de `output/fg_seed1` de Agustín (§9). Se eligió la seed 2 porque
+  tiene los órdenes de los promedios en las tres figuras (la seed 1 daba n = 1 peor que n = 0 y
+  k = 22 ≈ vacía): vacía 21.9, disco 14.3, k16 16.6, k22 27.8, k17 13.5, k17_n01 12.8, k17_n03
+  16.3 s. No son las trayectorias de los videos (seed 1). `plot_goals.py` ganó `--legend-loc`;
+  las tres con la leyenda arriba a la izquierda (D18, D21, D24). Comandos (desde `analysis/`,
+  `S=../output/sweeps`):
+  ```
+  python3 plot_goals.py $S/empty/s2 $S/single_R/R0.330/s2 --labels "mesa vacía" "disco central" \
+      --legend-loc "upper left" --out fg_empty_disco.png
+  python3 plot_goals.py $S/empty/s2 $S/multi_barrier/k16/s2 $S/multi_barrier/k22/s2 \
+      --labels "mesa vacía" "k = 16" "k = 22" --colors tab:red tab:green black \
+      --legend-loc "upper left" --out fg_multi_barrier.png
+  python3 plot_goals.py $S/multi_barrier/k17/s2 $S/multi_barrier_rows_k/k17_n01/s2 \
+      $S/multi_barrier_rows_k/k17_n03/s2 --labels 0 1 3 --legend-title n \
+      --colors tab:green tab:orange black --legend-loc "upper left" --out fg_rows.png
+  ```
+- Bloque central: la variable se llama k en todos lados. Diapositiva "Bloque central: ⟨t_90⟩ vs
+  k"; eje de `t90_multi_barrier.png` = "Cantidad de columnas k" (antes "… pegadas"; mismo rótulo que
+  `D_vs_k_multi_barrier.png`), cambiado en `gen_configs.py` y rehecho con `gen_configs.py` +
+  `plot_t90.py --from-csv multi_barrier` (no toca los csv).
