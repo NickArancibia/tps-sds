@@ -282,7 +282,7 @@ Outputs en `--out` (default `output/N<N>_K<K>_seed<seed>/`): `initial.txt`, `sta
   `out/dcm_D_multi_barrier.csv`. `D_vs_t90_multi_barrier.png` está en la presentación después de D vs <t_90> de las mejores de cada familia).
   Ojo: las curvas DCM son cóncavas casi desde el inicio, así que D depende de t_fin (ventana más
   larga → D menor); los saltos de D entre k con distinto t_fin son en parte efecto de la ventana.
-- `time_vs_n_loglog.png`: tiempo vs N con ambos ejes en décadas (no está en la presentación).
+- `time_vs_n_loglog.png`: tiempo vs N con ambos ejes en décadas. Desde el 2026-09-27 la diapositiva "Tiempo de ejecución vs N" usa `time_vs_n_linear.png` (ambos ejes lineales, N rotulado cada 50; pedido del grupo). `time_vs_n_semilog.png`: N lineal, tiempo log (no está en la presentación).
   `analysis/out/time_vs_n.csv` viene del modo `--bench` corrido en otra máquina (commit
   1bb0d95); los `run.json` de `output/time_vs_n/` de esta máquina son de la medición vieja (una
   JVM por corrida) y dan otros tiempos. Para rehacer figuras sin pisar el csv:

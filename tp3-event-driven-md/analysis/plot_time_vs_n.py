@@ -10,6 +10,8 @@ Salidas:
   magnitud); las rectas entre puntos son guía para el ojo.
 - `analysis/figures/time_vs_n_loglog.png`: lo mismo con ambos ejes rotulados en potencias de 10
   (décadas equiespaciadas también en N).
+- `analysis/figures/time_vs_n_semilog.png`: N en escala lineal (rótulos cada 50) y tiempo en
+  escala logarítmica.
 - `analysis/figures/time_vs_n_linear.png`: lo mismo en escala lineal (comparación).
 - `analysis/figures/events_vs_n.png`: eventos procesados en t_f vs N, log-log.
 
@@ -116,7 +118,22 @@ def main() -> None:
     fig, ax = plt.subplots()
     ax.errorbar(ns, means, yerr=stds, color="tab:blue", ecolor="tab:red", marker="o",
                 markersize=4, linestyle="--", linewidth=1.0, capsize=3)
-    ax.set_xticks(ns)
+    ax.set_yscale("log")
+    yticks = log_ticks(min(means), max(means))
+    ax.set_ylim(yticks[0], yticks[-1])
+    ax.set_yticks(yticks, labels=[rf"$10^{{{int(np.log10(t))}}}$" for t in yticks])
+    ax.minorticks_off()
+    ax.set_xlim(0, 1.0625 * max(ns))
+    ax.set_xticks(range(0, max(ns) + 1, 50))
+    ax.set_xlabel(LABEL_N)
+    ax.set_ylabel("Tiempo de ejecución (s)")
+    save_figure(fig, "time_vs_n_semilog.png")
+
+    fig, ax = plt.subplots()
+    ax.errorbar(ns, means, yerr=stds, color="tab:blue", ecolor="tab:red", marker="o",
+                markersize=4, linestyle="--", linewidth=1.0, capsize=3)
+    ax.set_xlim(0, 1.0625 * max(ns))
+    ax.set_xticks(range(0, max(ns) + 1, 50))
     ax.set_xlabel(LABEL_N)
     ax.set_ylabel("Tiempo de ejecución (s)")
     save_figure(fig, "time_vs_n_linear.png")
