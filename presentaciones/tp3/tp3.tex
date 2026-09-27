@@ -239,9 +239,11 @@
           \[
             \mathrm{DCM}(t) = \frac{1}{N}\sum_{i=1}^{N} |\vect{r}_i(t) - \vect{r}_i(0)|^2
           \]
-        \item \textbf{Difusión}: $\mathrm{DCM} = 4\,D\,t$. Se marca a ojo el tramo
-          $[0, t_{\mathrm{fin}}]$ del ajuste lineal y $D$ minimiza
-          $\sum_j [\mathrm{DCM}(t_j) - 4\,D\,t_j]^2$. Promedio sobre 20 realizaciones.
+        \item \textbf{Difusión}: $\mathrm{DCM} = 4\,D\,t$.
+          \begin{itemize}
+            \item Se marca a ojo el tramo $[0, t_{\mathrm{fin}}]$ del ajuste lineal.
+            \item Promedio sobre 20 realizaciones.
+          \end{itemize}
       \end{itemize}
     \end{column}
     \begin{column}{0.46\textwidth}
@@ -292,7 +294,7 @@
 \end{frame}
 
 \begin{frame}{Tiempo de ejecución vs $N$}
-  \figura{time_vs_n.png}
+  \figura{time_vs_n_linear.png}
 \end{frame}
 
 % --- Disco central ---------------------------------------------------------
