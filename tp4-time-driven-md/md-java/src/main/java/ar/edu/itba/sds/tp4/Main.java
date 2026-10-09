@@ -1,5 +1,6 @@
 package ar.edu.itba.sds.tp4;
 
+import ar.edu.itba.sds.tp4.billiard.BilliardRun;
 import ar.edu.itba.sds.tp4.oscillator.OscillatorRun;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ public final class Main {
 
             Uso:
               java -jar md.jar oscillator [opciones]   Sistema 1: oscilador puntual amortiguado
+              java -jar md.jar billiard [opciones]     Sistema 2: billar circular
               java -jar md.jar <sistema> --help        Opciones de cada sistema
             """;
 
@@ -31,6 +33,7 @@ public final class Main {
         try {
             switch (args[0]) {
                 case "oscillator" -> OscillatorRun.run(rest);
+                case "billiard" -> BilliardRun.run(rest);
                 default -> throw new IllegalArgumentException("Sistema desconocido: " + args[0] + "\n" + USAGE);
             }
         } catch (final IllegalArgumentException | IllegalStateException e) {

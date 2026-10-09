@@ -7,4 +7,9 @@ public record DampedOscillator(double mass, double k, double gamma) implements F
     public double at(final double position, final double velocity) {
         return -k * position - gamma * velocity;
     }
+
+    @Override
+    public double rate(final double position, final double velocity, final double acceleration) {
+        return -k * velocity - gamma * acceleration;
+    }
 }

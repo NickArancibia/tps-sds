@@ -41,9 +41,10 @@ def decade_ticks(axis, lo_exp: int, hi_exp: int, step: int = 1) -> None:
     axis.set_minor_locator(NullLocator())
 
 
-def save_figure(fig, name: str) -> Path:
-    FIGURES.mkdir(parents=True, exist_ok=True)
-    path = FIGURES / name
+def save_figure(fig, exercise: str, name: str) -> Path:
+    """Guarda en analysis/figures/<exercise>/<name>; exercise = "ej1" (oscilador) o "ej2" (billar)."""
+    path = FIGURES / exercise / name
+    path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path)
     plt.close(fig)
     print(f"  {path.relative_to(TP_ROOT)}")

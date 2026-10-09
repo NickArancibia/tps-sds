@@ -82,9 +82,8 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
 
 - **Inicialización a N > 600 (2.1b)**: la inserción aleatoria secuencial (la del TP3) se traba
   cerca de `φ ≈ 0.55` en 2D (N ≈ 465 acá; el TP3 1.1 llegó solo a N = 400 por eso, ver
-  `../tp3-event-driven-md/scripts/run_time_vs_n.sh`). A N = 600–700 (`φ` 0.71–0.82) hace falta
-  otro método (ej.: red hexagonal con sitios elegidos al azar, o crecer radios). El empaquetado
-  hexagonal admite ~720 centros dentro de `R − r`.
+  `../tp3-event-driven-md/scripts/run_time_vs_n.sh`). Resuelto en el TP4 con `--init hex`
+  (2026-10-08, §6): red triangular de lado `2r`, 716 sitios sin obstáculos y 714 con `x_o = r`.
 - **Comparación con TP3 (2.1b)**: el TP3 1.1 fue mesa rectangular vacía; hay que **re-correr su
   benchmark en la misma máquina** que el del TP4. Para N > 400 el TP3 tampoco puede inicializar
   con su método actual.
@@ -133,7 +132,11 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
   - Velocity Verlet: `v(t+dt)` predicha como `v(t) + a(t) dt`.
   - Beeman: variante PC de la teórica; `a(t+dt)` se recalcula con la `v` corregida (la
     diapositiva no lo dice; mismo criterio que Velocity Verlet).
-  - Arranques: `r(−dt)` (Verlet) y `a(−dt)` (Beeman) por Euler en `−dt`.
+  - Arranques: `a(−dt)` (Beeman) por Euler en `−dt` (con la exacta da el mismo ECM).
+    `r(−dt)` (Verlet) por **Taylor hasta tercer orden** (2026-10-05):
+    `r(0) − dt v(0) + dt²/2 a(0) − dt³/6 j(0)`, `j = (df/dt)/m` (`Force.rate`; en el oscilador
+    `df/dt = −k v − γ a`). Con Euler en `−dt` (solo hasta dt², lo de la teórica) el ECM era ~9 %
+    mayor (C = 379 vs 348 m² s⁻⁴), mismo orden.
 - **`t_f = 5 s` (sistema 1)**: es parámetro de la teórica (diap. 37) y ya es significativo:
   ~9.5 períodos, amplitud final 2.8 % de la inicial (`e^{−t/1.4}`); con un error que crece como
   `t e^{−t/τ}`, el 97 % de la integral del error cuadrático cae antes de 5 s. Alargarlo solo
@@ -142,7 +145,11 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
 ### Abiertas (charlar antes de implementar)
 
 1. Sistema 2: "esquema de Verlet" = **Verlet original** o **Velocity Verlet** (el 1.1 los
-   distingue; la teórica llama "Algoritmo de Verlet" al original).
+   distingue; la teórica llama "Algoritmo de Verlet" al original). El motor tiene los dos
+   (`--scheme`). Con fuerza que depende solo de posiciones son **el mismo algoritmo**: además de
+   las mismas posiciones, `r(t+dt) − r(t−dt) = 2 dt v_VV(t)`, así que la velocidad centrada de
+   Verlet coincide con la de Velocity Verlet. Lo único que cambia es el redondeo (ver §6,
+   sistema 2). Velocity Verlet es más simple (sin arranque `r(−dt)` ni paso adelantado).
 2. ~~Sistema 1: cómo evaluar la fuerza amortiguada~~ → decidido (predictor-corrector, arriba).
    Registro de las alternativas evaluadas:
    Opciones: diferencia hacia atrás / medio paso, predictor Euler, predictor-corrector, o
@@ -175,14 +182,14 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
    que el despeje si `f(t+dt)` se recalcula con la `v` corregida, ~20 % más si no.
 3. ¿Se agrega Gear de orden 5 al sistema 1? El enunciado dice "por lo menos" los 4, pero la
    diapositiva pide la figura "para los 4 métodos solicitados".
-4. Método de inicialización para N alto, y si se usa el mismo para todos los N.
-5. Observable escalar del 2.1a (ej.: `max_t |E(t) − E₀|/E₀`, promedio temporal de
-   `|E(t) − E₀|/E₀`, o pendiente de deriva) y criterio de tolerancia para elegir dt.
+4. ~~Método de inicialización para N alto~~ → red hexagonal (`--init hex`, §6), usada para
+   **todos** los N del 2.1b (mismo método en toda la curva; elegido 2026-10-08).
+5. ~~Observable escalar del 2.1a y dt~~ → error medio ε y **dt = 10⁻⁵ s** (2026-10-08, §6).
 6. Valores de N del 2.1b/2.4a y de `x_o` del 2.2; cantidad de realizaciones.
 7. Criterio de estacionario para `f(v)` en el 2.3 (ej.: `<v⁴>/<v²>²`, que vale 1 al inicio y 2
    para MB en 2D) y ancho de bins del histograma.
-8. Búsqueda de vecinos: CIM de `../common/` (grilla sobre `[−R, R]²`, sin periodicidad) vs.
-   fuerza bruta; impacta directo en el escalamiento del 2.1b.
+8. ~~Búsqueda de vecinos~~ → implementado con grilla de celdas propia (§6, sistema 2); costo por
+   paso O(N), relevante para el escalamiento del 2.1b.
 
 ## 6. Arquitectura
 
@@ -215,22 +222,141 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/
   10⁻² s, dt = 10⁻², 10⁻³, 10⁻⁴, 10⁻⁵): Beeman 3.4·10⁻⁶ … 3.3·10⁻¹⁸, Verlet 3.8·10⁻⁶ …
   3.8·10⁻¹⁸, Velocity Verlet 3.8·10⁻⁶ … 3.6·10⁻¹⁸ (pendiente 4); Euler PC 1.2·10⁻² … 3.4·10⁻⁸.
   Coincide con los chequeos de `exploracion/`.
-- **Punto 1.2 (2026-10-03)**: `scripts/run_oscillator_sweep.sh` (4 esquemas × dt = 5·10⁻³ …
-  10⁻⁶ en secuencia 1-2-5; dt < 10⁻² como pide el enunciado) → `output/oscillator/sweep/`;
-  `analysis/plot_ecm.py` → `analysis/figures/ecm_vs_dt.png` + tabla y pendientes por stdout.
-  Resultado: Beeman < Velocity Verlet < Verlet original por ~8 % y ~13 % (indistinguibles en
-  la figura log-log), las tres con pendiente 4.00 (orden 2); Euler PC pendiente 1.86 en
-  10⁻⁴–5·10⁻³ y 2.0 para dt chicos (orden 1), 10⁴–10¹² veces más ECM. Verlet original se
-  aplana en ~10⁻¹⁹ para dt ≤ 5·10⁻⁶ mientras las otras siguen bajando hasta 3·10⁻²²:
-  probablemente redondeo de `2r(t) − r(t−dt)` (sin verificar; la forma "sumada" de Verlet, que
-  acumula `r(t) − r(t−dt)`, lo evitaría). Pendiente decidir: explicarlo o cortar el barrido.
+- **Punto 1.2 (2026-10-03, re-corrido 2026-10-05 con el arranque nuevo de Verlet)**:
+  `scripts/run_oscillator_sweep.sh` (4 esquemas × dt = 5·10⁻³ … 10⁻⁶ en secuencia 1-2-5;
+  dt < 10⁻² como pide el enunciado) → `output/oscillator/sweep/`; `analysis/plot_ecm.py` →
+  `analysis/figures/ej1/ecm_vs_dt.png` + tabla y pendientes por stdout. Resultado: Beeman < Verlet
+  original < Velocity Verlet por ~6 % y ~10 % (indistinguibles en la figura log-log), las tres
+  con pendiente 4.00 (orden 2); Euler PC pendiente 1.86 en 10⁻⁴–5·10⁻³ y 2.0 para dt chicos
+  (orden 1), 10⁴–10¹² veces más ECM. Verlet original se aplana en ~10⁻¹⁹ para dt ≤ 5·10⁻⁶
+  mientras las otras siguen bajando hasta 3·10⁻²²: probablemente redondeo de
+  `2r(t) − r(t−dt)` (sin verificar; la forma "sumada" de Verlet, que acumula `r(t) − r(t−dt)`,
+  lo evitaría). Pendiente decidir: explicarlo o cortar el barrido.
+  `plot_ecm.py` también escribe `analysis/figures/ej1/ecm_dt4_vs_dt.png` (2026-10-05, **solo para
+  análisis, no va a la diapositiva**): ECM/dt⁴ vs dt de los tres esquemas de orden 2 en eje y
+  lineal, solo dt ≥ 10⁻⁵ (debajo, el piso de Verlet lo saca de escala). Constantes
+  `C = ECM/dt⁴`: Beeman 330, Verlet original 348 (×1.06), Velocity Verlet 364 (×1.10) m² s⁻⁴,
+  planas en todo el rango (VV y Beeman suben ~2 % en dt = 5·10⁻³ por términos de orden
+  superior). Descartado: lupa en dt = 10⁻³ dentro de `ecm_vs_dt.png` (no gustó).
+  También `analysis/figures/ej1/ecm_vs_dt_tramo.png` (solo análisis): el log-log de `ecm_vs_dt.png`
+  recortado a dt ∈ [10⁻³/1.04, 10⁻³·1.04] y a los tres esquemas de orden 2 (rectas paralelas;
+  un solo punto medido, el resto son los segmentos guía hacia 5·10⁻⁴ y 2·10⁻³).
+  Los chequeos de abajo (2026-10-05) son con el arranque de Euler de Verlet (C = 379).
+  Verlet con despeje vs predictor-corrector (2026-10-05, `exploracion/verlet_variantes.py`,
+  mismo ECM): C = 379.7 / 379.5 / 379.4 (despeje) contra 380.1 / 379.5 / 379.5 (PC) en
+  dt = 5·10⁻³ / 10⁻³ / 10⁻⁴; cociente PC/despeje 1.001 → 1.00003. El despeje (forma
+  incremental) también se aplana en ~10⁻¹⁹ para dt ≤ 5·10⁻⁶ (1.9·10⁻¹⁹, 1.1·10⁻¹⁹, 1.8·10⁻¹⁹,
+  idénticos al PC): el piso no viene del predictor-corrector.
+  Equivalencia (motor, 2026-10-05): con `--gamma 0` Verlet y Velocity Verlet dan las mismas
+  posiciones (máx. 3·10⁻¹² m) y los tres el mismo ECM; con γ = 1000 kg/s se separan (Verlet/
+  Beeman 6.2, VV/Beeman 0.80). Las diferencias vienen solo de la v dentro de −γv.
+  Chequeo descartable de arranque y velocidad (Python fuera del repo, C = ECM/dt⁴ en dt = 10⁻³ /
+  10⁻⁴, m² s⁻⁴): Beeman 330 (a(−dt) exacta: igual); Verlet PC 379 = despeje 379; **Verlet con
+  r(−dt) por Taylor de 3er orden (jerk = (−k v − γ a)/m) o exacta: 348** (−8 %, sigue arriba de
+  Beeman); Verlet con v(t) de 3 puntos hacia atrás 436; VV PC 363 (motor); VV implícito (despeje
+  o PC iterado a convergencia) 379, igual a Verlet con arranque de Euler; VV sin recalcular f
+  con la v corregida 436; VV con predictor Adams-Bashforth 2 377–379. Ninguna variante bajó de
+  Beeman con γ = 100. Beeman sin recalcular a(t+dt) con la v corregida (pasa la de la v
+  predicha, literal de la teórica): C = 327.0 / 328.7 contra 329.6 / 329.0 del motor (< 1 %).
+
+### Implementado (2026-10-08): sistema 2, motor + barrido de dt del 2.1a
+
+```
+md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
+├── BilliardRun.java      # CLI (java -jar md.jar billiard ...), lazo, static/dynamic/conversions/run.json
+├── Table.java            # R, r, m, k, obstáculos en (±x_o, 0)
+├── ContactForces.java    # resortes partícula-partícula (grilla de celdas), pared (imagen), obstáculos;
+│                         # registra la conversión fresca → usada en el paso del primer ξ > 0
+├── Integrator.java, Scheme.java
+├── VelocityVerlet.java, OriginalVerlet.java   # Verlet en forma sumada, v centrada, paso adelantado
+└── InitialState.java     # random: inserción secuencial al azar en |r| <= R − r (se traba en N ≈ 465)
+                          # hex: N sitios al azar de una red triangular de lado 2r(1 + 10⁻⁹)
+```
+
+- Grilla propia (no el CIM de `common`): 29 × 29 celdas de lado `2R/29 ≥ 2r` sobre `[−R, R]²`,
+  sin listas de vecinos ni alocación por paso; la fuerza se suma en el mismo recorrido.
+- `dynamic.txt` con precisión completa (`Double.toString`): la energía potencial se calcula en
+  post-proceso con `ξ ~ 10⁻³ m` y hace falta resolver desvíos relativos de 10⁻⁸.
+- Post-proceso: `analysis/billiard_common.py` (carga, `E = Σ ½ m v² + Σ_contactos ½ k ξ²`).
+- **Barrido 2.1a** (`scripts/run_energy_sweep.sh` → `output/billiard/energy_dt/`;
+  `analysis/plot_energy_dt.py` → `analysis/figures/ej2/`): N = 300 sin obstáculos,
+  `t_f = 10 s`, estado cada 5·10⁻² s, **semillas 1–10**, dt = 5·10⁻³ … 10⁻⁶ (1-2-5), ambos
+  esquemas. El sistema es conservativo: todo cambio de E es error de integración (criterio de la
+  Teórica 4, diap. 34–35, para casos sin solución analítica). Error relativo
+  `ΔE(t) = (E(t) − E₀)/E₀` (antes llamado "desvío relativo"; se renombró para no confundirlo
+  con el desvío estándar de las barras).
+  - **Observable elegido (2026-10-08): error medio** `ε = (1/K) Σ_{t_k>0} |ΔE(t_k)|` sobre los
+    K = 200 estados guardados; un escalar por realización, barra = desvío estándar entre las 10
+    semillas (ddof = 1). Descartados: `|ΔE(t_f)|` (desvío entre semillas del orden de su
+    promedio) y `max|ΔE|` (paralelo a ε, factor ~2-3).
+  - Figuras: `energia_vs_t.png` (E(t) con dt = 5·10⁻⁴, 10⁻⁴, 5·10⁻⁵, 10⁻⁵, semilla 1; 10⁻³ se
+    sacó: diverge y aplasta la escala), `energia_error_medio_dt.png` (ε vs dt, Velocity Verlet,
+    10 semillas por punto), `energia_esquemas_dt.png` (ε vs dt, ambas variantes),
+    `energia_costo_dt.png`. Las figuras de ε excluyen los dt que divergen (ε ≥ 1: 10⁻³, 2·10⁻³,
+    5·10⁻³), que se informan al costado.
+  - **dt elegido (2026-10-08): 10⁻⁵ s**, recta vertical en `energia_error_medio_dt.png`.
+    Criterio: mayor dt redondo con ε < 10⁻⁴ (ε = 5·10⁻⁶; 2·10⁻⁵ también cumple, 5·10⁻⁵ no).
+    ~350 pasos por contacto partícula-partícula; dt ≥ 10⁻³ diverge.
+  - ε (Velocity Verlet, promedio ± desvío): 2.3·10⁻² ± 9·10⁻³ (5·10⁻⁴), 4.7·10⁻⁴ ± 2·10⁻⁴
+    (10⁻⁴), 5.0·10⁻⁶ ± 2·10⁻⁶ (10⁻⁵), 7·10⁻⁸ ± 4·10⁻⁸ (10⁻⁶); pendiente log-log 2.03 en
+    10⁻⁶–5·10⁻⁴ (orden 2). dt = 10⁻³: 9·10³ (diverge; `|ΔE| = 1` entre 1.55 y 2.05 s);
+    2·10⁻³: 4·10⁵; 5·10⁻³: E no finita en las 10 semillas.
+  - Verlet original y Velocity Verlet: mismo ε dentro de las barras en todo el rango.
+    Partiendo de la misma condición inicial, las trayectorias se separan por redondeo
+    amplificado por el caos: 2.5·10⁻¹⁰ m a 0.2 s, 2.6·10⁻⁵ m a 0.4 s, 0.09 m a 0.6 s
+    (exponente ~58 s⁻¹, dt = 10⁻⁴). Ninguna trayectoria individual es reproducible a más de
+    ~0.5 s: solo valen las estadísticas sobre semillas.
+  - Costo (14 corridas en paralelo, no es benchmark): ~4 µs por paso por cada 100 partículas;
+    10⁻⁵ s → 41 s por cada 10 s simulados con N = 300.
+- **Punto 2.1b** (2026-10-08): `scripts/run_time_vs_n.sh` corre, secuencial y en esta máquina,
+  el `--bench` del TP3 (su 1.1: mesa vacía, N = 25 … 400, `output/tp3_time_vs_n/`) y el
+  `--bench` del TP4 (`billiard --bench`, `output/billiard/time_vs_n/N<N>/s<seed>/`): `x_o = r`,
+  `--init hex` para **todos** los N (mismo método en toda la curva), dt = 10⁻⁵ s, t_f = 30 s,
+  N = 25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 10 seeds. Una JVM, 30 s de calentamiento,
+  orden aleatorio, sin `dynamic.txt`; guarda `conversions.csv` (para el 2.4a) y `run.json`
+  (`loopTimeMs`). `analysis/plot_time_vs_n.py` → `ej2/tiempo_vs_n.png` (log-log, promedio ±
+  desvío entre realizaciones) y exponentes locales por stdout. Prueba previa (0.5 s simulados):
+  N = 50 → 0.22 s, N = 700 → 1.84 s, o sea ~13 s y ~110 s por corrida de 30 s.
+  **Corrido 2026-10-08** (80 min en total; log en `output/time_vs_n.log`). Tiempo del lazo,
+  promedio ± desvío (10 realizaciones):
+  - TP3 (eventos): 0.0020 s (N = 25), 0.096 (100), 1.07 (200), 6.1 (300), 25.0 (400);
+    exponente local 2.6 → 4.9 (crece con N).
+  - TP4 (paso temporal): 12.5 s (25), 17.0 (100), 25.4 (200), 36.0 (300), 49.8 (400), 66 (500),
+    86 (600), 115 (700); exponente local 0.14 → 1.87. A N chico domina el costo fijo por paso
+    (recorrer las 29 × 29 celdas, 3·10⁶ pasos); a N grande crece más que lineal porque con área
+    fija los pares a revisar por celda crecen con la densidad [inferencia, no medido aparte].
+  - TP3 más rápido en todo el rango medido (×6400 en N = 25, ×2 en N = 400). Cruce no medido:
+    el TP3 no inicializa arriba de N ≈ 400.
+  - Para el 2.4a (mismos outputs): F_u(30 s) = 0.93 (25), 0.95 (100), 0.89 (150), 0.86 (200),
+    0.71 (300), 0.55 (400), 0.34 (500), 0.14 (600), 0.01 (700). t_90 alcanzado en 7, 10, 9, 4
+    de 10 realizaciones para N = 25, 50, 100, 150 y en ninguna desde N = 200.
+- **Red hexagonal** (`--init hex`): fila `y = 0` en `x = (i + ½) a`, así con `x_o = r` cada
+  obstáculo ocupa un sitio. Sitios: 716 (sin obstáculos), 714 (`x_o = r`), 708 (`x_o = 0.2`).
+  Chequeo (2026-10-08, dt = 10⁻⁵, 3 s, `x_o = r`): `E_p(0) = 0` (sin superposición inicial);
+  N = 300 `<|ΔE|>` 2.7·10⁻⁶, N = 700 6.9·10⁻⁶. A N = 700 la energía potencial es el 38 % de E
+  (contactos casi permanentes; 5 % a N = 300). Lazo de 3·10⁵ pasos sin carga: 5.8 s (N = 300),
+  8.2 s (N = 700).
+  Esquema: `analysis/plot_hex_init.py <corrida>` → `ej2/red_hexagonal.png` (red completa, sitios
+  elegidos, velocidades, ampliación en los obstáculos); reconstruye la red en Python y verifica
+  que cada partícula de t = 0 cae en un sitio (distancia 0). Corrida de ejemplo:
+  `output/billiard/hex_demo_N300_s1`. Consecuencia: las vecinas arrancan a 2r + ~10⁻¹¹ m (en
+  contacto), así que las que ocupan los sitios pegados a un obstáculo pueden convertirse en el
+  primer paso (2 de 300 en esa corrida).
+- **Animación**: `analysis/animate_billiard.py` (un cuadro por estado guardado, `--stride` elige
+  uno de cada k, `--zoom X Y HALF`, `--snapshot T` para el PNG del PDF). Partículas
+  semitransparentes: la superposición se ve más oscura. Corridas de ejemplo en
+  `output/billiard/anim/` (N = 300, `x_o = r`, seed 7, dt = 10⁻⁵): `panorama.mp4` (t_f = 20 s,
+  estado cada 10⁻² s) y `lenta_zoom.mp4` (t_f = 0.3 s, estado cada 2·10⁻⁴ s, zoom 0.3 m × 0.3 m
+  sobre los obstáculos). Mismo seed y dt: la lenta son los primeros 0.3 s de la misma trayectoria.
+  Superposición máxima vista en la lenta: 5.1 mm (29 % de r).
 
 ### Convenciones del repo
 
 - Motor en **Java**, módulo Maven propio dentro de este directorio, agregado a `<modules>` del
   `pom.xml` raíz; reutilizar `../common/` (`Particle`, `CliArgs`, IO estático/dinámico, CIM)
   donde encaje. El zip < 100 KB lleva solo el `src/` del motor (+ lo usado de `common`).
-- Post-proceso en Python en `analysis/` (figuras en `analysis/figures/`), scripts de barridos
+- Post-proceso en Python en `analysis/` (figuras en `analysis/figures/ej1/` y `ej2/`, según el
+  sistema; `save_figure(fig, "ej1" | "ej2", nombre)`), scripts de barridos
   en `scripts/`, outputs crudos en `output/`.
 - `exploracion/`: prototipos en Python para decidir antes de implementar (no van al zip ni a
   la presentación). `verlet_variantes.py` compara formas de inferir `v(t)` en Verlet original
