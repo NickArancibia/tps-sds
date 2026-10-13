@@ -62,8 +62,9 @@ java -jar md-java/target/md.jar billiard --help
 |---|---|---|
 | `--scheme` | `verlet`, `velocity-verlet` | (obligatorio) |
 | `--dt` | paso de integración (s) | 1e-5 |
-| `--tf` | tiempo final (s), múltiplo de `dt` | 10 |
+| `--tf` | tiempo final (s), múltiplo de `dt`; con `--stop-at-t100`, tiempo máximo | 10 |
 | `--save-dt` | intervalo de guardado (s), múltiplo de `dt` | 5e-2 |
+| `--stop-at-t100` | cortar en el primer paso con todas las partículas usadas (`F_u = 1`) | — |
 | `--n` | cantidad de partículas | 300 |
 | `--xo` | obstáculos en `(±xo, 0)`, `r ≤ xo ≤ R − r`; sin el flag no hay obstáculos | — |
 | `--seed` | semilla de la condición inicial | 1 |
@@ -73,7 +74,8 @@ java -jar md-java/target/md.jar billiard --help
 
 Salida en `--out`: `static.txt` (N; R; `r m` por partícula; K; `x y r` por obstáculo),
 `dynamic.txt` (por bloque: `t` y `x y vx vy estado` por partícula, estado 0 = fresca, 1 = usada,
-precisión completa), `conversions.csv` (`t,id` del primer contacto con un obstáculo) y `run.json`.
+precisión completa; cada `save-dt` más el último paso, que con `--stop-at-t100` es el de corte),
+`conversions.csv` (`t,id` del primer contacto con un obstáculo) y `run.json` (incluye `finalTime`).
 
 Punto 2.1a (energía vs dt, N = 300 sin obstáculos, 10 semillas × 12 dt × 2 esquemas; ~20 min
 con 14 núcleos; saltea las corridas ya hechas):
@@ -83,16 +85,27 @@ con 14 núcleos; saltea las corridas ya hechas):
 python3 analysis/plot_energy_dt.py # → analysis/figures/ej2/energia_*.png + tabla por stdout
 ```
 
-Punto 2.1b (tiempo de ejecución vs N, TP3 y TP4 en esta máquina, 10 realizaciones por N; ~1.5 h
-secuencial, sin otra carga pesada mientras mide):
+Punto 2.1b (tiempo de ejecución vs N, TP3 y TP4 en esta máquina, red hexagonal en los dos,
+10 realizaciones por N; secuencial, sin otra carga pesada mientras mide). Solo re-mide los N de
+`NS3` (TP3) y `NS4` (TP4); el resto de lo ya medido queda:
 
 ```bash
-./scripts/run_time_vs_n.sh         # → output/tp3_time_vs_n/ y output/billiard/time_vs_n/
-python3 analysis/plot_time_vs_n.py # → analysis/figures/ej2/tiempo_vs_n.png + tabla por stdout
+./scripts/run_time_vs_n.sh                   # todos los N en los dos motores
+NS4=625,650 ./scripts/run_time_vs_n.sh       # TP3 completo + esos N del TP4
+python3 analysis/plot_time_vs_n.py           # → analysis/figures/ej2/tiempo_vs_n.png + tabla por stdout
 ```
 
 `--bench N1,N2,... --seeds k` corre todas las realizaciones en una sola JVM (calentamiento previo,
 orden aleatorio, sin `dynamic.txt`); el tiempo es `loopTimeMs` de cada `run.json`.
+
+Punto 2.4a (`t_90` y `t_100` vs densidad): las corridas del 2.1b del TP4 (mismas semillas; el
+motor es determinista, así que los primeros 30 s coinciden bit a bit) extendidas hasta `F_u = 1`
+o `t_max = 1500 s`, estado cada 5 s, en paralelo. No correr mientras mide el 2.1b:
+
+```bash
+./scripts/run_t100_vs_n.sh                   # → output/billiard/t100_vs_n/N<N>/s<seed>/
+python3 analysis/plot_t100_vs_n.py           # → ej2/t90_vs_*.png, t100_vs_*.png, fu_vs_t_densidad.png
+```
 
 Animación (un cuadro por estado guardado, sin interpolar; la superposición de los contactos se ve
 más oscura):

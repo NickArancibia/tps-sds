@@ -35,6 +35,7 @@ Opciones principales (`--help` lista todas):
 | `--obstacles` | archivo de obstáculos `x y R` (sin flag: mesa vacía) | — |
 | `--tf` | tiempo simulado máximo (s) | 30 |
 | `--seed` | semilla (usar seeds distintas para promediar) | 42 |
+| `--init` | condición inicial: `random` (inserción al azar, hasta N ≈ 400) o `hex` (N sitios al azar de una red triangular de lado 2r, 737 sitios en la mesa vacía; agregado para el 2.1b del TP4) | `random` |
 | `--stop-at-t90` | cortar apenas la fracción de usadas llega a 0.9 | — |
 | `--every` | escribir `dynamic.txt` cada k eventos, 1 = todos (0 = no escribir) | 0 |
 | `--gen-initial` | solo generar `initial.txt` y salir (competencia) | — |
@@ -72,6 +73,9 @@ A mano, una corrida: `java -jar billiard-java/target/billiard.jar --obstacles Co
 ./scripts/run_time_vs_n.sh 20          # una JVM, calentamiento, N × seeds en orden aleatorio
 python3 analysis/plot_time_vs_n.py     # analysis/out/time_vs_n.csv + analysis/figures/time_vs_n.png
 ```
+
+El 2.1b del TP4 re-corre este benchmark con `--init hex` hasta N = 675 (ver
+`../tp4-time-driven-md/scripts/run_time_vs_n.sh`).
 
 ## Salida
 

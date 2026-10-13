@@ -85,12 +85,14 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
   `../tp3-event-driven-md/scripts/run_time_vs_n.sh`). Resuelto en el TP4 con `--init hex`
   (2026-10-08, §6): red triangular de lado `2r`, 716 sitios sin obstáculos y 714 con `x_o = r`.
 - **Comparación con TP3 (2.1b)**: el TP3 1.1 fue mesa rectangular vacía; hay que **re-correr su
-  benchmark en la misma máquina** que el del TP4. Para N > 400 el TP3 tampoco puede inicializar
-  con su método actual.
-- **2.4a reusa los outputs del 2.1b**: esas corridas deben guardar los tiempos de conversión
-  (equivalente a `goals.csv` del TP3) aunque sean de benchmark; si no, hay que re-correr (error
-  del TP3, no repetir). Con `t_f = 30 s` puede que `t_100` (o `t_90`) no se alcance para algún N:
-  reportarlo.
+  benchmark en la misma máquina** que el del TP4. Resuelto (2026-10-12): el TP3 ganó
+  `--init hex` (red triangular centrada en la mesa, 737 sitios) y se re-corre con red hexagonal
+  para todos los N, hasta 675 (§6).
+- **2.4a reusa los outputs del 2.1b**: con `t_f = 30 s` no se llega a `t_90` desde N = 200 ni a
+  `t_100` casi nunca. Resuelto (2026-10-12): el motor es determinista, así que una corrida con la
+  misma semilla reproduce bit a bit la del benchmark (verificado: `conversions.csv` idéntico en
+  N = 25 y 50, semilla 1) y se extiende con `--stop-at-t100` hasta `t_max = 1500 s` (§6). Las
+  realizaciones que no llegan se reportan con `F_u(t_max)`.
 - **Verlet original y velocidades**: `v(t)` recién se conoce después de `r(t+dt)`, con error
   `O(dt²)`. Afecta la energía cinética del 2.1a, la `f(v)` del 2.3 y las velocidades impresas.
 - **Sistema 1 con fuerza dependiente de la velocidad**: Verlet original y Velocity Verlet
@@ -185,7 +187,9 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
 4. ~~Método de inicialización para N alto~~ → red hexagonal (`--init hex`, §6), usada para
    **todos** los N del 2.1b (mismo método en toda la curva; elegido 2026-10-08).
 5. ~~Observable escalar del 2.1a y dt~~ → error medio ε y **dt = 10⁻⁵ s** (2026-10-08, §6).
-6. Valores de N del 2.1b/2.4a y de `x_o` del 2.2; cantidad de realizaciones.
+6. ~~Valores de N del 2.1b/2.4a~~ → N = 25, 50, 100, 150, 200, 300, 400, 500, 600, 625, 650,
+   675, 10 realizaciones, en los dos motores (2026-10-12; 700 se sacó por costo del TP3, §6).
+   Pendiente: `x_o` del 2.2.
 7. Criterio de estacionario para `f(v)` en el 2.3 (ej.: `<v⁴>/<v²>²`, que vale 1 al inicio y 2
    para MB en 2D) y ancho de bins del histograma.
 8. ~~Búsqueda de vecinos~~ → implementado con grilla de celdas propia (§6, sistema 2); costo por
@@ -330,6 +334,68 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   - Para el 2.4a (mismos outputs): F_u(30 s) = 0.93 (25), 0.95 (100), 0.89 (150), 0.86 (200),
     0.71 (300), 0.55 (400), 0.34 (500), 0.14 (600), 0.01 (700). t_90 alcanzado en 7, 10, 9, 4
     de 10 realizaciones para N = 25, 50, 100, 150 y en ninguna desde N = 200.
+- **Actualización 2.1b (2026-10-12)**: se agregan N = 625 y 650 (los dos motores) y el TP3 se
+  re-corre con `--init hex` en todos los N (25 … 700, mismo método que el TP4). El benchmark del
+  TP4 existente (2026-10-08) no se re-corre: solo se miden 625 y 650 (otra sesión, misma
+  máquina). `run_time_vs_n.sh` re-mide solo los N de `NS3`/`NS4`. Comando lanzado:
+  `NS4=625,650 ./scripts/run_time_vs_n.sh && ./scripts/run_t100_vs_n.sh`, log en
+  `output/corridas_2026-10-12.log`.
+  Pruebas previas del TP3 con red hexagonal: 737 sitios (738 falla); `--verify` sin
+  superposiciones a N = 700 y 737 (0.01 s, ~17–19 mil eventos); con `--init random` reproduce el
+  benchmark viejo (N = 100, semilla 1: 25481 eventos, igual). Costo a N = 700, semilla 1: 4.36·10⁶
+  eventos en 6 s simulados, 439 s de lazo (el primer segundo, ~10⁶ eventos, es el más caro:
+  arranca con vecinas a 3.5·10⁻¹¹ m); estimado ~20 min por corrida de 30 s. Cola de eventos
+  1.35·10⁷ a 3 s y 1.43·10⁷ a 6 s (se satura), RSS 3.5 GB. 1 s simulado (4 en paralelo):
+  N = 500 4.2 s, 600 13.4 s, 650 26.7 s, 700 123 s.
+  **Cambio (2026-10-12, 23:40): N = 700 → 675** en los dos motores (2.1b y 2.4a). El TP3 a
+  N = 700 tardó 35 min por corrida (1 hecha, borrada); quedan tres N > 600 y el cruce de costos
+  ya se ve entre 400 y 500. El benchmark del TP4 a N = 700 (2026-10-08) se movió a
+  `output/billiard/time_vs_n_N700/` (fuera de la figura, por si sirve en otro punto). Se cortó
+  la cadena y se reanudó con `RESUME=1 NS4=625,650,675 ./scripts/run_time_vs_n.sh &&
+  ./scripts/run_t100_vs_n.sh` (los `--bench` saltean las corridas con `run.json`; 50 de 120
+  ya hechas). Medido en esta sesión antes del corte (TP3, lazo por corrida): N = 500 83 s,
+  600 4.1 min, 625 5.7 min, 650 8.5 min, 700 35 min.
+  **ESTADO (2026-10-13 13:20; si se corta, los `run.json` del disco mandan sobre esta nota)**:
+  - Benchmark TP3 (`output/tp3_time_vs_n/`): **completo, 120 de 120** (sesiones 10-12 noche y
+    10-13 mañana). Lazo promedio ± desvío (s): 0.0019 (25), 0.092 (100), 1.09 (200), 5.6 (300),
+    24 ± 2 (400), 87 ± 10 (500), 246 ± 17 (600), 351 ± 36 (625), 512 ± 32 (650), 850 ± 70
+    (675). Exponente local 2.6 → 13 (crece sin parar). Cruce con el TP4 entre N = 400 y 500.
+  - Benchmark TP4: medir solo 625/650/675 hoy contra el resto del 10-08 daba un escalón
+    (N = 625 84.7 s < N = 600 86.4 s, desvíos ~0.5 s: deriva entre sesiones). Decidido
+    2026-10-13: **re-correr el benchmark TP4 completo (12 N × 10) en una sola sesión**, antes del
+    2.4a. El del 10-08 quedó en `output/billiard/time_vs_n_2026-10-08/` (respaldo; N = 700 sigue
+    en `time_vs_n_N700/`). Lanzado 13:20, ~1.7 h.
+  - Corridas largas 2.4a (`output/billiard/t100_vs_n/`): arrancan solas después del benchmark
+    TP4. ~6 h, en paralelo; no miden tiempo.
+  - Comando en curso (desde `tp4-time-driven-md/`, log al final de
+    `output/corridas_2026-10-12.log`): `NS3= ./scripts/run_time_vs_n.sh &&
+    ./scripts/run_t100_vs_n.sh`. Si se corta, retomar con
+    `RESUME=1 NS3= ./scripts/run_time_vs_n.sh && ./scripts/run_t100_vs_n.sh` (sin `RESUME=1`
+    borraría lo ya medido del TP4). Sin carga pesada en la PC hasta que termine el benchmark.
+  - Después: `python3 analysis/plot_time_vs_n.py` y `python3 analysis/plot_t100_vs_n.py`;
+    decidir qué hacer con los N que no completan las 10 realizaciones en el 2.4a.
+  - **Benchmark TP4 completo (2026-10-13, 13:20–15:00, una sesión)**: lazo promedio ± desvío
+    (s): 11.54 ± 0.12 (25), 15.85 (100), 23.7 (200), 33.5 (300), 46.1 (400), 61.5 (500),
+    80.5 ± 0.4 (600), 86.7 ± 0.8 (625), 92.2 ± 0.1 (650), 100 ± 3 (675); ~7–8 % más rápido que
+    el del 10-08. Exponente local 0.15 → ~2. `tiempo_vs_n.png` regenerada con TP3 y TP4
+    completos. Corridas largas del 2.4a arrancaron ~15:00 (N grandes primero).
+- **Punto 2.4a** (2026-10-12): `scripts/run_t100_vs_n.sh` → `output/billiard/t100_vs_n/N<N>/s<seed>/`.
+  Mismo sistema y semillas que el benchmark del TP4 (`x_o = r`, red hexagonal, dt = 10⁻⁵ s,
+  Velocity Verlet), `--stop-at-t100` (corta en el primer paso con `F_u = 1`; `finalTime` en
+  `run.json`, último estado en `dynamic.txt`), `t_max = 1500 s`, estado cada 5 s (~1 GB como
+  máximo). En paralelo (nproc − 2), N grandes primero; nunca mientras mide el 2.1b.
+  `analysis/plot_t100_vs_n.py`: `t_90` = tiempo de la conversión ⌈0.9 N⌉, `t_100` = de la N-ésima;
+  `<t_90>`, `<t_100>` ± desvío entre realizaciones (ddof = 1) **solo para los N en que llegan las
+  10** (decidido 2026-10-12; qué hacer con los incompletos se decide con los resultados); por
+  stdout cuántas llegan y `F_u(t_final)` de las que no. Figuras `ej2/t90_vs_densidad.png`,
+  `t100_vs_densidad.png` (densidad numérica `N/(πR²)`, m⁻², la de la presentación), las mismas
+  vs N (`*_vs_n.png`, respaldo) y `fu_vs_t_densidad.png` (`<F_u(t)>` ± desvío, N = 25, 300, 600,
+  675; el promedio de un N llega hasta el `t_final` más chico de sus corridas incompletas).
+  Estimación previa (extrapolando `1 − F_u ∝ e^{−t/τ}` desde 30 s, optimista en las colas):
+  `t_100` ~250 s (400), ~490 s (500), ~1400 s (600); N = 700 casi congelado (`φ = 0.82`, arriba
+  de la solidificación de discos duros en 2D, φ ≈ 0.72): sin conversiones entre 20 y 30 s.
+  Animaciones de los extremos (decidido): N = 600 como alto (N = 25 propuesto como bajo),
+  re-corriendo una semilla ~20 s con estado fino.
 - **Red hexagonal** (`--init hex`): fila `y = 0` en `x = (i + ½) a`, así con `x_o = r` cada
   obstáculo ocupa un sitio. Sitios: 716 (sin obstáculos), 714 (`x_o = r`), 708 (`x_o = 0.2`).
   Chequeo (2026-10-08, dt = 10⁻⁵, 3 s, `x_o = r`): `E_p(0) = 0` (sin superposición inicial);

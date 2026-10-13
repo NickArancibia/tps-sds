@@ -134,6 +134,7 @@ public final class RunWriter {
         json.append("  \"v0\": ").append(num(config.v0())).append(",\n");
         json.append("  \"tf\": ").append(num(config.tf())).append(",\n");
         json.append("  \"seed\": ").append(config.seed()).append(",\n");
+        json.append("  \"init\": \"").append(config.init()).append("\",\n");
         json.append("  \"every\": ").append(config.every()).append(",\n");
         json.append("  \"stopAtT90\": ").append(config.stopAtT90()).append(",\n");
         json.append("  \"areaFraction\": ").append(num(config.areaFraction())).append(",\n");

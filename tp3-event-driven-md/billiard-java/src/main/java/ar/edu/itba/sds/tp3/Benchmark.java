@@ -1,6 +1,7 @@
 package ar.edu.itba.sds.tp3;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,14 +41,18 @@ public final class Benchmark {
                     outDir.resolve("warmup"), null, null, false, System.nanoTime());
         }
 
+        // Las corridas que ya tienen run.json (de una sesión anterior cortada) no se repiten.
         final List<int[]> jobs = new ArrayList<>();
         for (final int n : ns) {
             for (int seed = 1; seed <= seeds; seed++) {
-                jobs.add(new int[]{n, seed});
+                if (!Files.exists(outDir.resolve("N" + n).resolve("s" + seed).resolve("run.json"))) {
+                    jobs.add(new int[]{n, seed});
+                }
             }
         }
         Collections.shuffle(jobs, new Random(20260910));
-        System.out.printf(Locale.US, "Midiendo %d corridas en orden aleatorio...%n", jobs.size());
+        System.out.printf(Locale.US, "Midiendo %d corridas en orden aleatorio (%d ya hechas)...%n", jobs.size(),
+                ns.size() * seeds - jobs.size());
         int done = 0;
         for (final int[] job : jobs) {
             final SimulationConfig cfg = withNAndSeed(base, job[0], job[1]);
@@ -65,6 +70,6 @@ public final class Benchmark {
 
     private static SimulationConfig withNAndSeed(final SimulationConfig b, final int n, final long seed) {
         return new SimulationConfig(n, b.l(), b.w(), b.d(), b.radius(), b.mass(), b.v0(), b.tf(),
-                seed, 0, false, false, List.of());
+                seed, 0, false, false, List.of(), b.init());
     }
 }

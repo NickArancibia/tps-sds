@@ -37,6 +37,9 @@ public final class Main {
             Corrida:
               --tf <double>       Tiempo simulado máximo (s)                    (default 30)
               --seed <long>       Semilla del generador aleatorio               (default 42)
+              --init <nombre>     random: inserción secuencial al azar (hasta N ≈ 400)
+                                  hex: N sitios al azar de una red triangular de lado 2r
+                                  (737 sitios en la mesa vacía)                 (default random)
               --stop-at-t90       Cortar apenas F_g >= 0.9
               --every <k>         Escribir dynamic.txt cada k eventos (1 = todos) (default 0 = no escribir)
               --initial <file>    Correr desde una condición inicial dada (líneas "x y vx vy";
@@ -50,7 +53,8 @@ public final class Main {
               --bench [N1,N2,...] Lista de N a medir                          (default 25,...,400)
               --seeds <int>       Realizaciones (seeds 1..seeds) por N        (default 20)
               --warmup-s <double> Segundos de calentamiento previo            (default 30)
-                                  Escribe <out>/N<N>/s<seed>/ (default out: output/time_vs_n)
+                                  Acepta --init. Escribe <out>/N<N>/s<seed>/ (default out:
+                                  output/time_vs_n)
               --out <dir>         Directorio de salida                          (default: output/<auto>)
               --help              Muestra esta ayuda
 
@@ -87,7 +91,7 @@ public final class Main {
             final SimulationConfig base = new SimulationConfig(100, cli.number("L", 1.20),
                     cli.number("W", 0.68), cli.number("d", 0.20), cli.number("r", 0.0175),
                     cli.number("m", 0.025), cli.number("v0", 1.0), cli.number("tf", 30), 0, 0,
-                    false, false, List.of());
+                    false, false, List.of(), cli.string("init", "random"));
             Benchmark.run(cli.integerList("bench", List.of(25, 50, 100, 150, 200, 300, 400)),
                     cli.integer("seeds", 20), base, cli.number("warmup-s", 30),
                     Path.of(cli.string("out", "output/time_vs_n")));
@@ -110,7 +114,7 @@ public final class Main {
         final SimulationConfig config = new SimulationConfig(n, cli.number("L", 1.20),
                 cli.number("W", 0.68), cli.number("d", 0.20), radius, mass, cli.number("v0", 1.0),
                 cli.number("tf", 30), cli.longValue("seed", 42), cli.integer("every", 0),
-                cli.has("stop-at-t90"), cli.has("live"), obstacles);
+                cli.has("stop-at-t90"), cli.has("live"), obstacles, cli.string("init", "random"));
         final Path outDir = Path.of(cli.string("out", defaultOutDir(config)));
 
         if (balls == null) {

@@ -18,14 +18,19 @@ import java.util.List;
  * @param stopAtT90  cortar la corrida apenas F_g ≥ 0.9
  * @param live       imprimir las convertidas en cada nueva conversión (modo competencia)
  * @param obstacles  obstáculos fijos (vacío = mesa vacía)
+ * @param init       generación de la condición inicial: {@code random} (inserción al azar) o
+ *                   {@code hex} (sitios al azar de una red triangular), ver {@link InitialConditions}
  */
 public record SimulationConfig(int n, double l, double w, double d, double radius, double mass,
                                double v0, double tf, long seed, int every, boolean stopAtT90,
-                               boolean live, List<Obstacle> obstacles) {
+                               boolean live, List<Obstacle> obstacles, String init) {
 
     public SimulationConfig {
         if (n <= 0) {
             throw new IllegalArgumentException("N debe ser positivo, se recibió " + n);
+        }
+        if (!init.equals("random") && !init.equals("hex")) {
+            throw new IllegalArgumentException("--init desconocido: " + init + " (random, hex)");
         }
         if (l <= 0 || w <= 0) {
             throw new IllegalArgumentException("L y W deben ser positivos");

@@ -15,7 +15,8 @@ import java.util.Random;
 
 /**
  * Sistema 2: billar circular con contactos elásticos (resorte lineal normal) integrado con paso
- * fijo {@code dt} hasta {@code tf}. Escribe el estado cada {@code save-dt} y los instantes de
+ * fijo {@code dt} hasta {@code tf} (o hasta que todas las partículas estén usadas, con
+ * {@code --stop-at-t100}). Escribe el estado cada {@code save-dt} y los instantes de
  * conversión fresca → usada. No calcula observables: energía, F_u, t_90, f(v) van en post-proceso.
  */
 public final class BilliardRun {
@@ -31,6 +32,8 @@ public final class BilliardRun {
               --dt <double>       Paso de integración (s)                          (default 1e-5)
               --tf <double>       Tiempo final (s), múltiplo de dt                  (default 10)
               --save-dt <double>  Intervalo de guardado (s), múltiplo de dt         (default 5e-2)
+              --stop-at-t100      Cortar en el primer paso con todas las partículas usadas
+                                  (F_u = 1); tf pasa a ser el tiempo máximo
 
             Sistema:
               --n <int>           Cantidad de partículas                            (default 300)
@@ -58,7 +61,8 @@ public final class BilliardRun {
             Salida (en <out>):
               static.txt          N; R; "r m" por partícula; K; "x y r" por obstáculo
               dynamic.txt         por bloque: t y "x y vx vy estado" por partícula (estado 0 = fresca,
-                                  1 = usada), cada save-dt incluyendo t = 0 y t = tf (precisión completa)
+                                  1 = usada), cada save-dt incluyendo t = 0 y el último paso
+                                  (t = tf o el de corte con --stop-at-t100; precisión completa)
               conversions.csv     t,id del primer contacto de cada partícula con un obstáculo (id desde 1)
               run.json            inputs, pasos y tiempo del lazo (loopTimeMs: solo la integración)
             """;
@@ -69,10 +73,10 @@ public final class BilliardRun {
 
     /** Inputs de una corrida. */
     private record Config(Scheme scheme, Table table, int n, long seed, String init, double v0, double dt,
-                          double tf, double saveDt) {
+                          double tf, double saveDt, boolean stopAtT100) {
 
         Config withNAndSeed(final int newN, final long newSeed, final double newTf) {
-            return new Config(scheme, table, newN, newSeed, init, v0, dt, newTf, saveDt);
+            return new Config(scheme, table, newN, newSeed, init, v0, dt, newTf, saveDt, stopAtT100);
         }
     }
 
@@ -97,12 +101,16 @@ public final class BilliardRun {
                 : Table.empty(bigR, r, m, k);
         final Config config = new Config(Scheme.fromCli(cli.string("scheme", "")), table, cli.integer("n", 300),
                 cli.longValue("seed", 1), cli.string("init", "random"), cli.number("v0", 1.0),
-                cli.number("dt", 1e-5), cli.number("tf", 10.0), cli.number("save-dt", 5e-2));
+                cli.number("dt", 1e-5), cli.number("tf", 10.0), cli.number("save-dt", 5e-2),
+                cli.has("stop-at-t100"));
         if (config.dt() <= 0 || config.tf() <= 0 || config.saveDt() <= 0 || config.n() < 1) {
             throw new IllegalArgumentException("dt, tf, save-dt y n tienen que ser positivos");
         }
 
         if (cli.has("bench")) {
+            if (config.stopAtT100()) {
+                throw new IllegalArgumentException("--bench mide t_f fijo: no admite --stop-at-t100");
+            }
             bench(config, cli.integerList("bench", List.of()), cli.integer("seeds", 10),
                     cli.number("warmup-s", 30), Path.of(cli.string("out", "output/billiard/time_vs_n")));
             return;
@@ -110,9 +118,9 @@ public final class BilliardRun {
         final Path outDir = Path.of(cli.string("out", "output/billiard/%s_N%d_dt%s_s%d"
                 .formatted(config.scheme().cliName(), config.n(), compact(config.dt()), config.seed())));
         final Result result = simulate(config, outDir, true);
-        System.out.printf(Locale.US, "%s  N = %d  dt = %s s  pasos = %d  usadas = %d  lazo = %.1f s  -> %s%n",
-                config.scheme().cliName(), config.n(), compact(config.dt()), result.steps(), result.conversions(),
-                result.loopNs() / 1e9, outDir);
+        System.out.printf(Locale.US, "%s  N = %d  dt = %s s  pasos = %d  t = %s s  usadas = %d  lazo = %.1f s  -> %s%n",
+                config.scheme().cliName(), config.n(), compact(config.dt()), result.steps(),
+                compact(result.steps() * config.dt()), result.conversions(), result.loopNs() / 1e9, outDir);
     }
 
     private record Result(long steps, int conversions, long loopNs) {
@@ -136,14 +144,18 @@ public final class BilliardRun {
             simulate(base.withNAndSeed(WARMUP_N, -w, WARMUP_TF), outDir.resolve("warmup"), false);
         }
 
+        // Las corridas que ya tienen run.json (de una sesión anterior cortada) no se repiten.
         final List<long[]> jobs = new ArrayList<>();
         for (final int n : ns) {
             for (long seed = 1; seed <= seeds; seed++) {
-                jobs.add(new long[]{n, seed});
+                if (!Files.exists(outDir.resolve("N" + n).resolve("s" + seed).resolve("run.json"))) {
+                    jobs.add(new long[]{n, seed});
+                }
             }
         }
         Collections.shuffle(jobs, new Random(BENCH_SHUFFLE_SEED));
-        System.out.printf(Locale.US, "Midiendo %d corridas en orden aleatorio...%n", jobs.size());
+        System.out.printf(Locale.US, "Midiendo %d corridas en orden aleatorio (%d ya hechas)...%n", jobs.size(),
+                ns.size() * seeds - jobs.size());
         int done = 0;
         for (final long[] job : jobs) {
             final Config config = base.withNAndSeed((int) job[0], job[1], base.tf());
@@ -155,9 +167,12 @@ public final class BilliardRun {
         System.out.println("Benchmark terminado: " + outDir.toAbsolutePath());
     }
 
-    /** Corre una simulación y escribe sus archivos en {@code outDir}; el tiempo medido es solo el lazo. */
+    /**
+     * Corre una simulación y escribe sus archivos en {@code outDir}; el tiempo medido es solo el lazo.
+     * Con {@code stopAtT100} corta en el primer paso con todas las partículas usadas y guarda ese estado.
+     */
     private static Result simulate(final Config c, final Path outDir, final boolean writeDynamic) throws IOException {
-        final long steps = multipleOf(c.tf(), c.dt(), "tf");
+        final long maxSteps = multipleOf(c.tf(), c.dt(), "tf");
         final long saveEvery = multipleOf(c.saveDt(), c.dt(), "save-dt");
         final Random random = new Random(c.seed());
         final InitialState init = switch (c.init()) {
@@ -170,30 +185,40 @@ public final class BilliardRun {
 
         final ContactForces forces = new ContactForces(c.table(), c.n());
         final Integrator integrator = c.scheme().create(forces, c.dt(), init.x, init.y, init.vx, init.vy);
+        long step = 0;
         final long loopNs;
         if (writeDynamic) {
             final long start = System.nanoTime();
             try (BufferedWriter out = Files.newBufferedWriter(outDir.resolve("dynamic.txt"))) {
                 writeFrame(out, 0.0, integrator, forces);
-                for (long step = 1; step <= steps; step++) {
+                while (step < maxSteps) {
+                    step++;
                     integrator.step(step * c.dt());
-                    if (step % saveEvery == 0) {
+                    final boolean stop = c.stopAtT100() && forces.conversions() == c.n();
+                    if (step % saveEvery == 0 || stop) {
                         writeFrame(out, step * c.dt(), integrator, forces);
+                    }
+                    if (stop) {
+                        break;
                     }
                 }
             }
             loopNs = System.nanoTime() - start;
         } else {
             final long start = System.nanoTime();
-            for (long step = 1; step <= steps; step++) {
+            while (step < maxSteps) {
+                step++;
                 integrator.step(step * c.dt());
+                if (c.stopAtT100() && forces.conversions() == c.n()) {
+                    break;
+                }
             }
             loopNs = System.nanoTime() - start;
         }
 
         writeConversions(outDir.resolve("conversions.csv"), forces);
-        writeRunJson(outDir.resolve("run.json"), c, steps, saveEvery, writeDynamic, forces, loopNs);
-        return new Result(steps, forces.conversions(), loopNs);
+        writeRunJson(outDir.resolve("run.json"), c, step, saveEvery, writeDynamic, forces, loopNs);
+        return new Result(step, forces.conversions(), loopNs);
     }
 
     /** Cantidad entera de {@code dt} en {@code value}; error si no es un múltiplo exacto. */
@@ -272,6 +297,8 @@ public final class BilliardRun {
                   "xo": %s,
                   "dt": %s,
                   "tf": %s,
+                  "stopAtT100": %s,
+                  "finalTime": %s,
                   "saveDt": %s,
                   "steps": %d,
                   "saveEvery": %d,
@@ -281,8 +308,8 @@ public final class BilliardRun {
                   "loopTimeMs": %s
                 }
                 """.formatted(c.scheme().cliName(), c.n(), c.seed(), c.init(), table.bigR(), table.r(), table.m(),
-                table.k(), c.v0(), xo, c.dt(), c.tf(), c.saveDt(), steps, saveEvery, dynamic,
-                forces.cellsPerSide(), forces.conversions(), loopNs / 1e6);
+                table.k(), c.v0(), xo, c.dt(), c.tf(), c.stopAtT100(), steps * c.dt(), c.saveDt(), steps,
+                saveEvery, dynamic, forces.cellsPerSide(), forces.conversions(), loopNs / 1e6);
         Files.writeString(path, json);
     }
 
