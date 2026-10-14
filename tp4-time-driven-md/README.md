@@ -107,6 +107,14 @@ o `t_max = 1500 s`, estado cada 5 s, en paralelo. No correr mientras mide el 2.1
 python3 analysis/plot_t100_vs_n.py           # → ej2/t90_vs_*.png, t100_vs_*.png, fu_vs_t_densidad.png
 ```
 
+Punto 2.2 (`t_90` vs posición de los obstáculos): N = 100 y 20, `x_o` = r, 0.05, …, 0.45,
+R − r, semillas 1–5, `t_max = 100 s` o hasta `F_u = 1`, estado cada 0.5 s, en paralelo (~20 min):
+
+```bash
+./scripts/run_xo_sweep.sh                    # → output/billiard/xo_sweep/N<N>/xo<x_o>/s<seed>/
+python3 analysis/plot_xo.py                  # → ej2/t90_vs_xo.png, fu_vs_t_xo_N<N>.png + tabla por stdout
+```
+
 Animación (un cuadro por estado guardado, sin interpolar; la superposición de los contactos se ve
 más oscura):
 
