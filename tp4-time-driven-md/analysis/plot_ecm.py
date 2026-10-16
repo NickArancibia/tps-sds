@@ -29,10 +29,11 @@ from matplotlib.ticker import FixedLocator, MaxNLocator, NullLocator  # noqa: E4
 SWEEP = OUTPUT / "oscillator" / "sweep"
 # (cli, leyenda, color, marcador, tamaño, relleno, zorder). Verlet, Velocity Verlet y Beeman
 # quedan casi superpuestas: de atrás hacia adelante, marcadores huecos cada vez más chicos y el
-# último relleno, para que se vean las tres.
+# último relleno, para que se vean las tres. Orden de la lista = orden de la leyenda: de menor a
+# mayor ECM.
 SCHEMES = [
-    ("verlet", "Verlet original", "tab:red", "o", 9, "none", 2),
     ("beeman", "Beeman", "black", "s", 6, "none", 3),
+    ("verlet", "Verlet original", "tab:red", "o", 9, "none", 2),
     ("velocity-verlet", "Velocity Verlet", "tab:blue", "o", 3, "tab:blue", 4),
     ("euler-pc", "Euler predictor-corrector", "tab:purple", "^", 5, "tab:purple", 4),
 ]
