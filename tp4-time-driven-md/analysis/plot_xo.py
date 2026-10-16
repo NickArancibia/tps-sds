@@ -87,7 +87,7 @@ def plot_t90(runs: dict[int, dict[float, list[Run]]]) -> None:
     else:
         ax.set_ylim(0, None)
     ax.set_xlabel("Posición de los obstáculos (m)")
-    ax.set_ylabel("Tiempo hasta 90 % usadas (s)")
+    ax.set_ylabel(r"$\langle t_{90} \rangle$ (s)")
     ax.legend(title="N", loc="best")
     save_figure(fig, "ej2", "t90_vs_xo.png")
 
@@ -112,7 +112,7 @@ def plot_fu(runs: dict[int, dict[float, list[Run]]], xos: list[float]) -> None:
         ax.set_xlim(0, t_end)
         ax.set_ylim(0, 1.02)
         ax.set_xlabel("Tiempo (s)")
-        ax.set_ylabel("Fracción de partículas usadas")
+        ax.set_ylabel(r"$\langle F_u \rangle$")
         ax.legend(title="$x_o$ (m)", loc="lower right")
         save_figure(fig, "ej2", f"fu_vs_t_xo_N{n}.png")
 

@@ -157,7 +157,7 @@ def plot_fu(runs: dict[int, list[Run]], ns: list[int]) -> None:
     decade_ticks(ax.xaxis, -1, hi_e)
     ax.set_ylim(0, 1.02)
     ax.set_xlabel("Tiempo (s)")
-    ax.set_ylabel("Fracción de partículas usadas")
+    ax.set_ylabel(r"$\langle F_u \rangle$")
     ax.legend(title="N", loc="upper left")
     save_figure(fig, "ej2", "fu_vs_t_densidad.png")
 
@@ -172,8 +172,8 @@ def main() -> None:
         raise SystemExit(f"sin corridas en {args.root}")
     use_style()
     report(runs)
-    plot_scalar(summarize(runs, "t90"), "t90", "Tiempo hasta 90 % usadas (s)")
-    plot_scalar(summarize(runs, "t100"), "t100", "Tiempo hasta 100 % usadas (s)")
+    plot_scalar(summarize(runs, "t90"), "t90", r"$\langle t_{90} \rangle$ (s)")
+    plot_scalar(summarize(runs, "t100"), "t100", r"$\langle t_{100} \rangle$ (s)")
     plot_fu(runs, [int(v) for v in args.fu_ns.split(",")])
 
 

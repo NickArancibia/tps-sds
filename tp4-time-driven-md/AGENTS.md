@@ -431,6 +431,11 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
     15 ± 2, 25 ± 7 (R − r). Más ruidoso; mínimo nominal en 0.25–0.30, indistinguible dentro
     de las barras de casi toda la meseta; también peor en los extremos.
   - Con 5 realizaciones no se puede elegir un único `x_o` óptimo dentro de la meseta.
+  - Esquemas (2026-10-16, para Simulaciones): `analysis/plot_xo_scheme.py` →
+    `ej2/esquema_xo.png` (una mesa por `x_o`, a escala, leída de las corridas; los tres `x_o` de
+    `fu_vs_t_xo_N<N>.png` con sus colores, el resto gris; panel con R, r, `x_o`) y
+    `ej2/esquema_densidad.png` (t = 0 de N = 100 y N = 20 en `x_o` = 0.25, semilla 1, con
+    velocidades; 122 y 24 m⁻²).
 - **2.4a, semilla 1 de N = 625/650/675 (2026-10-14, 13:39–14:48, hasta 1500 s)**: `F_u` a
   30 / 100 / 300 / 600 / 1000 / 1500 s: 625 → 0.09 / 0.22 / 0.45 / 0.70 / 0.83 / 0.94 (`t_90`
   = 1234 s, sin `t_100`); 650 → 0.02 / 0.03 / 0.04 / 0.06 / 0.09 / 0.11; 675 → 0.01 constante.
@@ -458,8 +463,10 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   y queda plana: promedio 0.880 (1–5 s), 0.880 (5–10), 0.881 (10–15), 0.881 (15–20), fluctuación
   instantánea ±0.015; MB 2D con `k_B T` = 0.0125 J predice 0.886. **Estacionario: t_est = 1 s**
   (marcado a ojo por el grupo, recta vertical punteada; 2026-10-14). Figuras finales:
-  `rapidez_media_vs_t.png` (con la recta), `fv_evolucion.png` (f(v) a 0.05, 0.1, 0.2, 0.5 s y
-  la estacionaria, Δv = 0.1 m/s, superpuestas, leyenda "t (s)"), `fv_estacionaria_mb.png` (f(v)
+  `rapidez_media_vs_t.png` (con la recta), `fv_evolucion.png` (f(v) a 0.05, 0.1, 0.2, 0.5 y
+  1 s, cada una en ese instante, promedio ± desvío entre las 10 realizaciones, Δv = 0.1 m/s,
+  superpuestas, leyenda "t (s)"; la curva "≥ 1" promediada sobre t ≥ 1 s se sacó el 2026-10-16:
+  ese promedio queda solo en `fv_estacionaria_mb.png`), `fv_estacionaria_mb.png` (f(v)
   estacionaria con Δv = 0.05 m/s promediando todos los estados t ≥ 1 s de las 10 realizaciones;
   barra = desvío de los f instantáneos, criterio §8.3, por eso es grande: ~5 partículas por bin
   y estado) y `error_ajuste_mb.png` (E vs k_BT en mJ, recta en el mínimo). **Resultado**: k_BT

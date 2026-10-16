@@ -22,13 +22,13 @@ Definiciones (realización s, estado guardado k en el instante t_k, v_i = |v_i(t
 
 Figuras en analysis/figures/ej2/:
   rapidez_media_vs_t.png   <|v|>(t), eje t log, recta vertical punteada en t_est
-  fv_evolucion.png         f(v) en algunos instantes del transitorio y la estacionaria
+  fv_evolucion.png         f(v) en algunos instantes, del transitorio hasta t_est
   fv_estacionaria_mb.png   f(v) estacionaria ± fluctuación y la curva de MB con el k_BT ajustado
   error_ajuste_mb.png      E(k_BT), con el mínimo marcado
 Por stdout: rapidez media en algunos t, k_BT ajustado, m<v²>/2 y m v0²/2.
 
 Uso: python3 analysis/plot_speed_dist.py [--root DIR] [--t-est 1] [--dv 0.05]
-         [--times 0.05,0.1,0.2,0.5]
+         [--times 0.05,0.1,0.2,0.5,1]
 """
 
 from __future__ import annotations
@@ -97,18 +97,15 @@ def stationary(t: np.ndarray, v: np.ndarray, t_est: float, edges: np.ndarray) ->
     return f.mean(axis=0), f.std(axis=0, ddof=1)
 
 
-def plot_evolution(t: np.ndarray, v: np.ndarray, times: list[float], t_est: float, edges: np.ndarray) -> None:
+def plot_evolution(t: np.ndarray, v: np.ndarray, times: list[float], edges: np.ndarray) -> None:
     centers = 0.5 * (edges[1:] + edges[:-1])
     fig, ax = plt.subplots()
-    colors = plt.cm.viridis(np.linspace(0, 0.85, len(times) + 1))
+    colors = plt.cm.viridis(np.linspace(0, 0.85, len(times)))
     for x, color in zip(times, colors):
         k = int(np.argmin(np.abs(t - x)))
         f = histograms(v[:, k, :], edges)
         ax.errorbar(centers, f.mean(axis=0), yerr=f.std(axis=0, ddof=1), fmt="o-", color=color, ms=3.5,
                     lw=0.9, elinewidth=0.9, capsize=2, label=f"{t[k]:g}")
-    mean, std = stationary(t, v, t_est, edges)
-    ax.errorbar(centers, mean, yerr=std, fmt="s-", color=colors[-1], ms=3.5, lw=0.9, elinewidth=0.9,
-                capsize=2, label=f"≥ {t_est:g}")
     ax.set_xlim(0, 2.5)
     ax.set_ylim(0, None)
     ax.set_xlabel("Módulo de la velocidad (m/s)")
@@ -155,7 +152,7 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--t-est", type=float, default=1.0, help="inicio del estacionario, marcado a ojo (s)")
     parser.add_argument("--dv", type=float, default=0.05, help="ancho de bin (m/s)")
-    parser.add_argument("--times", default="0.05,0.1,0.2,0.5", help="instantes del transitorio (s)")
+    parser.add_argument("--times", default="0.05,0.1,0.2,0.5,1", help="instantes a graficar en fv_evolucion (s)")
     args = parser.parse_args()
 
     t, v, meta = speeds(args.root)
@@ -166,8 +163,7 @@ def main() -> None:
 
     use_style()
     plot_mean_speed(t, v, args.t_est)
-    plot_evolution(t, v, [float(x) for x in args.times.split(",")], args.t_est,
-                   np.arange(0, v_max + 0.05, 0.1))
+    plot_evolution(t, v, [float(x) for x in args.times.split(",")], np.arange(0, v_max + 0.05, 0.1))
     fit(t, v, args.t_est, edges, meta["m"], meta["v0"])
 
 

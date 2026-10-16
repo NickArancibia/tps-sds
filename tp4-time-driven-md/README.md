@@ -113,6 +113,7 @@ R − r, semillas 1–5, `t_max = 100 s` o hasta `F_u = 1`, estado cada 0.5 s, e
 ```bash
 ./scripts/run_xo_sweep.sh                    # → output/billiard/xo_sweep/N<N>/xo<x_o>/s<seed>/
 python3 analysis/plot_xo.py                  # → ej2/t90_vs_xo.png, fu_vs_t_xo_N<N>.png + tabla por stdout
+python3 analysis/plot_xo_scheme.py           # → ej2/esquema_xo.png, esquema_densidad.png (configuraciones a escala)
 ```
 
 Animación (un cuadro por estado guardado, sin interpolar; la superposición de los contactos se ve
