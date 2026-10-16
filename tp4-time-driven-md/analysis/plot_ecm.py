@@ -7,8 +7,7 @@ analysis/figures/ej1/ecm_vs_dt.png e imprime la tabla y la pendiente log-log de 
 Segunda figura, solo para análisis (no va a la diapositiva), analysis/figures/ej1/ecm_dt4_vs_dt.png:
 ECM/dt⁴ de los esquemas de orden 2 (Verlet original, Velocity Verlet, Beeman). Si ECM ≈ C dt⁴,
 el cociente es la constante C de cada esquema; en eje y lineal se ven las diferencias de ~10 %
-que en log-log quedan superpuestas. Solo dt ≥ 10⁻⁵: por debajo Verlet original entra en el piso
-de redondeo (visible en la primera figura) y el cociente deja de medir C.
+que en log-log quedan superpuestas.
 
 Tercera figura, también solo para análisis, analysis/figures/ej1/ecm_vs_dt_tramo.png: el mismo
 log-log de la primera, restringido a dt entre 10⁻³/1.04 y 10⁻³·1.04 y a los tres esquemas de
@@ -37,9 +36,8 @@ SCHEMES = [
     ("velocity-verlet", "Velocity Verlet", "tab:blue", "o", 3, "tab:blue", 4),
     ("euler-pc", "Euler predictor-corrector", "tab:purple", "^", 5, "tab:purple", 4),
 ]
-FIT_RANGE = (1e-4, 5e-3)  # tramo para informar la pendiente (antes del piso de redondeo)
+FIT_RANGE = (1e-4, 5e-3)  # tramo para informar la pendiente
 SECOND_ORDER = ("verlet", "velocity-verlet", "beeman")
-CONSTANT_MIN_DT = 1e-5  # por debajo, Verlet original está en el piso de redondeo
 SECTION_DT = 1e-3  # centro del tramo ampliado (tercera figura)
 SECTION_HALF_WIDTH = 1.04  # el tramo va de SECTION_DT/1.04 a SECTION_DT·1.04
 
@@ -87,25 +85,24 @@ def main() -> None:
     ax.legend(loc="best")
     save_figure(fig, "ej1", "ecm_vs_dt.png")
 
-    print(f"C = ECM/dt⁴ (m² s⁻⁴), dt ≥ {CONSTANT_MIN_DT:.0e}: media [mín, máx] y cociente a Beeman")
+    print("C = ECM/dt⁴ (m² s⁻⁴): media [mín, máx] y cociente a Beeman")
     beeman_x, beeman_y = curves["beeman"]
-    beeman_c = np.mean(beeman_y[beeman_x >= CONSTANT_MIN_DT] / beeman_x[beeman_x >= CONSTANT_MIN_DT] ** 4)
+    beeman_c = np.mean(beeman_y / beeman_x**4)
     fig, ax = plt.subplots()
     constants = []
     for cli, label, color, marker, _, _, z in SCHEMES:
         if cli not in SECOND_ORDER:
             continue
         x, y = curves[cli]
-        mask = x >= CONSTANT_MIN_DT
-        c = y[mask] / x[mask] ** 4
+        c = y / x**4
         constants.extend(c)
         print(f"  {label:16s} {c.mean():5.0f} [{c.min():.0f}, {c.max():.0f}]  {c.mean() / beeman_c:.3f}")
-        ax.plot(x[mask], c, marker=marker, ms=6, color=color, mfc=color, mec=color, label=label, zorder=z)
+        ax.plot(x, c, marker=marker, ms=6, color=color, mfc=color, mec=color, label=label, zorder=z)
     ax.set_xscale("log")
     ax.set_xlabel("Paso temporal (s)")
     ax.set_ylabel("ECM / (paso temporal)$^4$ (m$^2$ s$^{-4}$)")
-    decade_ticks(ax.xaxis, -5, -2)
-    ax.set_xlim(7e-6, 1e-2)
+    decade_ticks(ax.xaxis, -6, -2)
+    ax.set_xlim(6e-7, 1e-2)
     # Franja libre debajo de las curvas para la leyenda (las curvas ocupan todo el ancho).
     span = max(constants) - min(constants)
     ax.set_ylim(min(constants) - 0.7 * span, max(constants) + 0.1 * span)

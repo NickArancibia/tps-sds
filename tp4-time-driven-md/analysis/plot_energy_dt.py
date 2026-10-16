@@ -43,7 +43,6 @@ EXAMPLE_SEED = 1
 # dt de E(t) y su color; zorder creciente con dt: las casi planas (dt chicos) quedan detrás.
 E_VS_T = ((5e-4, "tab:red"), (1e-4, "tab:purple"), (5e-5, "tab:blue"), (1e-5, "black"))
 DIVERGED = 1.0  # ε >= 1 (o E no finita): la integración diverge; fuera de las figuras de ε
-CHOSEN_DT = 1e-5  # dt elegido (2026-10-08): mayor dt redondo con ε < 10⁻⁴; recta vertical
 
 
 def load_energies() -> dict[tuple[str, float, int], tuple[np.ndarray, np.ndarray, float]]:
@@ -136,8 +135,6 @@ def plot_error_vs_dt(stats, schemes, name: str) -> None:
                     lw=1.0, elinewidth=1.5, capsize=4, capthick=1.5,
                     label=SCHEME_LABEL[scheme] if len(schemes) > 1 else None)
     log_axes(ax)
-    if len(schemes) == 1:
-        ax.axvline(CHOSEN_DT, color="0.4", ls="--", lw=1.2, zorder=0)
     ax.set_xlabel("Paso de integración (s)")
     ax.set_ylabel("Error medio de la energía")
     if len(schemes) > 1:

@@ -14,8 +14,11 @@ que no llega no se grafican: se informan por stdout con cuántas llegaron y F_u(
 Densidad numérica ρ = N / (π R²).
 
 Figuras en analysis/figures/ej2/: t90_vs_densidad.png, t100_vs_densidad.png (y las mismas vs N:
-t90_vs_n.png, t100_vs_n.png), fu_vs_t_densidad.png (<F_u(t)> promedio entre realizaciones, banda
-= desvío estándar entre realizaciones, para los N de --fu-ns).
+t90_vs_n.png, t100_vs_n.png), t90_t100_vs_densidad.png (las dos en un mismo eje; mínimo de cada
+una por stdout), fu_vs_t_densidad.png (<F_u(t)> promedio entre realizaciones, banda
+= desvío estándar entre realizaciones, para los N de --fu-ns) y fu_vs_t_incompletas.png (F_u(t) de
+cada realización, sin promediar, de los N con alguna realización que no llega a t_100: esos N
+tienen distinta cantidad de realizaciones, así que no se comparan promedios).
 
 Uso: python3 analysis/plot_t100_vs_n.py [--root DIR] [--fu-ns 25,300,600,675]
 """
@@ -133,6 +136,33 @@ def plot_scalar(rows, attr: str, ylabel: str) -> None:
         save_figure(fig, "ej2", f"{attr}_vs_{suffix}.png")
 
 
+def plot_t90_t100(rows90, rows100) -> None:
+    """<t_90> y <t_100> vs densidad en el mismo eje (log), para comparar dónde está el mínimo de cada uno."""
+    fig, ax = plt.subplots()
+    values, errors = [], []
+    for rows, label, marker, color in ((rows90, r"$t_{90}$", "o", "tab:blue"),
+                                       (rows100, r"$t_{100}$", "s", "tab:red")):
+        if not rows:
+            continue
+        n, rho, mean, std = (np.array(c) for c in zip(*rows))
+        ax.errorbar(rho, mean, yerr=std, fmt=marker + "-", color=color, ms=6, mfc="white", mew=1.5, lw=1.0,
+                    elinewidth=1.5, capsize=4, capthick=1.5, label=label)
+        values.append(mean)
+        errors.append(std)
+        k = int(np.argmin(mean))
+        print(f"mínimo de <{label.strip('$').replace('_', '').replace('{', '').replace('}', '')}>: "
+              f"N = {int(n[k])} (ρ = {rho[k]:.1f} m⁻²), {mean[k]:.4g} ± {std[k]:.2g} s")
+    if not values:
+        plt.close(fig)
+        return
+    ax.set_yscale("log")
+    log_limits(ax, np.concatenate(values), np.concatenate(errors))
+    ax.set_xlabel("Densidad numérica (m$^{-2}$)")
+    ax.set_ylabel("Tiempo (s)")
+    ax.legend(loc="upper left")
+    save_figure(fig, "ej2", "t90_t100_vs_densidad.png")
+
+
 def plot_fu(runs: dict[int, list[Run]], ns: list[int]) -> None:
     ns = [n for n in ns if n in runs]
     if not ns:
@@ -162,6 +192,32 @@ def plot_fu(runs: dict[int, list[Run]], ns: list[int]) -> None:
     save_figure(fig, "ej2", "fu_vs_t_densidad.png")
 
 
+def plot_fu_incomplete(runs: dict[int, list[Run]]) -> None:
+    """F_u(t) de cada realización de los N en que alguna no llega a t_100, eje t lineal hasta t_max.
+    Una corrida que cortó en t_100 sigue con F_u = 1 (exacto: F_u no decrece y no pasa de 1)."""
+    ns = [n for n, rs in runs.items() if not all(math.isfinite(r.t100) for r in rs)]
+    if not ns:
+        return
+    t_max = max(r.t_final for n in ns for r in runs[n])
+    colors = ("black", "tab:blue", "tab:red", "tab:purple", "tab:brown", "tab:gray")
+    fig, ax = plt.subplots()
+    for n, color in zip(ns, colors):
+        rs = runs[n]
+        for k, run in enumerate(rs):
+            end = t_max if math.isfinite(run.t100) else run.t_final
+            t = np.concatenate(([0.0], run.times, [end]))
+            fu = np.concatenate(([0.0], np.arange(1, run.times.size + 1), [run.times.size])) / n
+            ax.step(t, fu, where="post", color=color, lw=1.0, label=str(n) if k == 0 else None)
+        print(f"F_u(t) por realización: N = {n}, {len(rs)} realizaciones, F_u({t_max:g} s) = "
+              + ", ".join(f"{r.fu_final:.3f}" for r in rs))
+    ax.set_xlim(0, t_max)
+    ax.set_ylim(0, 1.02)
+    ax.set_xlabel("Tiempo (s)")
+    ax.set_ylabel(r"$F_u$")
+    ax.legend(title="N", loc="center right")
+    save_figure(fig, "ej2", "fu_vs_t_incompletas.png")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
@@ -172,9 +228,12 @@ def main() -> None:
         raise SystemExit(f"sin corridas en {args.root}")
     use_style()
     report(runs)
-    plot_scalar(summarize(runs, "t90"), "t90", r"$\langle t_{90} \rangle$ (s)")
-    plot_scalar(summarize(runs, "t100"), "t100", r"$\langle t_{100} \rangle$ (s)")
+    rows90, rows100 = summarize(runs, "t90"), summarize(runs, "t100")
+    plot_scalar(rows90, "t90", r"$\langle t_{90} \rangle$ (s)")
+    plot_scalar(rows100, "t100", r"$\langle t_{100} \rangle$ (s)")
+    plot_t90_t100(rows90, rows100)
     plot_fu(runs, [int(v) for v in args.fu_ns.split(",")])
+    plot_fu_incomplete(runs)
 
 
 if __name__ == "__main__":

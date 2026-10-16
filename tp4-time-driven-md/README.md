@@ -65,6 +65,7 @@ java -jar md-java/target/md.jar billiard --help
 | `--tf` | tiempo final (s), múltiplo de `dt`; con `--stop-at-t100`, tiempo máximo | 10 |
 | `--save-dt` | intervalo de guardado (s), múltiplo de `dt` | 5e-2 |
 | `--stop-at-t100` | cortar en el primer paso con todas las partículas usadas (`F_u = 1`) | — |
+| `--log-collisions` | escribir `collisions.csv` con el comienzo de cada choque (no admitido con `--bench`) | — |
 | `--n` | cantidad de partículas | 300 |
 | `--xo` | obstáculos en `(±xo, 0)`, `r ≤ xo ≤ R − r`; sin el flag no hay obstáculos | — |
 | `--seed` | semilla de la condición inicial | 1 |
@@ -76,6 +77,13 @@ Salida en `--out`: `static.txt` (N; R; `r m` por partícula; K; `x y r` por obst
 `dynamic.txt` (por bloque: `t` y `x y vx vy estado` por partícula, estado 0 = fresca, 1 = usada,
 precisión completa; cada `save-dt` más el último paso, que con `--stop-at-t100` es el de corte),
 `conversions.csv` (`t,id` del primer contacto con un obstáculo) y `run.json` (incluye `finalTime`).
+Con `--log-collisions`, además `collisions.csv` (`t,kind,i,j`, ids desde 1): una fila por choque,
+en el primer paso con `ξ > 0` de ese contacto; los pasos siguientes en que el mismo contacto sigue
+superpuesto no cuentan, y si se separa (`ξ ≤ 0`) y se vuelve a tocar es otro choque. `kind` =
+`particle` (`j` = la otra partícula, `i < j`), `wall` (`j = 0`) u `obstacle` (`j` = obstáculo en
+el orden de `static.txt`: 1 en `−x_o`, 2 en `+x_o`). `run.json` suma los totales por tipo
+(`particleCollisions`, `wallCollisions`, `obstacleCollisions`; `null` sin el flag). No cambia la
+trayectoria.
 
 Punto 2.1a (energía vs dt, N = 300 sin obstáculos, 10 semillas × 12 dt × 2 esquemas; ~20 min
 con 14 núcleos; saltea las corridas ya hechas):
@@ -104,15 +112,18 @@ o `t_max = 1500 s`, estado cada 5 s, en paralelo. No correr mientras mide el 2.1
 
 ```bash
 ./scripts/run_t100_vs_n.sh                   # → output/billiard/t100_vs_n/N<N>/s<seed>/
-python3 analysis/plot_t100_vs_n.py           # → ej2/t90_vs_*.png, t100_vs_*.png, fu_vs_t_densidad.png
+python3 analysis/plot_t100_vs_n.py           # → ej2/t90_vs_*.png, t100_vs_*.png, fu_vs_t_densidad.png,
+                                             #   fu_vs_t_incompletas.png (F_u(t) por realización de los N que no completan)
 ```
 
-Punto 2.2 (`t_90` vs posición de los obstáculos): N = 100 y 20, `x_o` = r, 0.05, …, 0.45,
-R − r, semillas 1–5, `t_max = 100 s` o hasta `F_u = 1`, estado cada 0.5 s, en paralelo (~20 min):
+Punto 2.2 (`t_90` vs posición de los obstáculos): N = 100, 60, 20 y 10, `x_o` = r, 0.05, …, 0.45,
+R − r, semillas 1–10, `t_max = 100 s` o hasta `F_u = 1`, estado cada 0.5 s, con
+`--log-collisions`, en paralelo (~40 min con 14 núcleos):
 
 ```bash
 ./scripts/run_xo_sweep.sh                    # → output/billiard/xo_sweep/N<N>/xo<x_o>/s<seed>/
 python3 analysis/plot_xo.py                  # → ej2/t90_vs_xo.png, fu_vs_t_xo_N<N>.png + tabla por stdout
+python3 analysis/plot_collisions_xo.py       # → ej2/choques_particulas_vs_xo.png, choques_obstaculos_vs_xo.png
 python3 analysis/plot_xo_scheme.py           # → ej2/esquema_xo.png, esquema_densidad.png (configuraciones a escala)
 ```
 

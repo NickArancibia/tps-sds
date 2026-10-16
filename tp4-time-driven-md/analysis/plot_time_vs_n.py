@@ -43,26 +43,32 @@ def load(root: Path) -> list[tuple[int, float, float, int]]:
 def main() -> None:
     use_style()
     fig, ax = plt.subplots()
+    lows, highs = [], []
     for root, label, marker, color in ENGINES:
         rows = load(root)
         if not rows:
             print(f"sin corridas en {root}")
             continue
         n, mean, std, runs = np.array(rows).T
-        print(f"\n{label} ({root.relative_to(TP_ROOT)}): N | tiempo (s) promedio ± desvío | realizaciones")
+        print(f"\n{label} ({root.relative_to(TP_ROOT)}): N | tiempo (s) promedio ± desvío (desvío relativo) | "
+              "realizaciones")
         for row in rows:
-            print(f"  {row[0]:4d} | {row[1]:.4g} ± {row[2]:.2g} | {row[3]}")
+            print(f"  {row[0]:4d} | {row[1]:.4g} ± {row[2]:.2g} ({100 * row[2] / row[1]:.1f} %) | {row[3]}")
         slopes = np.diff(np.log(mean)) / np.diff(np.log(n))
         print("  exponente local α (t ∝ N^α) entre N consecutivos: "
               + ", ".join(f"{int(a)}–{int(b)}: {s:.2f}" for a, b, s in zip(n[:-1], n[1:], slopes)))
-        ax.errorbar(n, mean, yerr=std, fmt=marker + "-", color=color, ms=6, mfc="white", mew=1.5, lw=1.0,
-                    elinewidth=1.5, capsize=4, capthick=1.5, label=label)
+        # Desvíos de 0.1–20 % (0.0005–0.08 décadas): marcadores chicos y rellenos, barras con
+        # tapas más anchas que el marcador, para que la barra no quede escondida detrás. Sin mew=0:
+        # errorbar se lo pasa también a las tapas y las borra.
+        ax.errorbar(n, mean, yerr=std, fmt=marker + "-", color=color, ms=4, lw=1.0,
+                    elinewidth=1.5, capsize=6, capthick=1.5, label=label)
+        lows.append(np.min(mean - std))
+        highs.append(np.max(mean + std))
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(10, 1000)
     decade_ticks(ax.xaxis, 1, 3)
-    lo, hi = ax.get_ylim()
-    lo_e, hi_e = int(np.floor(np.log10(lo))), int(np.ceil(np.log10(hi)))
+    lo_e, hi_e = int(np.floor(np.log10(min(lows)))), int(np.ceil(np.log10(max(highs))))
     ax.set_ylim(10.0**lo_e, 10.0**hi_e)
     decade_ticks(ax.yaxis, lo_e, hi_e)
     ax.set_xlabel("Número de partículas")

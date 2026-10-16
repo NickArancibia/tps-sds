@@ -222,7 +222,8 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/
 - `tf` y `save-dt` tienen que ser múltiplos enteros de `dt` (si no, error): el guardado usa
   contador entero de pasos y los mismos `t_k` para todos los `dt`.
 - `trajectory.csv` con `Double.toString` (precisión completa: el ECM llega a 10⁻¹⁸).
-- Verlet original va un paso adelantado internamente para informar `r(t)` y `v(t)` juntas.
+- Verlet original va un paso adelantado internamente para informar `r(t)` y `v(t)` juntas, en
+  forma sumada (acumula `d = r(t) − r(t−dt)`; ver piso de redondeo abajo).
 - Post-proceso: `analysis/oscillator_common.py` (carga + analítica),
   `analysis/animate_oscillator.py` (masa-resorte + `r(t)` vs analítica, un cuadro por estado
   guardado).
@@ -236,13 +237,16 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/
   `analysis/figures/ej1/ecm_vs_dt.png` + tabla y pendientes por stdout. Resultado: Beeman < Verlet
   original < Velocity Verlet por ~6 % y ~10 % (indistinguibles en la figura log-log), las tres
   con pendiente 4.00 (orden 2); Euler PC pendiente 1.86 en 10⁻⁴–5·10⁻³ y 2.0 para dt chicos
-  (orden 1), 10⁴–10¹² veces más ECM. Verlet original se aplana en ~10⁻¹⁹ para dt ≤ 5·10⁻⁶
-  mientras las otras siguen bajando hasta 3·10⁻²²: probablemente redondeo de
-  `2r(t) − r(t−dt)` (sin verificar; la forma "sumada" de Verlet, que acumula `r(t) − r(t−dt)`,
-  lo evitaría). Pendiente decidir: explicarlo o cortar el barrido.
+  (orden 1), 10⁴–10¹² veces más ECM. Hasta el 2026-10-16 Verlet original se aplanaba en ~10⁻¹⁹
+  para dt ≤ 2·10⁻⁶ (1.7·10⁻¹⁹, 1.1·10⁻¹⁹, 1.8·10⁻¹⁹ en 5·10⁻⁶, 2·10⁻⁶, 10⁻⁶): redondeo de la
+  forma directa `2r(t) − r(t−dt)`, donde el error de redondeo de `r` (~10⁻¹⁶ m) entra cada paso
+  al desplazamiento como error de velocidad ~10⁻¹⁶/dt. **Resuelto (2026-10-16)**: el motor usa
+  la forma sumada (algebraicamente idéntica), `d(t+dt) = d(t) + dt² f(t)/m`,
+  `r(t+dt) = r(t) + d(t+dt)`, `v(t) = (d(t+dt) + d(t))/(2dt)`, con `d(0)` por Taylor directo.
+  Barrido re-corrido: Verlet llega a 3.5·10⁻²² en dt = 10⁻⁶; mismo ECM que antes en dt ≥ 10⁻⁵.
   `plot_ecm.py` también escribe `analysis/figures/ej1/ecm_dt4_vs_dt.png` (2026-10-05, **solo para
   análisis, no va a la diapositiva**): ECM/dt⁴ vs dt de los tres esquemas de orden 2 en eje y
-  lineal, solo dt ≥ 10⁻⁵ (debajo, el piso de Verlet lo saca de escala). Constantes
+  lineal, en todo el barrido (desde 2026-10-16; antes solo dt ≥ 10⁻⁵ por el piso). Constantes
   `C = ECM/dt⁴`: Beeman 330, Verlet original 348 (×1.06), Velocity Verlet 364 (×1.10) m² s⁻⁴,
   planas en todo el rango (VV y Beeman suben ~2 % en dt = 5·10⁻³ por términos de orden
   superior). Descartado: lupa en dt = 10⁻³ dentro de `ecm_vs_dt.png` (no gustó).
@@ -254,10 +258,19 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/
   mismo ECM): C = 379.7 / 379.5 / 379.4 (despeje) contra 380.1 / 379.5 / 379.5 (PC) en
   dt = 5·10⁻³ / 10⁻³ / 10⁻⁴; cociente PC/despeje 1.001 → 1.00003. El despeje (forma
   incremental) también se aplana en ~10⁻¹⁹ para dt ≤ 5·10⁻⁶ (1.9·10⁻¹⁹, 1.1·10⁻¹⁹, 1.8·10⁻¹⁹,
-  idénticos al PC): el piso no viene del predictor-corrector.
+  idénticos al PC): el piso no viene del predictor-corrector (venía de la forma directa, ver arriba).
   Equivalencia (motor, 2026-10-05): con `--gamma 0` Verlet y Velocity Verlet dan las mismas
   posiciones (máx. 3·10⁻¹² m) y los tres el mismo ECM; con γ = 1000 kg/s se separan (Verlet/
   Beeman 6.2, VV/Beeman 0.80). Las diferencias vienen solo de la v dentro de −γv.
+  **Auditoría (2026-10-16, scripts descartables fuera del repo)**: (1) reimplementación en Python
+  desde las fórmulas de la teórica: mismas trayectorias que el motor (≤ 2·10⁻¹⁵ m) y mismo ECM en
+  los 4 esquemas. (2) Autovalor principal de cada esquema como mapa lineal,
+  `Λ = λ + c dtᵖ`: con γ = 0 los tres de orden 2 tienen exactamente el mismo `c` (error de fase
+  ω³/24, sin error de amortiguamiento); con γ = 100 `Im c` difiere 0.959 / 0.978 / 1.022 × ω³/24
+  (VV / Beeman / Verlet): la separación es de orden ζ = γ/(2mω₀) = 0.06, por eso las curvas
+  quedan juntas. Barrido en γ (dt = 10⁻⁴, C relativo a Beeman, Verlet / VV): 1.00 / 1.00 (γ = 0),
+  1.06 / 1.10 (100), 1.49 / 1.86 (300). (3) Gear orden 5 (tabla `r₂ = f(r, r₁)`): pendiente 10,
+  ECM 3·10⁻²² en dt = 10⁻³ (12 órdenes debajo de Beeman), piso ~10⁻²⁸ desde dt ≤ 2·10⁻⁴.
   Chequeo descartable de arranque y velocidad (Python fuera del repo, C = ECM/dt⁴ en dt = 10⁻³ /
   10⁻⁴, m² s⁻⁴): Beeman 330 (a(−dt) exacta: igual); Verlet PC 379 = despeje 379; **Verlet con
   r(−dt) por Taylor de 3er orden (jerk = (−k v − γ a)/m) o exacta: 348** (−8 %, sigue arriba de
@@ -271,10 +284,12 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/
 
 ```
 md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
-├── BilliardRun.java      # CLI (java -jar md.jar billiard ...), lazo, static/dynamic/conversions/run.json
+├── BilliardRun.java      # CLI (java -jar md.jar billiard ...), lazo, static/dynamic/conversions/
+│                         # collisions/run.json
 ├── Table.java            # R, r, m, k, obstáculos en (±x_o, 0)
 ├── ContactForces.java    # resortes partícula-partícula (grilla de celdas), pared (imagen), obstáculos;
 │                         # registra la conversión fresca → usada en el paso del primer ξ > 0
+├── CollisionTracker.java # --log-collisions: un choque por episodio de contacto (ver 2.2)
 ├── Integrator.java, Scheme.java
 ├── VelocityVerlet.java, OriginalVerlet.java   # Verlet en forma sumada, v centrada, paso adelantado
 └── InitialState.java     # random: inserción secuencial al azar en |r| <= R − r (se traba en N ≈ 465)
@@ -302,7 +317,8 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
     10 semillas por punto), `energia_esquemas_dt.png` (ε vs dt, ambas variantes),
     `energia_costo_dt.png`. Las figuras de ε excluyen los dt que divergen (ε ≥ 1: 10⁻³, 2·10⁻³,
     5·10⁻³), que se informan al costado.
-  - **dt elegido (2026-10-08): 10⁻⁵ s**, recta vertical en `energia_error_medio_dt.png`.
+  - **dt elegido (2026-10-08): 10⁻⁵ s**. La recta vertical punteada gris en
+    `energia_error_medio_dt.png` se sacó el 2026-10-16 (pedido de la cátedra: no hace falta).
     Criterio: mayor dt redondo con ε < 10⁻⁴ (ε = 5·10⁻⁶; 2·10⁻⁵ también cumple, 5·10⁻⁵ no).
     ~350 pasos por contacto partícula-partícula; dt ≥ 10⁻³ diverge.
   - ε (Velocity Verlet, promedio ± desvío): 2.3·10⁻² ± 9·10⁻³ (5·10⁻⁴), 4.7·10⁻⁴ ± 2·10⁻⁴
@@ -412,6 +428,18 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
     m⁻²), indistinguible de N = 25 dentro de las barras; desde N = 150 crece monótono.
     Figuras generadas: `ej2/t90_vs_densidad.png`, `t100_vs_densidad.png`, `*_vs_n.png`,
     `fu_vs_t_densidad.png`. Pendiente: decidir N = 625/650/675.
+  - **`fu_vs_t_incompletas.png` (2026-10-16, pedido de la cátedra)**: F_u(t) de **cada
+    realización**, sin promediar, eje t lineal hasta 1500 s, para los N con alguna realización
+    sin `t_100` (600, 625, 650, 675). Reemplaza a `fu_tmax_vs_densidad.png` (⟨F_u(t_max)⟩ vs
+    densidad, descartada: promediaba 10 realizaciones en 600/625 y 1 en 650/675, comparación
+    injusta). F_u(1500 s): 600 → 0.993–1.000 (10), 625 → 0.917–0.949 (10), 650 → 0.112 (1),
+    675 → 0.013 (1, plana desde t ≈ 1 s).
+  - **`t90_t100_vs_densidad.png` (2026-10-16)**: `<t_90>` y `<t_100>` vs densidad en un mismo eje
+    log (`plot_t100_vs_n.py`, mínimos por stdout). Mínimo nominal de los dos en N = 50
+    (ρ = 61 m⁻²): 22.7 ± 4.3 s y 40 ± 10 s, indistinguible de N = 25 y 100 dentro de las barras.
+  - **`tiempo_vs_n.png` (2026-10-16)**: marcadores chicos rellenos y tapas de 6 pt para que se
+    vean las barras. Desvío relativo TP3 4–20 % (barras visibles); TP4 0.1–2.8 % (≤ 0.012
+    décadas, ~1 px: las tapas quedan pegadas al marcador). Decirlo al costado de la figura.
 - **Punto 2.2** (2026-10-14): `scripts/run_xo_sweep.sh` → `output/billiard/xo_sweep/N<N>/xo<x_o>/s<seed>/`.
   `x_o` = 0.0175 (r), 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.4925 (R − r);
   N = 100 y N = 20; semillas 1–5; red hexagonal (mismo método que 2.1b/2.4a), dt = 10⁻⁵ s,
@@ -431,6 +459,75 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
     15 ± 2, 25 ± 7 (R − r). Más ruidoso; mínimo nominal en 0.25–0.30, indistinguible dentro
     de las barras de casi toda la meseta; también peor en los extremos.
   - Con 5 realizaciones no se puede elegir un único `x_o` óptimo dentro de la meseta.
+  - **Registro de choques (2026-10-16, autorizado por la cátedra para la discusión)**: flag
+    `--log-collisions` → `collisions.csv` (`t,kind,i,j`; kind `particle`/`wall`/`obstacle`) y
+    totales por tipo en `run.json`. Un choque = un **episodio de contacto**: cuenta solo en la
+    primera evaluación de fuerzas con `ξ > 0` después de una sin superposición; los ~350 pasos
+    siguientes del mismo contacto no cuentan (`CollisionTracker`: por contacto, última evaluación
+    con `ξ > 0`; arreglos fijos, sin alocación). Si se separa y vuelve a tocarse, es otro choque.
+    Verificado: N = 300, `x_o = r`, semilla 2, 0.05 s guardando cada paso, reconstrucción
+    independiente en Python desde `dynamic.txt` → los mismos 613 choques (mismo t, tipo y par);
+    contar pasos en contacto daba 226 846 (×370). No cambia la trayectoria: N = 100, `x_o` = 0.25,
+    semilla 1 con el flag da `dynamic.txt` y `conversions.csv` idénticos al barrido (23 220
+    partícula-partícula, 5 239 pared, 679 obstáculo hasta `t_100` = 36.5 s).
+    `run_xo_sweep.sh` pasa el flag.
+  - **2.2 re-corrido con `--log-collisions` (2026-10-16, 14:01–14:11, `JOBS=14`, 110/110, log en
+    `output/xo_sweep_2026-10-16.log`)**: `conversions.csv` y `dynamic.txt` idénticos byte a byte a
+    los del 2026-10-14 en las 110 corridas (se borró el respaldo); `<t_90>` y figuras sin cambios.
+    `analysis/plot_collisions_xo.py` (para la discusión; **todavía no decidido si va a la
+    presentación**) → `ej2/choques_particulas_vs_xo.png` y `ej2/choques_obstaculos_vs_xo.png`.
+    Por realización, en [0, t_90]: `ν_pp = 2 C_pp/(N t_90)` (choques entre partículas por
+    partícula y por segundo), `ν_o = C_o/t_90` (choques contra los obstáculos por segundo),
+    `η = ⌈0.9 N⌉/C_o` (fracción de choques con obstáculo que convierten, solo stdout); promedio
+    ± desvío entre las 5 realizaciones. Resultados: `ν_pp` no depende de `x_o`: 12.8 ± 0.1 s⁻¹
+    (N = 100) y 2.15 ± 0.1 s⁻¹ (N = 20), ×6. `ν_o` meseta ~19.5 s⁻¹ (N = 100) y ~3.4 s⁻¹
+    (N = 20) en 0.05–0.45, cae en los extremos: 13.7 y 2.7 en `x_o = r` (obstáculos pegados, se
+    tapan entre sí), 10.0 y 1.7 en `R − r` (pegados a la pared). `η` ≈ 0.2–0.3 (N = 100) y
+    0.26–0.50 (N = 20). Lectura posible [inferencia, a discutir]: la forma de `<t_90>(x_o)` (meseta
+    con extremos peores) sigue a `ν_o` en las dos densidades, mientras que `ν_pp` cambia ×6 sin
+    cambiar el lugar de la meseta.
+  - **Prueba N = 60 y N = 10 (2026-10-16, sin figuras todavía)**: mismo barrido (11 `x_o`, semillas
+    1–5, `--log-collisions`), `NS="60 10" JOBS=14 ./scripts/run_xo_sweep.sh` (6 min, 110/110, todas
+    llegan a `t_90`; log `output/xo_sweep_N60_N10_2026-10-16.log`). `ν_pp` (s⁻¹, 55
+    realizaciones): 12.8 (100), 7.1 (60), 2.15 (20), 1.0 (10). Mínimo nominal de `<t_90>`: 0.15 m
+    (14.5 ± 1.7 s, N = 100), 0.20 (12.2 ± 2.8, 60), 0.30 (10.6 ± 2.4, 20), 0.35 (7.4 ± 3.4, 10):
+    se corre hacia afuera al bajar N, pero dentro de las barras. `x_o` cuya barra toca la del
+    mínimo: 0.05–0.35 (100), 0.10–0.45 (60, 20 y 10). Extremos (r y R − r) peores en los cuatro N.
+    Dispersión grande en N = 10 (desvío relativo hasta 50 %; `x_o = r`: 30 ± 14 s, semilla 1 con
+    50 s). Ojo: `plot_xo.py` ahora levanta los cuatro N (sus `COLORS`/`MARKERS` solo tienen 100 y 20).
+  - **10 semillas en los cuatro N (2026-10-16, semillas 6–10, 220 corridas, 15 min, log
+    `output/xo_sweep_s6-10_2026-10-16.log`; `run_xo_sweep.sh` ahora tiene por defecto
+    `NS="100 60 20 10"` y semillas 1–10)**. `<t_90>` ± desvío entre 10 realizaciones (s):
+    - N = 100: 23 ± 3 (r), 20 ± 3, 17 ± 2, 15.1 ± 1.8, 15.5 ± 1.6, **15.1 ± 1.5 (0.25)**,
+      15 ± 2, 15.4 ± 1.5, 18 ± 2, 22.4 ± 1.5 (0.45), 32 ± 5 (R − r).
+    - N = 60: 22 ± 4, 18 ± 2, 15 ± 2, 15 ± 3, **12 ± 2 (0.20)**, 15 ± 3, 12.9 ± 1.9, 15 ± 2,
+      16 ± 3, 17 ± 3, 29 ± 4.
+    - N = 20: 18 ± 3, 21 ± 7, 13 ± 4, 15 ± 4, 14 ± 4, 12 ± 3, **10.8 ± 2.9 (0.30)**, 14 ± 2,
+      14 ± 3, 15 ± 2, 25 ± 8.
+    - N = 10: 31 ± 15, 19 ± 5, 13 ± 5, 14 ± 5, 10 ± 4, 14 ± 6, 10 ± 4, **9.9 ± 4.2 (0.35)**,
+      12 ± 4, 12 ± 4, 22 ± 8.
+    - Con 10 semillas el mínimo nominal de N = 100 pasó de 0.15 a 0.25 m (0.15–0.35 dentro de
+      0.35 s entre sí): el mínimo nominal dentro de la meseta es ruido; el "corrimiento hacia
+      afuera" visto con 5 semillas no se sostiene. Lo robusto: meseta en 0.10–0.40 m para todo
+      N, extremos peores en todos; `x_o = 0.45` es claramente peor solo en N = 100 (22.4 ± 1.5
+      contra 15.1 ± 1.5), en N ≤ 60 queda dentro de la meseta; el nivel de la meseta baja con N
+      (~15 s → ~10 s). Los desvíos (ddof = 1 entre realizaciones) no bajan con más semillas.
+    - Outliers a avisar: N = 10, `x_o = r` 31 ± 15 s (máx 53.7); N = 20, 0.05 21 ± 7 (máx 33.6)
+      y R − r 25 ± 8 (máx 42.9).
+    - **`t90_vs_xo.png` (2026-10-16)**: N = 100, 60 y 20 (`plot_xo.py --t90-ns`, default
+      `100,60,20`); N = 10 fuera de la figura por decisión del grupo (corridas y tabla por stdout
+      se mantienen).
+    - **Por qué N = 20 dispersa tanto en `x_o` = 0.05 y R − r (2026-10-16, análisis en sesión,
+      sin script)**: `t_90` de N = 20 es la conversión 18: lo deciden las 2–3 últimas frescas;
+      desvío relativo 25–40 % en N = 20 contra 8–15 % en N = 100 en todo `x_o`. En 0.05 hay un
+      mecanismo extra: la fuerza de la pared es radial (central), así que entre choques con
+      otras partículas se conserva el parámetro de impacto `b = |x v_y − y v_x|/|v|` (distancia
+      mínima de la recta al centro). Solo `b < x_o + 2r` = 0.085 m puede tocar un obstáculo.
+      Semillas 4, 5 y 10 (las de `t_90` de 28–34 s): las 3 últimas frescas pasaron 85–97 % de
+      los estados guardados con `b > 0.085 m` y se convirtieron 0.02–0.5 s después de un choque
+      con otra partícula que les bajó `b`. En 0.25 (alcance 0.285 m) la misma cuenta da 10–50 %.
+      En R − r no verificado: `ν_o` cae a la mitad (1.7 contra ~3.4 s⁻¹), esperas más largas y
+      variables (semilla 6: 17.4 s entre la conversión 17 y la 18).
   - Esquemas (2026-10-16, para Simulaciones): `analysis/plot_xo_scheme.py` →
     `ej2/esquema_xo.png` (una mesa por `x_o`, a escala, leída de las corridas; los tres `x_o` de
     `fu_vs_t_xo_N<N>.png` con sus colores, el resto gris; panel con R, r, `x_o`) y
