@@ -1,5 +1,5 @@
 """Punto 2.2, discusión: frecuencia de choques en función de la posición de los obstáculos, para
-N = 100 y N = 20 (¿el x_o óptimo depende de la frecuencia de choques entre partículas?).
+los N de --ns (¿el x_o óptimo depende de la frecuencia de choques entre partículas?).
 
 Lee output/billiard/xo_sweep/N<N>/xo<x_o>/s<seed>/ (scripts/run_xo_sweep.sh, con --log-collisions):
 collisions.csv (un choque por episodio de contacto, en el primer paso con ξ > 0), conversions.csv y
@@ -15,9 +15,10 @@ Por (N, x_o): promedio entre realizaciones ± desvío estándar entre realizacio
 escalar por realización), solo si todas llegan a t_90.
 
 Figuras en analysis/figures/ej2/: choques_particulas_vs_xo.png (ν_pp) y
-choques_obstaculos_vs_xo.png (ν_o), las dos densidades en cada una. Tabla por stdout.
+choques_obstaculos_vs_xo.png (ν_o), los N de --ns en cada una (los mismos que t90_vs_xo.png).
+Tabla por stdout.
 
-Uso: python3 analysis/plot_collisions_xo.py [--root DIR]
+Uso: python3 analysis/plot_collisions_xo.py [--root DIR] [--ns 100,60,20]
 """
 
 from __future__ import annotations
@@ -68,7 +69,8 @@ def mean_std(values: list[float]) -> tuple[float, float]:
 
 
 def plot(table: dict[int, dict[float, list[tuple[float, float, float]]]], column: int, ylabel: str,
-         name: str) -> None:
+         name: str, legend_at: tuple[float, float]) -> None:
+    """legend_at: centro de la leyenda (en fracción de los ejes), en una franja sin datos."""
     fig, ax = plt.subplots()
     lows, highs = [], []
     for n, by_xo in table.items():
@@ -89,21 +91,25 @@ def plot(table: dict[int, dict[float, list[tuple[float, float, float]]]], column
         ax.set_ylim(0, None)
     ax.set_xlabel("Posición de los obstáculos (m)")
     ax.set_ylabel(ylabel)
-    ax.legend(title="N", loc="best")
+    ax.legend(title="N", loc="center", bbox_to_anchor=legend_at, ncol=len(table), columnspacing=1.2)
     save_figure(fig, "ej2", name)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    parser.add_argument("--ns", default="100,60,20", help="N de las figuras, separados por coma")
     args = parser.parse_args()
+    ns = {int(v) for v in args.ns.split(",")}
 
     # table[N][x_o] = [(ν_pp, ν_o, η) por realización]; x_o con alguna realización sin t_90 se descartan.
     table: dict[int, dict[float, list[tuple[float, float, float]]]] = {}
     incomplete: set[tuple[int, float]] = set()
     for meta_path in sorted(args.root.glob("N*/xo*/s*/run.json")):
-        result = rates(meta_path.parent)
         meta = json.loads(meta_path.read_text())
+        if meta["N"] not in ns:
+            continue
+        result = rates(meta_path.parent)
         if result is None:
             incomplete.add((meta["N"], meta["xo"]))
             continue
@@ -123,8 +129,10 @@ def main() -> None:
             print(f"  {xo:.4f} | {len(rs)} | " + " | ".join(f"{m:.4g} ± {s:.2g}" for m, s in cols))
 
     use_style()
-    plot(table, 0, "Choques entre partículas\npor partícula (s$^{-1}$)", "choques_particulas_vs_xo.png")
-    plot(table, 1, "Choques con obstáculos (s$^{-1}$)", "choques_obstaculos_vs_xo.png")
+    # Franjas vacías: entre N = 60 (~7 s⁻¹) y N = 100 (~13 s⁻¹) en ν_pp; arriba de ~25 s⁻¹ en ν_o.
+    plot(table, 0, "Frecuencia de choques entre\npartículas por partícula (s$^{-1}$)",
+         "choques_particulas_vs_xo.png", (0.5, 0.73))
+    plot(table, 1, "Frecuencia de choques\ncon obstáculos (s$^{-1}$)", "choques_obstaculos_vs_xo.png", (0.5, 0.86))
 
 
 if __name__ == "__main__":

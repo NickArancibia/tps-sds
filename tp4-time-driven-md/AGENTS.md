@@ -27,9 +27,12 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
 - **Entrega: 23/10/2026 13 hs** por campus: `SdS_TP4_2026Q2GXXCSS_Presentación.pdf` y
   `SdS_TP4_2026Q2GXXCSS_Codigo.zip` (**< 100 KB**, solo la versión final del motor). Presentación
   oral de **13 min**.
-- Presentación: del sistema 1 **una sola diapositiva** (la figura ECM vs dt de los 4 métodos;
-  sin intro ni animaciones). Al final, **diapositiva extra declarando qué agente/modelo de IA se
-  usó y cómo** (punto 2.5).
+- Presentación: del sistema 1 el enunciado pide **una sola diapositiva** (la figura ECM vs dt de
+  los 4 métodos; sin intro ni animaciones). Pedido 2026-10-19: dos diapositivas entre la carátula
+  y la Introducción, `r(t)` con dt = 5·10⁻³ s (`analysis/plot_oscillator_r.py` →
+  `ej1/r_vs_t.png`) y ECM vs dt con bullets de la velocidad predicha con Euler y corregida; el
+  Modelo muestra solo Velocity Verlet. Al final, **diapositiva extra declarando qué agente/modelo
+  de IA se usó y cómo** (punto 2.5).
 
 ### Puntos del enunciado
 
@@ -186,7 +189,8 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
    diapositiva pide la figura "para los 4 métodos solicitados".
 4. ~~Método de inicialización para N alto~~ → red hexagonal (`--init hex`, §6), usada para
    **todos** los N del 2.1b (mismo método en toda la curva; elegido 2026-10-08).
-5. ~~Observable escalar del 2.1a y dt~~ → error medio ε y **dt = 10⁻⁵ s** (2026-10-08, §6).
+5. ~~Observable escalar del 2.1a y dt~~ → error relativo ε (antes "error medio", renombrado
+   2026-10-19) y **dt = 10⁻⁵ s** (2026-10-08, §6).
 6. ~~Valores de N del 2.1b/2.4a~~ → N = 25, 50, 100, 150, 200, 300, 400, 500, 600, 625, 650,
    675, 10 realizaciones, en los dos motores (2026-10-12; 700 se sacó por costo del TP3, §6).
    ~~`x_o` del 2.2~~ → r, 0.05, 0.10, …, 0.45, R − r (11 valores), N = 100 y 20, 5 realizaciones,
@@ -308,17 +312,18 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   Teórica 4, diap. 34–35, para casos sin solución analítica). Error relativo
   `ΔE(t) = (E(t) − E₀)/E₀` (antes llamado "desvío relativo"; se renombró para no confundirlo
   con el desvío estándar de las barras).
-  - **Observable elegido (2026-10-08): error medio** `ε = (1/K) Σ_{t_k>0} |ΔE(t_k)|` sobre los
+  - **Observable elegido (2026-10-08): error relativo** (antes "error medio") `ε = (1/K) Σ_{t_k>0} |ΔE(t_k)|` sobre los
     K = 200 estados guardados; un escalar por realización, barra = desvío estándar entre las 10
     semillas (ddof = 1). Descartados: `|ΔE(t_f)|` (desvío entre semillas del orden de su
     promedio) y `max|ΔE|` (paralelo a ε, factor ~2-3).
   - Figuras: `energia_vs_t.png` (E(t) con dt = 5·10⁻⁴, 10⁻⁴, 5·10⁻⁵, 10⁻⁵, semilla 1; 10⁻³ se
-    sacó: diverge y aplasta la escala), `energia_error_medio_dt.png` (ε vs dt, Velocity Verlet,
+    sacó: diverge y aplasta la escala), `energia_error_relativo_dt.png` (ε vs dt, Velocity Verlet,
     10 semillas por punto), `energia_esquemas_dt.png` (ε vs dt, ambas variantes),
     `energia_costo_dt.png`. Las figuras de ε excluyen los dt que divergen (ε ≥ 1: 10⁻³, 2·10⁻³,
     5·10⁻³), que se informan al costado.
-  - **dt elegido (2026-10-08): 10⁻⁵ s**. La recta vertical punteada gris en
-    `energia_error_medio_dt.png` se sacó el 2026-10-16 (pedido de la cátedra: no hace falta).
+  - **dt elegido (2026-10-08): 10⁻⁵ s**. La recta vertical punteada gris se sacó el 2026-10-16
+    (pedido de la cátedra) y volvió el 2026-10-19 (nuevo pedido): punteada desde el punto de
+    10⁻⁵ s hasta el eje horizontal.
     Criterio: mayor dt redondo con ε < 10⁻⁴ (ε = 5·10⁻⁶; 2·10⁻⁵ también cumple, 5·10⁻⁵ no).
     ~350 pasos por contacto partícula-partícula; dt ≥ 10⁻³ diverge.
   - ε (Velocity Verlet, promedio ± desvío): 2.3·10⁻² ± 9·10⁻³ (5·10⁻⁴), 4.7·10⁻⁴ ± 2·10⁻⁴
@@ -428,8 +433,10 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
     m⁻²), indistinguible de N = 25 dentro de las barras; desde N = 150 crece monótono.
     Figuras generadas: `ej2/t90_vs_densidad.png`, `t100_vs_densidad.png`, `*_vs_n.png`,
     `fu_vs_t_densidad.png`. Pendiente: decidir N = 625/650/675.
-  - **`fu_vs_t_incompletas.png` (2026-10-16, pedido de la cátedra)**: F_u(t) de **cada
-    realización**, sin promediar, eje t lineal hasta 1500 s, para los N con alguna realización
+  - **`fu_vs_t_incompletas.png` (2026-10-16, pedido de la cátedra; eliminada 2026-10-19, la
+    reemplaza `fu_vs_t_densidad.png` con N = 625 y 650)**: F_u(t) de **cada
+    realización**, sin promediar, eje t lineal hasta 1500 s, recta en `F_u` = 0.9 (2026-10-19),
+    para los N con alguna realización
     sin `t_100` (600, 625, 650, 675). Reemplaza a `fu_tmax_vs_densidad.png` (⟨F_u(t_max)⟩ vs
     densidad, descartada: promediaba 10 realizaciones en 600/625 y 1 en 650/675, comparación
     injusta). F_u(1500 s): 600 → 0.993–1.000 (10), 625 → 0.917–0.949 (10), 650 → 0.112 (1),
@@ -437,7 +444,8 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   - **`t90_t100_vs_densidad.png` (2026-10-16)**: `<t_90>` y `<t_100>` vs densidad en un mismo eje
     log (`plot_t100_vs_n.py`, mínimos por stdout). Mínimo nominal de los dos en N = 50
     (ρ = 61 m⁻²): 22.7 ± 4.3 s y 40 ± 10 s, indistinguible de N = 25 y 100 dentro de las barras.
-  - **`tiempo_vs_n.png` (2026-10-16)**: marcadores chicos rellenos y tapas de 6 pt para que se
+  - **`tiempo_vs_n.png` (2026-10-16; 2026-10-19: eje N con rótulos 25, 50, 100, 200, 400, 675
+    tal cual, no equiespaciados)**: marcadores chicos rellenos y tapas de 6 pt para que se
     vean las barras. Desvío relativo TP3 4–20 % (barras visibles); TP4 0.1–2.8 % (≤ 0.012
     décadas, ~1 px: las tapas quedan pegadas al marcador). Decirlo al costado de la figura.
 - **Punto 2.2** (2026-10-14): `scripts/run_xo_sweep.sh` → `output/billiard/xo_sweep/N<N>/xo<x_o>/s<seed>/`.
@@ -448,7 +456,8 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   `analysis/plot_xo.py`: `<t_90>` ± desvío entre realizaciones (ddof = 1) vs `x_o` solo si
   llegan las 5 (mismo criterio que el 2.4a), las dos densidades en `ej2/t90_vs_xo.png`;
   `<F_u(t)>` ± desvío para `x_o` = r, 0.25, R − r en `ej2/fu_vs_t_xo_N<N>.png` (`--fu-xo` para
-  cambiarlos). Lanzado 2026-10-14 13:50 con `JOBS=11` (en paralelo con la semilla 1 de
+  cambiarlos; **desde 2026-10-19 una sola realización**, `--fu-seed 1`, escalones, recta y rótulo
+  en `F_u` = 0.9: t_90 = 19.2 / 14.3 / 32.6 s en N = 100). Lanzado 2026-10-14 13:50 con `JOBS=11` (en paralelo con la semilla 1 de
   N = 625/650/675 del 2.4a, que no mide tiempos).
   **Resultados (2026-10-14, 13:50–13:58, 110/110, todas llegan a `t_90` antes de 100 s)**,
   `<t_90>` (s) promedio ± desvío entre 5 realizaciones:
@@ -486,6 +495,10 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
     0.26–0.50 (N = 20). Lectura posible [inferencia, a discutir]: la forma de `<t_90>(x_o)` (meseta
     con extremos peores) sigue a `ν_o` en las dos densidades, mientras que `ν_pp` cambia ×6 sin
     cambiar el lugar de la meseta.
+    **Actualización 2026-10-19**: las dos figuras con N = 100, 60 y 20 (`--ns`, los de
+    `t90_vs_xo.png`; antes solo 100 y 20), 10 realizaciones; eje "Frecuencia de choques ..."
+    (s⁻¹: conteo dividido por `t_90`); leyenda en una fila en la franja vacía. `ν_pp` = 12.8
+    (100), 7.1 (60), 2.15 (20) s⁻¹; `ν_o` en `x_o` = 0.25: 19.3, 10.8, 3.4 s⁻¹.
   - **Prueba N = 60 y N = 10 (2026-10-16, sin figuras todavía)**: mismo barrido (11 `x_o`, semillas
     1–5, `--log-collisions`), `NS="60 10" JOBS=14 ./scripts/run_xo_sweep.sh` (6 min, 110/110, todas
     llegan a `t_90`; log `output/xo_sweep_N60_N10_2026-10-16.log`). `ν_pp` (s⁻¹, 55
@@ -552,24 +565,29 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
 - **Punto 2.3** (2026-10-14): `scripts/run_speed_dist.sh` → `output/billiard/speed_dist/s<seed>/`
   (sin obstáculos, N = 100, red hexagonal, dt = 10⁻⁵ s, `t_f` = 20 s (re-corrido desde 10 s
   para confirmar el estacionario), estado cada 0.01 s, semillas 1–10; 157 MB).
-  `analysis/plot_speed_dist.py` → `ej2/fv_evolucion.png`: f(v) = cuentas en el bin / (N Δv) por
-  realización, promedio ± desvío entre las 10 (ddof = 1), un panel por instante, Δv = 0.05 m/s;
-  y `ej2/rapidez_media_vs_t.png`: `<|v|>(t)` = (1/N) Σ_i |v_i| por realización, promedio ±
-  desvío entre realizaciones, eje t log. Escalar elegido para marcar el estacionario a ojo:
+  `analysis/plot_speed_dist.py` → `ej2/fv_evolucion.png` y `ej2/rapidez_media_vs_t.png`.
+  **Desde 2026-10-19 (pedido)**: las 10 realizaciones se juntan como una sola de 1000 partículas:
+  un único histograma y un único promedio, sin barras (mismos valores que promediar por
+  realización, porque todas tienen igual N; k_BT* no cambia). Antes: promedio ± desvío entre
+  realizaciones. Escalar elegido para marcar el estacionario a ojo:
   **rapidez media** (descartado `<v⁴>/<v²>²`, 2026-10-14). Cae de 1 a ~0.88 m/s hasta ~0.6–1 s
   y queda plana: promedio 0.880 (1–5 s), 0.880 (5–10), 0.881 (10–15), 0.881 (15–20), fluctuación
   instantánea ±0.015; MB 2D con `k_B T` = 0.0125 J predice 0.886. **Estacionario: t_est = 1 s**
   (marcado a ojo por el grupo, recta vertical punteada; 2026-10-14). Figuras finales:
-  `rapidez_media_vs_t.png` (con la recta), `fv_evolucion.png` (f(v) a 0.05, 0.1, 0.2, 0.5 y
-  1 s, cada una en ese instante, promedio ± desvío entre las 10 realizaciones, Δv = 0.1 m/s,
-  superpuestas, leyenda "t (s)"; la curva "≥ 1" promediada sobre t ≥ 1 s se sacó el 2026-10-16:
-  ese promedio queda solo en `fv_estacionaria_mb.png`), `fv_estacionaria_mb.png` (f(v)
-  estacionaria con Δv = 0.05 m/s promediando todos los estados t ≥ 1 s de las 10 realizaciones;
-  barra = desvío de los f instantáneos, criterio §8.3, por eso es grande: ~5 partículas por bin
-  y estado) y `error_ajuste_mb.png` (E vs k_BT en mJ, recta en el mínimo). **Resultado**: k_BT
+  `rapidez_media_vs_t.png` (con la recta; curva agrupada: 0.881 m/s para t ≥ 1 s, desvío
+  temporal 0.004 m/s), `fv_evolucion.png` (desde 2026-10-19: tres paneles, t = 10⁻², 10⁻¹ y
+  10⁰ s, cada uno con su eje vertical, histograma agrupado con Δv = 0.1 m/s, instante en la
+  leyenda "t (s)"; antes 5 curvas superpuestas con barras), `fv_estacionaria_mb.png` (f(v)
+  estacionaria con Δv = 0.05 m/s: un único histograma con todos los estados t ≥ 1 s de las 10
+  realizaciones, sin barras desde 2026-10-19; antes, barra = desvío de los f instantáneos) y
+  `error_ajuste_mb.png` (E vs k_BT en mJ, punto rojo en el mínimo; desde 2026-10-19
+  eje y lineal acotado a E ≤ 0.05 s²/m² y k_BT ≈ 11.4–13.6 mJ: con todo el rango el mínimo
+  E = 3.8·10⁻³ s²/m² se veía como 0; se probó eje y log y se descartó). **Resultado**: k_BT
   ajustado = 12.41 mJ; m<v²>/2 estacionario = 12.32 mJ; m v0²/2 = 12.50 mJ (−0.7 % y −1.4 %).
   La diferencia de m<v²>/2 sería la energía guardada en los resortes de los contactos
-  [inferencia: no se midió E_p en estas corridas]. El ajuste no tiene incerteza calculada.
+  [inferencia: no se midió E_p en estas corridas]. El ajuste no tiene incerteza calculada
+  (decidido 2026-10-19: se informa sin incerteza). Chequeo descartable 2026-10-19: ajuste por
+  realización 12.41 ± 0.12 mJ; por estado instantáneo 12.4 ± 1.0 mJ (no usados).
 - **Punto 2.4a** (2026-10-12): `scripts/run_t100_vs_n.sh` → `output/billiard/t100_vs_n/N<N>/s<seed>/`.
   Mismo sistema y semillas que el benchmark del TP4 (`x_o = r`, red hexagonal, dt = 10⁻⁵ s,
   Velocity Verlet), `--stop-at-t100` (corta en el primer paso con `F_u = 1`; `finalTime` en
@@ -580,8 +598,9 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   10** (decidido 2026-10-12; qué hacer con los incompletos se decide con los resultados); por
   stdout cuántas llegan y `F_u(t_final)` de las que no. Figuras `ej2/t90_vs_densidad.png`,
   `t100_vs_densidad.png` (densidad numérica `N/(πR²)`, m⁻², la de la presentación), las mismas
-  vs N (`*_vs_n.png`, respaldo) y `fu_vs_t_densidad.png` (`<F_u(t)>` ± desvío, N = 25, 300, 600,
-  675; el promedio de un N llega hasta el `t_final` más chico de sus corridas incompletas).
+  vs N (`*_vs_n.png`, respaldo) y `fu_vs_t_densidad.png` (desde 2026-10-19: F_u(t) de una sola
+  realización, semilla 1, N = 25, 300, 500, 625, 650, escalones, rectas en `F_u` = 0.9 y 1;
+  t_90 = 24.7, 58.2, 174, 1234 s; 625 queda en 0.94 y 650 en 0.11 a 1500 s).
   Estimación previa (extrapolando `1 − F_u ∝ e^{−t/τ}` desde 30 s, optimista en las colas):
   `t_100` ~250 s (400), ~490 s (500), ~1400 s (600); N = 700 casi congelado (`φ = 0.82`, arriba
   de la solidificación de discos duros en 2D, φ ≈ 0.72): sin conversiones entre 20 y 30 s.

@@ -15,12 +15,11 @@ Densidad numérica ρ = N / (π R²).
 
 Figuras en analysis/figures/ej2/: t90_vs_densidad.png, t100_vs_densidad.png (y las mismas vs N:
 t90_vs_n.png, t100_vs_n.png), t90_t100_vs_densidad.png (las dos en un mismo eje; mínimo de cada
-una por stdout), fu_vs_t_densidad.png (<F_u(t)> promedio entre realizaciones, banda
-= desvío estándar entre realizaciones, para los N de --fu-ns) y fu_vs_t_incompletas.png (F_u(t) de
-cada realización, sin promediar, de los N con alguna realización que no llega a t_100: esos N
-tienen distinta cantidad de realizaciones, así que no se comparan promedios).
+una por stdout) y fu_vs_t_densidad.png (F_u(t) de una realización, la semilla --fu-seed, para los
+N de --fu-ns, incluidos N que no llegan a t_100 o a t_90; rectas horizontales en F_u = 0.9 y 1,
+donde se leen t_90 y t_100).
 
-Uso: python3 analysis/plot_t100_vs_n.py [--root DIR] [--fu-ns 25,300,600,675]
+Uso: python3 analysis/plot_t100_vs_n.py [--root DIR] [--fu-ns 25,300,500,625,650] [--fu-seed 1]
 """
 
 from __future__ import annotations
@@ -163,65 +162,44 @@ def plot_t90_t100(rows90, rows100) -> None:
     save_figure(fig, "ej2", "t90_t100_vs_densidad.png")
 
 
-def plot_fu(runs: dict[int, list[Run]], ns: list[int]) -> None:
-    ns = [n for n in ns if n in runs]
-    if not ns:
+def plot_fu(runs: dict[int, list[Run]], ns: list[int], seed: int) -> None:
+    """F_u(t) de la realización `seed` para los N pedidos: evolución típica (los promedios entre
+    realizaciones están en t90_t100_vs_densidad.png). Incluye N que no llegan a t_100 ni a t_90
+    (la curva termina en t_max). Escalones exactos en cada conversión; una corrida que cortó en
+    t_100 sigue con F_u = 1."""
+    chosen = {n: run for n in ns if n in runs for run in runs[n] if run.seed == seed}
+    if not chosen:
         return
-    t_end = max(r.t_final for n in ns for r in runs[n])
-    hi_e = math.ceil(math.log10(t_end))
-    t = np.geomspace(1e-1, t_end, 2000)
+    t_end = max(run.t_final for run in chosen.values())
     fig, ax = plt.subplots()
-    colors = plt.cm.viridis(np.linspace(0, 0.8, len(ns)))
-    for n, color in zip(ns, colors):
-        rs = runs[n]
-        # Las corridas que cortaron en t_100 siguen con F_u = 1; las que llegaron a t_max no se
-        # extrapolan: el promedio llega hasta el t_final más chico de las que no completaron.
-        unfinished = [r.t_final for r in rs if not math.isfinite(r.t100)]
-        t_n = t[t <= min(unfinished)] if unfinished else t
-        fu = np.array([r.fu(t_n) for r in rs])
-        mean, std = fu.mean(axis=0), fu.std(axis=0, ddof=1)
-        ax.fill_between(t_n, mean - std, mean + std, color=color, alpha=0.25, lw=0)
-        ax.plot(t_n, mean, color=color, label=str(n))
+    for level in (0.9, 1.0):
+        ax.axhline(level, color="black", ls=":", lw=1.2, zorder=0)
+    colors = plt.cm.viridis(np.linspace(0, 0.85, len(chosen)))
+    for (n, run), color in zip(chosen.items(), colors):
+        end = t_end if math.isfinite(run.t100) else run.t_final
+        # Arranca en 10⁻³ s con F_u = 0 (fuera del eje log, que empieza en 10⁻¹ s).
+        t = np.concatenate(([1e-3], run.times, [end]))
+        fu = np.concatenate(([0.0], np.arange(1, run.times.size + 1), [run.times.size])) / n
+        ax.step(t, fu, where="post", color=color, lw=1.2, label=str(n))
+        print(f"F_u(t), N = {n}, semilla {seed}: t_90 = {run.t90:.4g} s, t_100 = {run.t100:.4g} s, "
+              f"F_u({run.t_final:g} s) = {run.fu_final:.3f}")
+    hi_e = math.floor(math.log10(t_end))
     ax.set_xscale("log")
-    ax.set_xlim(1e-1, 10.0**hi_e)
+    ax.set_xlim(1e-1, t_end)
     decade_ticks(ax.xaxis, -1, hi_e)
     ax.set_ylim(0, 1.02)
-    ax.set_xlabel("Tiempo (s)")
-    ax.set_ylabel(r"$\langle F_u \rangle$")
-    ax.legend(title="N", loc="upper left")
-    save_figure(fig, "ej2", "fu_vs_t_densidad.png")
-
-
-def plot_fu_incomplete(runs: dict[int, list[Run]]) -> None:
-    """F_u(t) de cada realización de los N en que alguna no llega a t_100, eje t lineal hasta t_max.
-    Una corrida que cortó en t_100 sigue con F_u = 1 (exacto: F_u no decrece y no pasa de 1)."""
-    ns = [n for n, rs in runs.items() if not all(math.isfinite(r.t100) for r in rs)]
-    if not ns:
-        return
-    t_max = max(r.t_final for n in ns for r in runs[n])
-    colors = ("black", "tab:blue", "tab:red", "tab:purple", "tab:brown", "tab:gray")
-    fig, ax = plt.subplots()
-    for n, color in zip(ns, colors):
-        rs = runs[n]
-        for k, run in enumerate(rs):
-            end = t_max if math.isfinite(run.t100) else run.t_final
-            t = np.concatenate(([0.0], run.times, [end]))
-            fu = np.concatenate(([0.0], np.arange(1, run.times.size + 1), [run.times.size])) / n
-            ax.step(t, fu, where="post", color=color, lw=1.0, label=str(n) if k == 0 else None)
-        print(f"F_u(t) por realización: N = {n}, {len(rs)} realizaciones, F_u({t_max:g} s) = "
-              + ", ".join(f"{r.fu_final:.3f}" for r in rs))
-    ax.set_xlim(0, t_max)
-    ax.set_ylim(0, 1.02)
+    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0])  # 0.9 rotulado: recta de t_90
     ax.set_xlabel("Tiempo (s)")
     ax.set_ylabel(r"$F_u$")
-    ax.legend(title="N", loc="center right")
-    save_figure(fig, "ej2", "fu_vs_t_incompletas.png")
+    ax.legend(title="N", loc="center left")
+    save_figure(fig, "ej2", "fu_vs_t_densidad.png")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
-    parser.add_argument("--fu-ns", default="25,300,600,675", help="N de la figura F_u(t), separados por coma")
+    parser.add_argument("--fu-ns", default="25,300,500,625,650", help="N de la figura F_u(t), separados por coma")
+    parser.add_argument("--fu-seed", type=int, default=1, help="realización de la figura F_u(t)")
     args = parser.parse_args()
     runs = load(args.root)
     if not runs:
@@ -232,8 +210,7 @@ def main() -> None:
     plot_scalar(rows90, "t90", r"$\langle t_{90} \rangle$ (s)")
     plot_scalar(rows100, "t100", r"$\langle t_{100} \rangle$ (s)")
     plot_t90_t100(rows90, rows100)
-    plot_fu(runs, [int(v) for v in args.fu_ns.split(",")])
-    plot_fu_incomplete(runs)
+    plot_fu(runs, [int(v) for v in args.fu_ns.split(",")], args.fu_seed)
 
 
 if __name__ == "__main__":

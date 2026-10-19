@@ -6,7 +6,7 @@ total de cada estado guardado es E(t) = Σ ½ m |v|² + Σ_contactos ½ k ξ². 
 conservativo (resortes sin disipación): la exacta es constante, así que todo cambio de E es error
 de integración. Error relativo de la energía: ΔE(t) = (E(t) − E(0)) / E(0).
 
-Observable escalar, uno por realización: error medio ε = (1/K) Σ_k |ΔE(t_k)|, sobre los K
+Observable escalar, uno por realización: error relativo ε = (1/K) Σ_k |ΔE(t_k)|, sobre los K
 estados guardados con t_k > 0. Por cada dt: promedio de ε entre semillas ± desvío estándar entre
 semillas (ddof = 1). Un dt "explota" si alguna semilla da E no finita (no tiene ε).
 
@@ -14,7 +14,7 @@ Figuras en analysis/figures/ej2/:
 
   energia_vs_t.png            E(t) para E_VS_T_DTS (una semilla, Velocity Verlet); la curva que
                               diverge sale por arriba del eje
-  energia_error_medio_dt.png  ε vs dt (Velocity Verlet), log-log
+  energia_error_relativo_dt.png  ε vs dt (Velocity Verlet), log-log, recta punteada en el dt elegido
   energia_esquemas_dt.png     ε vs dt, Verlet original y Velocity Verlet (decisión de variante)
   energia_costo_dt.png        tiempo del lazo vs dt (corridas en paralelo: no es benchmark)
 
@@ -43,6 +43,7 @@ EXAMPLE_SEED = 1
 # dt de E(t) y su color; zorder creciente con dt: las casi planas (dt chicos) quedan detrás.
 E_VS_T = ((5e-4, "tab:red"), (1e-4, "tab:purple"), (5e-5, "tab:blue"), (1e-5, "black"))
 DIVERGED = 1.0  # ε >= 1 (o E no finita): la integración diverge; fuera de las figuras de ε
+CHOSEN_DT = 1e-5  # dt del resto del TP (mayor potencia de 10 con <ε> < 10⁻⁴), marcado en la figura
 
 
 def load_energies() -> dict[tuple[str, float, int], tuple[np.ndarray, np.ndarray, float]]:
@@ -106,7 +107,7 @@ def main() -> None:
               f"{np.polyfit(np.log10(dt_s), np.log10(mean_s), 1)[0]:.2f}")
 
     plot_energy_vs_t(data)
-    plot_error_vs_dt(stats, [MAIN_SCHEME], "energia_error_medio_dt.png")
+    plot_error_vs_dt(stats, [MAIN_SCHEME], "energia_error_relativo_dt.png", CHOSEN_DT)
     plot_error_vs_dt(stats, schemes, "energia_esquemas_dt.png")
     plot_cost(cost[MAIN_SCHEME])
 
@@ -124,8 +125,9 @@ def plot_energy_vs_t(data) -> None:
     save_figure(fig, "ej2", "energia_vs_t.png")
 
 
-def plot_error_vs_dt(stats, schemes, name: str) -> None:
-    """ε vs dt: marcadores huecos y barras en el mismo color, por encima de la línea guía."""
+def plot_error_vs_dt(stats, schemes, name: str, chosen_dt: float | None = None) -> None:
+    """ε vs dt: marcadores huecos y barras en el mismo color, por encima de la línea guía. Con
+    chosen_dt, recta punteada desde ese punto hasta el eje horizontal."""
     fig, ax = plt.subplots()
     styles = {"velocity-verlet": ("o", "tab:blue", 7), "verlet": ("s", "tab:red", 5)}
     for scheme in schemes:
@@ -135,8 +137,12 @@ def plot_error_vs_dt(stats, schemes, name: str) -> None:
                     lw=1.0, elinewidth=1.5, capsize=4, capthick=1.5,
                     label=SCHEME_LABEL[scheme] if len(schemes) > 1 else None)
     log_axes(ax)
+    if chosen_dt is not None:
+        dt, mean, *_ = np.array(stats[schemes[0]]).T
+        y = mean[np.isclose(dt, chosen_dt)][0]
+        ax.plot([chosen_dt] * 2, [ax.get_ylim()[0], y], color="black", ls=":", lw=1.5, zorder=0)
     ax.set_xlabel("Paso de integración (s)")
-    ax.set_ylabel("Error medio de la energía")
+    ax.set_ylabel("Error relativo de la energía")
     if len(schemes) > 1:
         ax.legend(loc="upper left")
     save_figure(fig, "ej2", name)

@@ -22,12 +22,16 @@ import numpy as np
 from common import TP_ROOT, decade_ticks, save_figure, use_style
 
 import matplotlib.pyplot as plt  # noqa: E402  (después de common: backend Agg)
+from matplotlib.ticker import NullLocator  # noqa: E402
 
 ENGINES = (
     # (directorio, leyenda, marcador, color)
     (TP_ROOT / "output" / "tp3_time_vs_n", "eventos", "s", "tab:red"),
     (TP_ROOT / "output" / "billiard" / "time_vs_n", "paso temporal", "o", "tab:blue"),
 )
+# Rótulos del eje N: algunos N medidos, tal cual (no equiespaciados en log), para poder leer a qué
+# N corresponde cada punto.
+N_TICKS = (25, 50, 100, 200, 400, 675)
 
 
 def load(root: Path) -> list[tuple[int, float, float, int]]:
@@ -66,8 +70,9 @@ def main() -> None:
         highs.append(np.max(mean + std))
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlim(10, 1000)
-    decade_ticks(ax.xaxis, 1, 3)
+    ax.set_xlim(20, 800)
+    ax.set_xticks(N_TICKS, [str(n) for n in N_TICKS])
+    ax.xaxis.set_minor_locator(NullLocator())
     lo_e, hi_e = int(np.floor(np.log10(min(lows)))), int(np.ceil(np.log10(max(highs))))
     ax.set_ylim(10.0**lo_e, 10.0**hi_e)
     decade_ticks(ax.yaxis, lo_e, hi_e)

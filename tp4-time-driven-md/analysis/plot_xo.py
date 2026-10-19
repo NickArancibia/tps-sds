@@ -9,10 +9,11 @@ entre realizaciones ± desvío estándar entre realizaciones (ddof = 1; un escal
 solo si llegan todas; si no, el punto no se grafica y se informa por stdout con F_u(t_max).
 
 Figuras en analysis/figures/ej2/: t90_vs_xo.png (los N de --t90-ns) y fu_vs_t_xo_N<N>.png
-(<F_u(t)> ± desvío entre realizaciones para los x_o de --fu-xo). La tabla por stdout incluye todos
-los N del directorio.
+(F_u(t) de una realización, la semilla --fu-seed, para los x_o de --fu-xo; recta en F_u = 0.9,
+donde se lee t_90). La tabla por stdout incluye todos los N del directorio.
 
 Uso: python3 analysis/plot_xo.py [--root DIR] [--t90-ns 100,60,20] [--fu-xo 0.0175,0.25,0.4925]
+     [--fu-seed 1]
 """
 
 from __future__ import annotations
@@ -105,35 +106,51 @@ def plot_t90(runs: dict[int, dict[float, list[Run]]]) -> None:
     save_figure(fig, "ej2", "t90_vs_xo.png")
 
 
-def plot_fu(runs: dict[int, dict[float, list[Run]]], xos: list[float]) -> None:
+def plot_fu(runs: dict[int, dict[float, list[Run]]], xos: list[float], seed: int) -> None:
+    """F_u(t) de la realización `seed` en cada x_o: evolución típica (el promedio entre
+    realizaciones está en t90_vs_xo.png). Escalones exactos en cada conversión; una corrida que
+    cortó en t_100 sigue con F_u = 1."""
     for n, by_xo in runs.items():
-        chosen = [xo for xo in by_xo if any(math.isclose(xo, x, abs_tol=1e-9) for x in xos)]
+        chosen = {xo: run for xo, rs in by_xo.items() for run in rs
+                  if run.seed == seed and any(math.isclose(xo, x, abs_tol=1e-9) for x in xos)}
         if not chosen:
             continue
-        t_end = max(r.t_final for xo in chosen for r in by_xo[xo])
-        t = np.linspace(0, t_end, 2000)
+        t_end = max(run.t_final for run in chosen.values())
         fig, ax = plt.subplots()
-        for xo, color in zip(chosen, ("tab:blue", "tab:red", "black", "tab:purple")):
-            rs = by_xo[xo]
-            # Las que cortaron en t_100 siguen con F_u = 1; las que llegaron a t_max no se extrapolan.
-            unfinished = [r.t_final for r in rs if not math.isfinite(r.t100)]
-            t_x = t[t <= min(unfinished)] if unfinished else t
-            fu = np.array([r.fu(t_x) for r in rs])
-            mean, std = fu.mean(axis=0), fu.std(axis=0, ddof=1)
-            ax.fill_between(t_x, mean - std, mean + std, color=color, alpha=0.2, lw=0)
-            ax.plot(t_x, mean, color=color, label=f"{xo:g}")
+        ax.axhline(0.9, color="black", ls=":", lw=1.2, zorder=0)
+        for (xo, run), color in zip(chosen.items(), ("tab:blue", "tab:red", "black", "tab:purple")):
+            end = t_end if math.isfinite(run.t100) else run.t_final
+            t = np.concatenate(([0.0], run.times, [end]))
+            fu = np.concatenate(([0.0], np.arange(1, run.times.size + 1), [run.times.size])) / n
+            label = xo_label(xo, by_xo, run.big_r)
+            ax.step(t, fu, where="post", color=color, lw=1.2, label=label)
+            print(f"F_u(t), N = {n}, semilla {seed}, x_o = {xo:g} m: t_90 = {run.t90:.1f} s")
         ax.set_xlim(0, t_end)
         ax.set_ylim(0, 1.02)
+        ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0])  # 0.9 rotulado: recta de t_90
         ax.set_xlabel("Tiempo (s)")
-        ax.set_ylabel(r"$\langle F_u \rangle$")
+        ax.set_ylabel(r"$F_u$")
         ax.legend(title="$x_o$ (m)", loc="lower right")
         save_figure(fig, "ej2", f"fu_vs_t_xo_N{n}.png")
+
+
+def xo_label(xo: float, by_xo: dict[float, list[Run]], big_r: float) -> str:
+    """x_o en m, salvo los extremos del barrido [r, R − r]: r (obstáculos en contacto) y R − r
+    (contra la pared). Se reconocen porque suman R; si no, se rotula el número."""
+    lo, hi = min(by_xo), max(by_xo)
+    if math.isclose(lo + hi, big_r, abs_tol=1e-9):
+        if math.isclose(xo, lo, abs_tol=1e-9):
+            return "$r$"
+        if math.isclose(xo, hi, abs_tol=1e-9):
+            return "$R - r$"
+    return f"{xo:g}"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--fu-xo", default="0.0175,0.25,0.4925", help="x_o de la figura F_u(t), separados por coma")
+    parser.add_argument("--fu-seed", type=int, default=1, help="realización de la figura F_u(t)")
     parser.add_argument("--t90-ns", default="100,60,20", help="N de la figura t90_vs_xo, separados por coma")
     args = parser.parse_args()
     runs = load(args.root)
@@ -143,7 +160,7 @@ def main() -> None:
     report(runs)
     t90_ns = {int(v) for v in args.t90_ns.split(",")}
     plot_t90({n: by_xo for n, by_xo in runs.items() if n in t90_ns})
-    plot_fu(runs, [float(v) for v in args.fu_xo.split(",")])
+    plot_fu(runs, [float(v) for v in args.fu_xo.split(",")], args.fu_seed)
 
 
 if __name__ == "__main__":

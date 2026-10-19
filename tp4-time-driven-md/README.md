@@ -47,6 +47,7 @@ Punto 1.2 (ECM vs dt de los 4 esquemas, ~5 s en total):
 ```bash
 ./scripts/run_oscillator_sweep.sh     # → output/oscillator/sweep/<esquema>_dt<dt>/
 python3 analysis/plot_ecm.py          # → analysis/figures/ej1/ecm_vs_dt.png + tabla por stdout
+python3 analysis/plot_oscillator_r.py  # → analysis/figures/ej1/r_vs_t.png (r(t) de los 4 esquemas y la analítica, dt = 5e-3)
 ```
 
 ## Sistema 2: billar circular
@@ -112,8 +113,8 @@ o `t_max = 1500 s`, estado cada 5 s, en paralelo. No correr mientras mide el 2.1
 
 ```bash
 ./scripts/run_t100_vs_n.sh                   # → output/billiard/t100_vs_n/N<N>/s<seed>/
-python3 analysis/plot_t100_vs_n.py           # → ej2/t90_vs_*.png, t100_vs_*.png, fu_vs_t_densidad.png,
-                                             #   fu_vs_t_incompletas.png (F_u(t) por realización de los N que no completan)
+python3 analysis/plot_t100_vs_n.py           # → ej2/t90_vs_*.png, t100_vs_*.png, t90_t100_vs_densidad.png,
+                                             #   fu_vs_t_densidad.png (F_u(t) de la semilla 1, N = 25…650)
 ```
 
 Punto 2.2 (`t_90` vs posición de los obstáculos): N = 100, 60, 20 y 10, `x_o` = r, 0.05, …, 0.45,

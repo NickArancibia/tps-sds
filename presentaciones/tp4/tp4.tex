@@ -12,12 +12,12 @@
 %%   integracion) -> Implementacion (solo motor) -> Simulaciones (sistema particular, interaccion,
 %%   parametros por estudio, observables; sin resultados) -> Resultados (titulo + figura, sin
 %%   texto al costado) -> Conclusiones (1 diap.) -> cierre -> uso de IA (2.5).
+%% Sistema 1 (oscilador): dos diapositivas, r(t) y ECM vs dt, entre la carátula y la
+%%   Introducción, fuera de las secciones (pedido 2026-10-19; el enunciado pide una sola, sin
+%%   intro ni animación).
 %% Resultados, por input (animacion -> evolucion temporal -> input vs observable):
-%%   oscilador (sistema 1: una sola diapositiva, sin intro ni animacion, enunciado) ->
 %%   paso temporal (2.1a) -> numero de particulas (2.1b y 2.4a: mismas corridas, mismo input) ->
 %%   posicion de los obstaculos (2.2) -> distribucion de velocidades (2.3).
-%% El sistema 1 va al principio de Resultados y no antes de la Introduccion: la presentacion
-%%   arranca con la introduccion (../AGENTS.md §8.6) y el enunciado prohibe darle introduccion.
 %% Resultados y numeros: ../../tp4-time-driven-md/AGENTS.md (seccion 6).
 %%
 %% Pendientes marcados con "% TODO:" (grep -n "TODO" tp4.tex).
@@ -30,8 +30,7 @@
 %   diapositiva; la condición inicial va en texto), t90_vs_n, t100_vs_n, t90_vs_densidad y
 %   t100_vs_densidad (reemplazadas por t90_t100_vs_densidad), fu_vs_t_xo_N{60,20,10} (alcanza
 %   con una evolución típica), choques_{particulas,obstaculos}_vs_xo (ver TODO del 2.2),
-%   ecm_dt4_vs_dt y ecm_vs_dt_tramo (solo análisis), error_ajuste_mb (el método del ajuste de
-%   k_BT se explica en Observables; pedido del grupo).
+%   ecm_dt4_vs_dt y ecm_vs_dt_tramo (solo análisis).
 
 \documentclass[aspectratio=169]{beamer}
 \makeatletter\def\input@path{{../}}\makeatother
@@ -100,6 +99,49 @@
   \titlepage
 \end{frame}
 
+% --- Sistema 1 ------------------------------------------------------------
+% Enunciado: una sola diapositiva (ECM vs dt de los 4 métodos, sin intro ni animaciones). Pedido
+%   2026-10-19: sumar la evolución r(t) y, en la del ECM, cómo se obtiene la velocidad que falta.
+% Evolución: dt = 5e-3 s, el mayor del barrido. Dicho en vivo: máx |r_num - r_an| = 9.1e-4 m
+%   (Beeman), 9.3e-4 (Verlet), 9.6e-4 (Velocity Verlet), 0.15 m (Euler PC).
+\begin{frame}{Oscilador: posición vs tiempo}
+  \begin{columns}[c]
+    \begin{column}{0.74\textwidth}
+      \centering
+      \includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{ej1/r_vs_t.png}
+    \end{column}
+    \begin{column}{0.24\textwidth}
+      \begin{itemize}
+        \item $dt = 5\ten{-3}\uni{s}$
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% Leyenda de menor a mayor ECM. "¿Cuál es mejor?" (Beeman) va en Conclusiones.
+% TODO: el ECM se calcula sobre los estados guardados cada 10^-2 s y no sobre todos los pasos
+%   (letra del enunciado), y ya no se declara en la diapositiva: decidir si se recalcula.
+% Detalle (tp4-time-driven-md/AGENTS.md §5): una corrección; la fuerza que pasa al paso
+%   siguiente se recalcula con la v corregida. Dicho en vivo: la fuerza -k r - gamma v necesita
+%   una v que el esquema todavía no calculó. r(-dt) de Verlet: Taylor hasta dt^3 (no es la v de
+%   la fuerza: es el arranque). Beeman usa la variante predictor-corrector de la teórica.
+\begin{frame}{Oscilador: error cuadrático medio vs paso temporal}
+  \begin{columns}[c]
+    \begin{column}{0.66\textwidth}
+      \centering
+      \includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{ej1/ecm_vs_dt.png}
+    \end{column}
+    \begin{column}{0.32\textwidth}
+      \small
+      Verlet y Velocity Verlet:
+      \begin{itemize}\setlength{\itemsep}{0.6em}
+        \item $v$ en la fuerza: se predice con Euler y se corrige con la fórmula de $v$ del esquema
+        \item Verlet: $r(-dt)$ por Taylor desde $r(0)$ y $v(0)$
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
 % ==========================================================================
 \section{Introducción}
 % Sistema real + ecuaciones del modelo general (sin sistema particular ni método de
@@ -135,52 +177,32 @@
   \end{columns}
 \end{frame}
 
-% Modelo general: avance en un paso + esquemas de la Teórica 4 (sin la segunda ley de Newton:
-% pedido del grupo). La ley de fuerza de contacto es del sistema particular: va en Simulaciones
-% ("Sistema: interacción").
-\begin{frame}{Modelo: esquemas de integración}
-  \small
-  \setlength{\abovedisplayskip}{2pt}\setlength{\belowdisplayskip}{6pt}
-  \setlength{\abovedisplayshortskip}{2pt}\setlength{\belowdisplayshortskip}{6pt}
+% Modelo general: segunda ley de Newton con fuerzas de a pares y la ley de contacto (resorte
+% normal; pedido 2026-10-19: va acá y no en Simulaciones) + avance en un paso + el esquema del
+% billar, Velocity Verlet. Los otros tres esquemas del oscilador no van (pedido 2026-10-19).
+% Obstáculos y pared (imagen) son del sistema particular: van en "Sistema: interacción".
+\begin{frame}{Modelo: ecuación de movimiento y esquema de integración}
+  \setlength{\abovedisplayskip}{3pt}\setlength{\belowdisplayskip}{3pt}
+  \textbf{Segunda ley de Newton con contactos elásticos}
+  \[
+    m_i\,\vect{a}_i(t) = \vect{F}_i(t) = \sum_{j\,:\,\xi_{ij} > 0} -k\,\xi_{ij}\,\hat{\vect{e}}_{ij},
+    \qquad
+    \xi_{ij} = 2r - |\vect{r}_j - \vect{r}_i|, \quad
+    \hat{\vect{e}}_{ij} = \frac{\vect{r}_j - \vect{r}_i}{|\vect{r}_j - \vect{r}_i|}
+  \]
+  \vspace{0.3em}
   \textbf{Avance en un paso $dt$ con aceleración constante}
   \[
     \vect{r}_i(t + dt) = \vect{r}_i(t) + \vect{v}_i(t)\,dt + \tfrac{1}{2}\,\vect{a}_i(t)\,dt^2,
     \qquad
     \vect{v}_i(t + dt) = \vect{v}_i(t) + \vect{a}_i(t)\,dt
   \]
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.53\textwidth}
-      \textbf{Verlet original}
-      \begin{align*}
-        \vect{r}_i(t + dt) &= 2\,\vect{r}_i(t) - \vect{r}_i(t - dt) + \vect{a}_i(t)\,dt^2\\
-        \vect{v}_i(t) &= \frac{\vect{r}_i(t + dt) - \vect{r}_i(t - dt)}{2\,dt}
-      \end{align*}
-      \textbf{Beeman}
-      \begin{align*}
-        \vect{r}_i(t + dt) &= \vect{r}_i(t) + \vect{v}_i(t)\,dt\\
-          &\phantom{=}\; + \bigl[\tfrac{2}{3}\vect{a}_i(t) - \tfrac{1}{6}\vect{a}_i(t - dt)\bigr]\,dt^2\\
-        \vect{v}_i(t + dt) &= \vect{v}_i(t)\\
-          &\phantom{=}\; + \bigl[\tfrac{1}{3}\vect{a}_i(t + dt) + \tfrac{5}{6}\vect{a}_i(t)
-          - \tfrac{1}{6}\vect{a}_i(t - dt)\bigr]\,dt
-      \end{align*}
-    \end{column}
-    \begin{column}{0.45\textwidth}
-      \textbf{Velocity Verlet}
-      \begin{align*}
-        \vect{r}_i(t + dt) &= \vect{r}_i(t) + \vect{v}_i(t)\,dt + \tfrac{1}{2}\,\vect{a}_i(t)\,dt^2\\
-        \vect{v}_i(t + dt) &= \vect{v}_i(t)
-          + \tfrac{1}{2}\bigl[\vect{a}_i(t) + \vect{a}_i(t + dt)\bigr]\,dt
-      \end{align*}
-      \textbf{Euler predictor-corrector}
-      \begin{align*}
-        \vect{r}_i^{p} &= \vect{r}_i(t) + \vect{v}_i(t)\,dt\\
-        \vect{v}_i^{p} &= \vect{v}_i(t) + \vect{a}_i(t)\,dt\\
-        \vect{a}_i(t + dt) &= \vect{F}_i(\vect{r}^{p}, \vect{v}^{p})/m_i\\
-        \vect{v}_i(t + dt) &= \vect{v}_i(t) + \vect{a}_i(t + dt)\,dt\\
-        \vect{r}_i(t + dt) &= \vect{r}_i(t) + \vect{v}_i(t + dt)\,dt
-      \end{align*}
-    \end{column}
-  \end{columns}
+  \vspace{0.3em}
+  \textbf{Velocity Verlet}
+  \begin{align*}
+    \vect{r}_i(t + dt) &= \vect{r}_i(t) + \vect{v}_i(t)\,dt + \tfrac{1}{2}\,\vect{a}_i(t)\,dt^2\\
+    \vect{v}_i(t + dt) &= \vect{v}_i(t) + \tfrac{1}{2}\bigl[\vect{a}_i(t) + \vect{a}_i(t + dt)\bigr]\,dt
+  \end{align*}
 \end{frame}
 
 % ==========================================================================
@@ -233,15 +255,17 @@
 % Sistema 2. El sistema 1 no va acá: el enunciado limita el oscilador a una sola diapositiva,
 % en Resultados. La condición inicial va aparte de los parámetros (devolución TP3, D8).
 % dt fijo en el valor elegido (decisión del grupo, 2026-10-18): el barrido de dt del 2.1a no se
-% declara como variable. N: 25, 50, 100, 150, 200, 300, 400, 500, 600, 625, 650, 675 (2.1b y
-% 2.4a) más 20 y 60 (2.2). t_f: 10 (2.1a), 20 (2.3), 30 (2.1b), 100 (2.2), 1500 (2.4a).
-% Realizaciones: N = 650 y 675 solo la semilla 1 hasta 1500 s.
+% declara como variable. Pedido 2026-10-19: solo rangos de N y x_o (los valores se ven en cada
+% figura), sin t_f (cada figura muestra hasta dónde llega) y sin realizaciones (van en cada
+% observable). N: 25, 50, 100, 150, 200, 300, 400, 500, 600, 625, 650, 675 (2.1b y 2.4a) más 20
+% y 60 (2.2). t_f: 10 (2.1a), 20 (2.3), 30 (2.1b), 100 (2.2), 1500 (2.4a). Realizaciones: 10;
+% N = 650 y 675 solo la semilla 1 hasta 1500 s.
 \begin{frame}{Sistema}
   \begin{columns}[T]
-    \begin{column}{0.42\textwidth}
+    \begin{column}{0.52\textwidth}
       \centering
       % Esquema con las magnitudes (radios exagerados para que se vean).
-      \begin{tikzpicture}[scale=3.9, >=Stealth]
+      \begin{tikzpicture}[scale=4.15, >=Stealth]
         \draw[thick] (0,0) circle (0.51);
         \draw[->] (0,0) -- (125:0.51) node[pos=0.55, left] {$R$};
         \fill (-0.25,0) circle (0.022);
@@ -264,7 +288,7 @@
         \item Dirección de $\vect{v}_0$ al azar
       \end{itemize}
     \end{column}
-    \begin{column}{0.56\textwidth}
+    \begin{column}{0.44\textwidth}
       \textbf{Parámetros fijos}
       \begin{itemize}\setlength{\itemsep}{2pt}
         \item $R = 0.51\uni{m}$, $r = 0.0175\uni{m}$
@@ -274,34 +298,26 @@
       \vspace{0.3em}
       \textbf{Parámetros variables}
       \begin{itemize}\setlength{\itemsep}{2pt}
-        \item 14 valores de $N$ entre 20 y 675
-        \item 11 valores de $x_o$ en $[r, R - r]$
+        \item $N$ entre 20 y 675
+        \item $x_o$ en $[r, R - r]$
       \end{itemize}
       \vspace{0.3em}
       \textbf{Parámetros de simulación}
       \begin{itemize}\setlength{\itemsep}{2pt}
         \item $dt = 10^{-5}\uni{s}$
-        \item $t_f \in \{10, 20, 30, 100, 1500\}\uni{s}$
-        \item 10 realizaciones
       \end{itemize}
     \end{column}
   \end{columns}
 \end{frame}
 
-% Ley de fuerza del sistema particular (antes en "Modelo"). Sin definiciones redactadas
-% (devolución TP3, D4): los símbolos se leen en el esquema.
+% Lo propio del sistema particular: con qué interactúa cada partícula con la ley de contacto del
+% Modelo (obstáculos fijos y pared por imagen). Sin definiciones redactadas (devolución TP3, D4):
+% los símbolos se leen en el esquema.
 \begin{frame}{Sistema: interacción}
   \begin{columns}[c]
     \begin{column}{0.54\textwidth}
-      \begin{itemize}\setlength{\itemsep}{0.6em}
-        \item Resortes normales con partículas, obstáculos y pared, sin fricción ni disipación:
-          \[
-            \vect{F}_i = \sum_{j\,:\,\xi_{ij} > 0} -k\,\xi_{ij}\,\hat{\vect{e}}_{ij}
-          \]
-          \[
-            \xi_{ij} = 2r - |\vect{r}_j - \vect{r}_i|, \qquad
-            \hat{\vect{e}}_{ij} = \frac{\vect{r}_j - \vect{r}_i}{|\vect{r}_j - \vect{r}_i|}
-          \]
+      \begin{itemize}\setlength{\itemsep}{0.8em}
+        \item $j$: otras partículas, obstáculos fijos en $(\pm x_o, 0)$ y la pared
         \item Pared: partícula imagen
           \[
             \vect{r}_{\mathrm{img}} = (R + r)\,\hat{\vect{n}}, \qquad
@@ -348,8 +364,7 @@
         \item $F_u(t) = N_u(t)/N$.
         \item $t_{90} = \min\{t : F_u(t) \ge 0.9\}$\\[0.2em]
           $t_{100} = \min\{t : F_u(t) = 1\}$
-        \item $\langle t_{90}\rangle$, $\langle t_{100}\rangle$: promedio $\pm$ desvío entre
-          realizaciones, si llegan todas; si no, $F_u(t_{\mathrm{max}})$.
+        \item $\langle t_{90}\rangle$ y $\langle t_{100}\rangle$ sobre 10 realizaciones
       \end{itemize}
     \end{column}
     \begin{column}{0.40\textwidth}
@@ -375,23 +390,29 @@
         E(t) = \sum_{i=1}^{N} \tfrac{1}{2}\,m\,|\vect{v}_i(t)|^2
           + \sum_{\text{contactos}} \tfrac{1}{2}\,k\,\xi^2
       \]
-    \item Error medio de la energía sobre los $K$ estados guardados:
+    \item Error relativo de la energía sobre los $K$ estados guardados ($\langle\varepsilon\rangle$
+      sobre 10 realizaciones):
       \[
         \varepsilon = \frac{1}{K}\sum_{\ell=1}^{K} \left|\frac{E(t_\ell) - E(0)}{E(0)}\right|
       \]
+    \item Tiempo de ejecución del lazo de integración, sobre 10 realizaciones
   \end{itemize}
 \end{frame}
 
 % Cómo se ajusta k_BT va acá (devolución TP3, D9-D10: "¿cómo calculan el ajuste?"); la
-% figura E(k_BT) no va en Resultados.
+% figura E(k_BT) va en Resultados, antes de la f(v) estacionaria. Pedido 2026-10-19: un único
+% histograma con las partículas de las 10 realizaciones (y de todos los estados t >= t_est en la
+% estacionaria) y un único promedio de la rapidez; mismos valores que promediar por realización
+% (igual N en todas), sin barras de error.
 \begin{frame}{Observables: distribución de velocidades}
-  \begin{itemize}\setlength{\itemsep}{0.7em}
-    \item $N_b(t)$: partículas con rapidez $|\vect{v}_i|$ en el bin $b$ (centro $v_b$, ancho
-      $\Delta v$):
+  \begin{itemize}\setlength{\itemsep}{0.6em}
+    \item $N_b(t)$: partículas de las 10 realizaciones con rapidez en el bin $b$ (centro $v_b$,
+      ancho $\Delta v$):
       \[
-        f(v_b, t) = \frac{N_b(t)}{N\,\Delta v}, \qquad
-        \bar{v}(t) = \frac{1}{N}\sum_{i=1}^{N} |\vect{v}_i(t)|
+        f(v_b, t) = \frac{N_b(t)}{10\,N\,\Delta v}, \qquad
+        \bar{v}(t) = \frac{1}{10\,N}\sum_{k=1}^{10}\sum_{i=1}^{N} |\vect{v}_{i,k}(t)|
       \]
+    \item $f(v_b)$ estacionaria: promedio de $f(v_b, t)$ en $t \ge t_{\mathrm{est}}$
     \item Ajuste de Maxwell-Boltzmann 2D: $\kT^{*}$ minimiza $\mathcal{E}(\kT)$
       \[
         f_{\mathrm{MB}}(v) = \frac{m\,v}{\kT}\,\exp\!\left(-\frac{m\,v^2}{2\,\kT}\right), \qquad
@@ -407,17 +428,6 @@
 %   ../../tp4-time-driven-md/analysis/animate_billiard.py, un cuadro por estado guardado):
 %   output/billiard/anim/base_N300_s1.mp4, fina_N25_s1.mp4, larga_N625_s1.mp4.
 % ==========================================================================
-
-% --- Sistema 1 ------------------------------------------------------------
-% Enunciado: UNA sola diapositiva, con la figura de ECM vs dt de los 4 métodos; sin
-% introducción, ni animaciones, ni ninguna otra información: solo la figura, sin nada al costado.
-% Leyenda de menor a mayor ECM. "¿Cuál es mejor?" (Beeman) va en Conclusiones.
-% TODO: el ECM se calcula sobre los estados guardados cada 10^-2 s y no sobre todos los pasos
-%   (letra del enunciado), y ya no se declara en la diapositiva: decidir si se recalcula.
-\begin{frame}{Oscilador: error cuadrático medio vs paso temporal}
-  \centering
-  \includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{ej1/ecm_vs_dt.png}
-\end{frame}
 
 % --- Paso temporal (2.1a) ---------------------------------------------------
 
@@ -436,8 +446,8 @@
 %   ajuste.
 % Dicho en vivo (sin texto en la diapositiva): dt >= 10^-3 s da <ε> >= 1 (fuera de la figura);
 %   elegido dt = 10^-5 s, mayor potencia de 10 con <ε> < 10^-4: <ε> = (5 ± 2) x 10^-6.
-\begin{frame}{Paso temporal: error medio de la energía vs paso}
-  \figura{ej2/energia_error_medio_dt.png}
+\begin{frame}{Paso temporal: error relativo de la energía vs paso}
+  \figura{ej2/energia_error_relativo_dt.png}
 \end{frame}
 
 % --- Número de partículas (2.1b y 2.4a: mismas corridas) -----------------------
@@ -458,14 +468,15 @@
   \figura{ej2/tiempo_vs_n.png}
 \end{frame}
 
+% Evolución temporal del observable (../AGENTS.md §5.3): F_u(t) de UNA realización (semilla 1)
+%   por N; de acá se leen t_90 y t_100 (rectas en F_u = 0.9 y 1). N = 625 y 650 muestran por qué
+%   faltan puntos en <t_90>/<t_100> (pedido 2026-10-19; reemplaza a la diapositiva de
+%   realizaciones incompletas). Dicho en vivo (semilla 1): t_90 = 24.7, 58.2, 174, 1234 s (25,
+%   300, 500, 625); N = 625 queda en F_u(1500 s) = 0.94 y N = 650 en 0.11. Con las 10
+%   realizaciones, F_u(1500 s): N = 600 0.993 a 1.000, N = 625 0.92 a 0.95; N = 675 (solo
+%   semilla 1) 0.01.
 \begin{frame}{Número de partículas: fracción de usadas vs tiempo}
   \figura{ej2/fu_vs_t_densidad.png}
-\end{frame}
-
-% Dicho en vivo, F_u(1500 s): N = 600 0.993 a 1.000 (10 realizaciones), N = 625 0.92 a 0.95 (10),
-%   N = 650 0.11 (1), N = 675 0.01 (1).
-\begin{frame}{Número de partículas: realizaciones que no llegan a $F_u = 1$}
-  \figura{ej2/fu_vs_t_incompletas.png}
 \end{frame}
 
 % Dicho en vivo: mínimo en ρ = 61 m^-2 (N = 50), <t_90> = 23 ± 4 s, <t_100> = 40 ± 10 s.
@@ -475,7 +486,9 @@
 
 % --- Posición de los obstáculos (2.2) ----------------------------------------
 
-% TODO (figura): agregar una recta horizontal en F_u = 0.9 para cerrar la evolución con t_90.
+% Evolución típica: F_u(t) de UNA realización (semilla 1, N = 100); el promedio entre
+%   realizaciones va en <t_90> vs x_o. Dicho en vivo, t_90 de esa semilla: 19.2 s (r), 14.3 s
+%   (0.25 m), 32.6 s (R - r).
 \begin{frame}{Posición de los obstáculos: fracción de usadas vs tiempo}
   \figura{ej2/fu_vs_t_xo_N100.png}
 \end{frame}
@@ -491,19 +504,37 @@
 
 % --- Distribución de velocidades (2.3) -----------------------------------------
 
-% Orden: primero la f(v) a la que se llega, después cómo se encontró el estacionario.
-\begin{frame}{Distribución de velocidades: evolución de $f(v)$}
-  \figura{ej2/fv_evolucion.png}
-\end{frame}
-
-% Dicho en vivo: v̄ = 0.880 ± 0.015 m/s para t >= t_est = 1 s.
+% Orden (pedido 2026-10-19): primero cómo se encontró el estacionario (rapidez media) y después
+%   la f(v) en t = 10^-2, 10^-1 y 10^0 s (el último, el inicio del estacionario). Partículas de las
+%   10 realizaciones juntas: una sola curva / un solo histograma, sin barras.
+% Dicho en vivo: v̄ = 0.881 m/s para t >= t_est = 1 s (desvío temporal 0.004 m/s).
 \begin{frame}{Distribución de velocidades: rapidez media vs tiempo}
   \figura{ej2/rapidez_media_vs_t.png}
 \end{frame}
 
-% Sin diapositiva de E(k_BT): el método del ajuste está en Observables. Dicho en vivo:
-%   k_BT* = 12.41 mJ, m<v^2>/2 = 12.32 mJ, m v0^2/2 = 12.50 mJ.
-% TODO: k_BT* no tiene incerteza calculada; revisar cuántas cifras se informan (12.41 mJ).
+\begin{frame}{Distribución de velocidades: evolución de $f(v)$}
+  \figura{ej2/fv_evolucion.png}
+\end{frame}
+
+% Ajuste de MB (pedido: mostrar la figura del ajuste y reportar k_BT*). k_BT* va solo en el eje
+%   horizontal de la figura (rótulo rojo); m v0^2/2 al costado: es la comparación que pide el
+%   enunciado. Dicho en vivo: m<v^2>/2 = 12.32 mJ (estacionario, t >= 1 s).
+% k_BT* sin incerteza (decidido 2026-10-19; un solo ajuste sobre el histograma de todo el
+%   estacionario). E(k_BT*) = 3.8e-3 s^2/m^2 (eje y lineal acotado a 0.05 para que no parezca 0).
+% TODO: decidir la conclusión "0.7 % debajo de m v0^2/2": por estado k_BT* = 12.4 ± 1.0 mJ.
+\begin{frame}{Distribución de velocidades: ajuste de Maxwell-Boltzmann}
+  \begin{columns}[c]
+    \begin{column}{0.72\textwidth}
+      \centering
+      \includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{ej2/error_ajuste_mb.png}
+    \end{column}
+    \begin{column}{0.26\textwidth}
+      \[ \frac{m\,v_0^2}{2} = 12.50\uni{mJ} \]
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% Curva de MB con el k_BT* de la diapositiva anterior.
 % La diferencia entre m<v^2>/2 y m v0^2/2 sería energía guardada en los resortes: es una
 % inferencia (no se midió E_p en estas corridas), no va a la diapositiva sin medirla.
 \begin{frame}{Distribución de velocidades: $f(v)$ estacionaria}
