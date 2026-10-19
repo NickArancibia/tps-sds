@@ -403,8 +403,9 @@
 % ==========================================================================
 \section{Resultados}
 % Por input: animacion -> evolucion temporal -> input vs observable.
-% TODO: todos los fotogramas (figuras/anim_*.png) y links de YouTube están pendientes. Las
-%   corridas largas de output/billiard/ no están en esta copia del repo.
+% TODO: subir los videos a YouTube y reemplazar \yt{PENDIENTE}. Videos (2026-10-18, todos con
+%   ../../tp4-time-driven-md/analysis/animate_billiard.py, un cuadro por estado guardado):
+%   output/billiard/anim/base_N300_s1.mp4, fina_N25_s1.mp4, larga_N625_s1.mp4.
 % ==========================================================================
 
 % --- Sistema 1 ------------------------------------------------------------
@@ -420,11 +421,11 @@
 
 % --- Paso temporal (2.1a) ---------------------------------------------------
 
-% TODO: elegir los dt de la animación. Propuesta: 10^-3 s (diverge) y 10^-5 s (elegido); las
-%   corridas de output/billiard/energy_dt/ guardan cada 5e-2 s (200 cuadros en 10 s).
-\begin{frame}{Paso temporal: animaciones con $N = 300$}
-  \animdos{anim_energia_dt1e-3.png}{$dt = 10^{-3}\uni{s}$}{\yt{PENDIENTE}}
-          {anim_energia_dt1e-5.png}{$dt = 10^{-5}\uni{s}$}{\yt{PENDIENTE}}
+% Sistema base: N = 300, x_o = r, red hexagonal, semilla 1, dt = 10^-5 s, t_f = 20 s, estado cada
+%   0.01 s (output/billiard/anim/base_N300_s1; video con --stride 3 --fps 30, 22 s). Ojo: el
+%   estudio del paso temporal es sin obstáculos; esta animación muestra el sistema completo.
+\begin{frame}{Billar: animación con $N = 300$}
+  \animsola{anim_base_N300.png}{\yt{PENDIENTE}}
 \end{frame}
 
 \begin{frame}{Paso temporal: energía total vs tiempo}
@@ -441,13 +442,14 @@
 
 % --- Número de partículas (2.1b y 2.4a: mismas corridas) -----------------------
 
-% TODO: animaciones de los extremos (decidido: N = 600 como alto, N = 25 propuesto como bajo),
-%   re-corriendo una semilla ~20 s con estado fino. Existe larga_N600_s1.mp4 (estado cada 5 s).
-%   ¿N = 675 en lugar de 600? Mostraría el anillo de usadas que traba el sistema (ver TODO de
-%   Conclusiones).
+% N = 25: semilla 1 re-corrida con estado cada 0.01 s hasta t_100 = 38.4 s
+%   (output/billiard/anim/fina_N25_s1; conversions.csv idéntico al de t100_vs_n/N25/s1; video
+%   --stride 4 --fps 45, 21 s). N = 625: la corrida de 1500 s del 2.4a (t100_vs_n/N625/s1, estado
+%   cada 5 s; video --fps 15, 20 s, 75 s simulados por s de video): llega a t_90 = 1234 s y queda
+%   en F_u = 0.94. Fotogramas en t = 15 s (N = 25) y t = 1500 s (N = 625).
 \begin{frame}{Número de partículas: animaciones con $x_o = r$}
   \animdos{anim_densidad_N25.png}{$N = 25$}{\yt{PENDIENTE}}
-          {anim_densidad_N600.png}{$N = 600$}{\yt{PENDIENTE}}
+          {anim_densidad_N625.png}{$N = 625$}{\yt{PENDIENTE}}
 \end{frame}
 
 % TODO: discutir el escalamiento (exponente local: paso temporal 0.15 -> 2, eventos 2.6 -> 13,
@@ -460,16 +462,10 @@
   \figura{ej2/fu_vs_t_densidad.png}
 \end{frame}
 
-% F_u(t_max) de las realizaciones que no llegan: lo pide el enunciado y no se lee con
-% precisión en la figura; es el único texto al costado que queda en Resultados.
+% Dicho en vivo, F_u(1500 s): N = 600 0.993 a 1.000 (10 realizaciones), N = 625 0.92 a 0.95 (10),
+%   N = 650 0.11 (1), N = 675 0.01 (1).
 \begin{frame}{Número de partículas: realizaciones que no llegan a $F_u = 1$}
-  \figuraparam{ej2/fu_vs_t_incompletas.png}{%
-    $F_u(1500\uni{s})$:\\
-    $N = 600$: 0.993 a 1.000 (10)\\
-    $N = 625$: 0.92 a 0.95 (10)\\
-    $N = 650$: 0.11 (1)\\
-    $N = 675$: 0.01 (1)
-  }
+  \figura{ej2/fu_vs_t_incompletas.png}
 \end{frame}
 
 % Dicho en vivo: mínimo en ρ = 61 m^-2 (N = 50), <t_90> = 23 ± 4 s, <t_100> = 40 ± 10 s.
@@ -478,13 +474,6 @@
 \end{frame}
 
 % --- Posición de los obstáculos (2.2) ----------------------------------------
-
-% TODO: elegir los x_o de la animación (propuesta: 0.25 m y R - r, el mejor y el peor de
-%   fu_vs_t_xo_N100.png; o los extremos r y R - r).
-\begin{frame}{Posición de los obstáculos: animaciones con $N = 100$}
-  \animdos{anim_xo025_N100.png}{$x_o = 0.25\uni{m}$}{\yt{PENDIENTE}}
-          {anim_xoborde_N100.png}{$x_o = R - r$}{\yt{PENDIENTE}}
-\end{frame}
 
 % TODO (figura): agregar una recta horizontal en F_u = 0.9 para cerrar la evolución con t_90.
 \begin{frame}{Posición de los obstáculos: fracción de usadas vs tiempo}
@@ -501,11 +490,6 @@
 \end{frame}
 
 % --- Distribución de velocidades (2.3) -----------------------------------------
-
-% TODO: animación (¿partículas coloreadas por rapidez?). Sin corrida de animación todavía.
-\begin{frame}{Distribución de velocidades: animación con $N = 100$}
-  \animsola{anim_velocidades_N100.png}{\yt{PENDIENTE}}
-\end{frame}
 
 % Orden: primero la f(v) a la que se llega, después cómo se encontró el estacionario.
 \begin{frame}{Distribución de velocidades: evolución de $f(v)$}

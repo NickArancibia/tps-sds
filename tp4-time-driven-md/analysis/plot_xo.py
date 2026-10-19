@@ -62,6 +62,7 @@ def report(runs: dict[int, dict[float, list[Run]]]) -> None:
 def plot_t90(runs: dict[int, dict[float, list[Run]]]) -> None:
     fig, ax = plt.subplots()
     all_values = []
+    minima = []  # (x_o, <t_90>, color) del mínimo de cada N
     for n, by_xo in runs.items():
         rows = []
         for xo, rs in by_xo.items():
@@ -72,8 +73,12 @@ def plot_t90(runs: dict[int, dict[float, list[Run]]]) -> None:
             continue
         xo, mean, std = (np.array(c) for c in zip(*rows))
         all_values.append((mean, std))
-        ax.errorbar(xo, mean, yerr=std, fmt=MARKERS.get(n, "o") + "-", color=COLORS.get(n), ms=6,
+        color = COLORS.get(n)
+        ax.errorbar(xo, mean, yerr=std, fmt=MARKERS.get(n, "o") + "-", color=color, ms=6,
                     mfc="white", mew=1.5, lw=1.0, elinewidth=1.5, capsize=4, capthick=1.5, label=str(n))
+        best = int(np.argmin(mean))
+        minima.append((xo[best], mean[best], color))
+        print(f"N = {n}: mínimo de <t90> en x_o = {xo[best]:g} m ({mean[best]:.3g} ± {std[best]:.2g} s)")
     if not all_values:
         print("ningún x_o con todas las realizaciones completas, sin figura")
         plt.close(fig)
@@ -87,6 +92,10 @@ def plot_t90(runs: dict[int, dict[float, list[Run]]]) -> None:
         decade_ticks(ax.yaxis, lo_e, hi_e)
     else:
         ax.set_ylim(0, None)
+    # x_o que minimiza <t_90> para cada N: punteada del color de la curva hasta el eje horizontal.
+    bottom = ax.get_ylim()[0]
+    for x, y, color in minima:
+        ax.vlines(x, bottom, y, colors=color, linestyles=":", lw=1.5, zorder=1)
     ax.set_xlabel("Posición de los obstáculos (m)")
     ax.set_ylabel(r"$\langle t_{90} \rangle$ (s)")
     # Abajo a la izquierda, compacta: tiene que quedar debajo de las tapas inferiores de N = 20 en
