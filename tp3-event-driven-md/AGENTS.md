@@ -485,3 +485,31 @@ Finalizar mostrando una comparación de los mejores ejemplares de cada familia."
   k"; eje de `t90_multi_barrier.png` = "Cantidad de columnas k" (antes "… pegadas"; mismo rótulo que
   `D_vs_k_multi_barrier.png`), cambiado en `gen_configs.py` y rehecho con `gen_configs.py` +
   `plot_t90.py --from-csv multi_barrier` (no toca los csv).
+
+## 12. Devolución final de la cátedra (presentación, nota 9)
+
+Numeración de diapositivas = `../presentaciones/tp3/tp3.pdf` (33 páginas, la entregada). Las
+lecciones generales quedaron en `../AGENTS.md` §5.6 (diseño de referencia) y §8 (ítems **[TP3]**).
+Devolución textual:
+
+- General: *"Bien explicado el proceso de aprendizaje por el que pasaron, se entiende porqué
+  toman las desiciones, felicitaciones."* El grupo toma como base para las próximas
+  presentaciones la cantidad de texto y el diseño (diapositivas con solo una figura).
+- *"El tiempo elegido para el DCM no está del todo bien."*
+- *"Durante la presentación hicieron algunos comentarios sin justificar 100%: ("crece
+  exponencialmente" o "pendiente agresiva")."*
+- **D3** (Sistema, introducción): *"La configuración de la mesa, arcos y obstáculos no va en esta
+  parte, corresponde a simulaciones."*
+- **D4** (Modelo): *"No redactar en e_n"* (la definición de `ê_n` estaba escrita como oración).
+- **D8** (Sistema, Simulaciones): *"Las posiciones iniciales al azar no son un parámetro, y tampoco
+  están fijas."* (estaban en "Fijos").
+- **D9–D10** (Observables): *"muy bien los observables. ¿Cómo calculan el ajuste lineal para el
+  D?"* (la diapositiva no mostraba E(c); solo "se marca a ojo el tramo [0, t_fin]").
+- **D11–D13** (Configuraciones): *"Buenísima idea mostrar el parámetro a variar y varios ejemplos.
+  En este tp era necesario ese nivel de detalle dado que son sus propias propuestas."*
+- **D16** (Tiempo de ejecución vs N, `time_vs_n_linear.png`, ejes lineales por pedido del grupo,
+  §6): *"Usen ejes logaritmicos para mostrar cambios por escalas."*
+- **D28** (Difusión: DCM vs tiempo, `dcm_vs_t.png`, t_fin a ojo de hasta varios segundos):
+  *"Me parece que están tomando tiempos demasiado largos para el calculo del D."*
+- **D30** (Bloque central: ⟨D⟩ vs ⟨t_90⟩, `D_vs_t90_multi_barrier.png`): *"Bien esta figura,
+  condensa mucha información sin que se sature ni vuelva confusa."*

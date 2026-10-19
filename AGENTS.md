@@ -117,7 +117,7 @@ Basado en la "Guía para realizar presentaciones con diapositivas" de la cátedr
 ### 5.2 Figuras en presentaciones
 
 - Las figuras **no llevan título dentro ni caption debajo** (a diferencia de los informes, que sí llevan captions).
-- Los **parámetros fijos** (configuración del sistema con la que se obtuvo el resultado) se describen **al costado de la figura**.
+- Los **parámetros fijos** (configuración del sistema con la que se obtuvo el resultado) se describen **al costado de la figura**, pero **solo los que no estén ya en Simulaciones ni en el título**. Si no queda nada nuevo que decir, la diapositiva lleva solo título + figura (ver 5.6).
 - Aplican además todas las reglas de la sección 3 (ejes, unidades, notación científica, fuente ≥ 20).
 
 ### 5.3 Estructura obligatoria de la presentación
@@ -149,6 +149,19 @@ Distribución orientativa de tiempos (para una presentación de ~15 min):
 - Todos los integrantes deben poder exponer **cualquier** parte.
 - No superponerse ni agregar a lo que recién explicó un compañero; las preguntas se responden en orden.
 - Antes de entregar, **todos** revisan el documento contra esta guía y contra las correcciones de TPs anteriores: los errores reiterados de un TP al siguiente penalizan la nota.
+
+### 5.6 Diseño de referencia: presentación del TP3 (nota 9)
+
+La cátedra elogió la cantidad de texto y el diseño de `presentaciones/tp3/tp3.tex` (PDF entregado: `presentaciones/tp3/tp3.pdf`). Usarla como **plantilla** de las próximas presentaciones, corrigiendo las observaciones **[TP3]** de la sección 8.
+
+- **Resultados**: una diapositiva = título + **una sola figura** al máximo tamaño, sin texto. El valor del input que distingue el caso va en el título ("Disco central: animación con R = 0.33 m"). Texto al costado solo si aporta algo que no esté en Simulaciones ni en el título (ej.: a qué configuración corresponde cada barra de una comparación).
+- **Animaciones**: fotograma grande + link debajo, nada más.
+- **Simulaciones**: esquema grande de un lado, parámetros en bullets cortos del otro.
+- **Inputs que son propuestas propias** (configuraciones, geometrías): en Simulaciones, una diapositiva por familia con el parámetro a variar y **varios ejemplos dibujados** (D11–D13 del TP3, elogiadas: "en este TP era necesario ese nivel de detalle dado que son sus propias propuestas").
+- **Observables**: definición matemática + esquema del procedimiento (D9–D10 del TP3, elogiadas).
+- **Contar el proceso**: qué se probó, qué se descartó y por qué se tomó cada decisión (elogiado: "se entiende por qué toman las decisiones"). Todo lo que se diga tiene que estar respaldado por una figura mostrada.
+- **Figuras que condensan**: una figura puede combinar mucha información si no se satura; ej.: D30 del TP3 (⟨D⟩ vs ⟨t₉₀⟩ con el parámetro k como escala de color).
+- Las explicaciones se dicen en vivo; no se escriben en la diapositiva.
 
 ## 6. Informes
 
@@ -194,13 +207,17 @@ Basado en la "Guía para Redacción de Informe" de la cátedra. Los informes son
 - [ ] ¿PDF de presentación sin animaciones embebidas, con fotograma + link?
 - [ ] ¿Conclusiones basadas solo en resultados mostrados?
 - [ ] ¿Se verificó no repetir errores corregidos en TPs anteriores?
+- [ ] ¿Introducción sin el sistema particular, Modelo sin geometría y sin definiciones redactadas en oraciones?
+- [ ] ¿Figuras de escalamiento en log-log y el método de cada ajuste explicado en Observables (qué error se minimiza, qué parámetro queda libre)?
+- [ ] ¿Ventanas de ajuste (ej.: D a partir del DCM) limitadas al tramo donde vale la ley ajustada y justificadas con la curva?
+- [ ] ¿Cada afirmación oral sobre la forma de una curva ("crece como...", "pendiente...") está cuantificada y mostrada?
 - [ ] ¿Las barras de error son comparables a la fluctuación visible en la evolución temporal (no desvío de promedios ni σ/√n)?
 - [ ] ¿El inicio del estacionario sale de la curva (mínimo tiempo en régimen) y es el mismo en todas las diapositivas/figuras?
 - [ ] ¿Hay introducción, ningún acrónimo sin definir, y el link de animaciones se copia bien desde el PDF?
 
 ## 8. Errores frecuentes en devoluciones de la cátedra
 
-Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devoluciones propias del TP2 (G2, nota 6/10; los ítems marcados **[TP2]** costaron puntos) y del TP3 (**[TP3]**). Revisar antes de entregar.
+Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devoluciones propias del TP2 (G2, nota 6/10; los ítems marcados **[TP2]** costaron puntos) y del TP3 (G2, nota 9/10; **[TP3]**, devolución textual en `tp3-event-driven-md/AGENTS.md` §12). Revisar antes de entregar.
 
 ### 8.1 Modelo vs. Simulaciones
 - Los **escenarios/sistemas particulares** (geometrías, casos a estudiar) van en **Simulaciones**, NO en Modelo. El Modelo es solo ecuaciones generales.
@@ -211,6 +228,9 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devol
 - **[TP2] No agregar aclaraciones triviales** en la definición del sistema (ej.: "las partículas son puntuales"): sobra y ocupa espacio.
 - **[TP2] Estado estacionario**: el inicio del estacionario se determina **mirando la evolución temporal** y se toma como el **mínimo tiempo** a partir del cual el observable ya está en régimen (marcado con recta vertical). **Prohibido fijarlo arbitrariamente** (ej.: "última mitad, `t ≥ T/2`") sin justificarlo con la curva. El promedio estacionario se calcula desde ese tiempo, no desde un valor cómodo.
 - **[TP2] Coherencia entre diapositivas**: el inicio del estacionario declarado en Simulaciones/definición del observable tiene que ser **el mismo** que se marca en las figuras de evolución de Resultados. Distintos valores en distintas diapositivas es una observación directa del corrector.
+- **[TP3] La Introducción tampoco lleva el sistema particular**: la mesa, los arcos y los obstáculos de la diapositiva de introducción (D3) "corresponden a simulaciones". La Introducción describe el sistema real y el fenómeno en general; la geometría y la configuración concretas van recién en Simulaciones.
+- **[TP3] La condición inicial al azar no es un parámetro**: "posiciones iniciales al azar" figuraba entre los parámetros fijos (D8); la cátedra: "no son un parámetro, y tampoco están fijas". Describir la condición inicial en un renglón propio (ej.: "Condición inicial: posiciones al azar sin superposición, distinta en cada realización"), fuera de las listas de parámetros fijos y variables.
+- **Modelo = ecuaciones generales del movimiento** (decisión del grupo, TP4): avance en un paso y esquemas de integración de la teórica, en una sola diapositiva (sin la segunda ley de Newton aparte). La ley de fuerza o de choque **del sistema particular** (resortes de contacto con su `k`, imagen de la pared, etc.) va en Simulaciones, con su esquema.
 
 ### 8.2 Observables y consistencia
 - Las figuras deben medir **exactamente** los observables definidos; si el eje no respeta la definición, no mostrarlo.
@@ -218,6 +238,8 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devol
 - **[TP2] Esquema del observable**: si el observable requiere un procedimiento no trivial (ej.: identificar el cluster más grande, contar vecinos), incluir un **dibujo/esquema** de cómo se identifica, junto a la definición matemática.
 - **Notación uniforme**: no reusar un símbolo para dos cosas (ej.: `L` para tamaño y para partícula líder; `r` vs `r_c`). Mantener el mismo nombre en ecuaciones, diagramas y parámetros fijos.
 - La **cantidad de realizaciones** no es un parámetro variable de estudio: indicarla en "Parámetros de simulación", no como input barrido.
+- **[TP3] Explicar cómo se calcula cada ajuste**: la cátedra preguntó "¿Cómo calculan el ajuste lineal para el D?" porque la diapositiva solo decía `DCM = 4 D t` y "se marca a ojo el tramo [0, t_fin]". La aclaración va en la diapositiva de **Observables**, junto a la definición: la expresión del error que se minimiza y el parámetro libre (método de la Teórica 0). Decisión del grupo (TP4): la figura E(c) vs c no hace falta como diapositiva de Resultados.
+- **[TP3] Ventana del ajuste de difusión**: "El tiempo elegido para el DCM no está del todo bien" y (D28) "están tomando tiempos demasiado largos para el cálculo del D". El ajuste `DCM = 4 D t` va solo en el tramo de tiempos cortos donde el DCM crece linealmente, antes de que el confinamiento (paredes, obstáculos) lo curve o lo sature. Marcar la ventana sobre la figura DCM vs t y justificarla con la curva; si la curva es cóncava desde el inicio, D depende de la ventana y eso se tiene que decir.
 
 ### 8.3 Gráficos
 - **Curvas que se tapan**: dibujar la que tapa por **detrás** (menor zorder) y usar **colores independientes/distinguibles** (azul, rojo, negro); evitar combinaciones que se confunden (verde/naranja).
@@ -228,6 +250,7 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devol
 - Para asociar un parámetro a su color, considerar **escala de color tipo gradiente**.
 - NO duplicar en tablas datos que ya están en los gráficos.
 - **[TP2] Aprovechar el espacio**: cada figura ocupa el **máximo espacio disponible** en la diapositiva. Una figura chica con media diapositiva vacía es una observación segura. Esquemas ilustrativos (geometría, sistema) también grandes.
+- **[TP3] Escalamiento → ejes logarítmicos** (regla de la sección 3, incumplida): el tiempo de ejecución vs N se mostró en ejes lineales (D16) y la cátedra pidió "ejes logarítmicos para mostrar cambios por escalas". Toda figura de escalamiento (costo vs N, etc.) va en log-log; la pendiente da el exponente, y eso es lo que se afirma.
 
 ### 8.4 Animaciones
 - El sujeto de interés (ej.: líder) debe estar **centrado**, no en el borde.
@@ -243,4 +266,7 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devol
 - **[TP2] Cifras significativas en el informe**: los valores promedio se reportan con **los decimales que el error permite** (`0.83 ± 0.04`, no `0.8312 ± 0.0413`). Observación textual: "en P7 se ponen más decimales de los correctos". El formato "valor ± error" en tablas de texto fue aceptado; el exceso de decimales, no. Redondear el error a 1 cifra significativa (2 si empieza en 1) y el valor al mismo decimal; el script que genera la tabla debe hacerlo automáticamente.
 - **[TP3] Exploración de configuraciones / familias**: no presentar más de **tres familias** de configuraciones. Cada familia sigue el esquema usual de 5.3 (animación característica → evolución temporal del observable → input vs. observable) y el estudio **cierra con la comparación de los mejores ejemplares de cada familia** (más la referencia que pida el enunciado). Los esquemas de cada familia van en Simulaciones.
 - **[TP3] Sin interpolación en simulaciones dirigidas por eventos**: no se permite ningún tipo de interpolación, búsqueda o uso de tiempos que no correspondan a eventos, ni para animar ni para ningún otro fin (ni siquiera avanzar en MRU entre eventos, aunque sea exacto). Cada cuadro de animación es un estado guardado en un evento; la reproducción no es en tiempo real. El código de animación se entrega junto con el motor.
+- **[TP3] No redactar en las diapositivas de ecuaciones**: en el Modelo (D4) se marcó "No redactar en ê_n" por la definición escrita como oración (`ê_n: versor normal al choque, del centro del obstáculo al de la partícula`). Definir los símbolos con una expresión (`ê_n = (r − r_k)/|r − r_k|`) o dibujarlos en un esquema; la explicación se dice en vivo.
+- **[TP3] Afirmaciones orales justificadas**: comentarios como "crece exponencialmente" o "pendiente agresiva" fueron observados por no estar justificados. Toda afirmación sobre la forma de una curva tiene que estar cuantificada y mostrada (ej.: "pendiente 3 en log-log, tiempo ∝ N³"); no decir "exponencial" si no se ajustó una exponencial. Revisar el guion con este criterio al ensayar.
 - Lo que la cátedra marcó como **bien** en TP2 y hay que mantener: títulos de sección como diapositivas separadas, cantidad de diapositivas, extensión y presentación general del informe, formato "valor ± error".
+- Lo que la cátedra marcó como **bien** en TP3 y hay que mantener: ver 5.6 (cantidad de texto, diapositivas de una sola figura, esquemas de las propuestas propias, observables, relato de las decisiones).
