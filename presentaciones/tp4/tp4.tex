@@ -29,8 +29,7 @@
 %   energia_esquemas_dt (ver TODO de Implementación), red_hexagonal (letra muy chica para una
 %   diapositiva; la condición inicial va en texto), t90_vs_n, t100_vs_n, t90_vs_densidad y
 %   t100_vs_densidad (reemplazadas por t90_t100_vs_densidad), fu_vs_t_xo_N{60,20,10} (alcanza
-%   con una evolución típica), choques_{particulas,obstaculos}_vs_xo (ver TODO del 2.2),
-%   ecm_dt4_vs_dt y ecm_vs_dt_tramo (solo análisis).
+%   con una evolución típica), ecm_dt4_vs_dt y ecm_vs_dt_tramo (solo análisis).
 
 \documentclass[aspectratio=169]{beamer}
 \makeatletter\def\input@path{{../}}\makeatother
@@ -441,9 +440,8 @@
 \end{frame}
 
 % TODO: el enunciado pide discutir si el x_o óptimo depende de la frecuencia de choques entre
-%   partículas. Esta figura compara densidades; la frecuencia de choques está medida en
-%   choques_particulas_vs_xo.png (12.8 y 2.15 s^-1 para N = 100 y 20), todavía sin decidir si va
-%   (sumaría una diapositiva).
+%   partículas. Esta figura compara densidades; el conteo de choques se sacó del motor
+%   (2026-10-21): la discusión se apoya solo en la comparación entre N.
 % TODO: avisar outliers de N = 20: x_o = 0.05 (21 ± 7 s, máx 33.6) y R - r (25 ± 8 s, máx 42.9).
 \begin{frame}{Posición de los obstáculos: $\langle t_{90} \rangle$ vs posición}
   \figura{ej2/t90_vs_xo.png}
@@ -503,7 +501,9 @@
 % Conclusiones del grupo (pedido 2026-10-21). Respaldo en Resultados, dicho en vivo: cruce de costos
 %   entre N = 400 y 500 (100 s contra 850 s en N = 675); <ε> = (5 ± 2) x 10^-6 en dt = 10^-5 s,
 %   diverge con dt >= 10^-3 s; N = 100: <t_90> ≈ 15 s con x_o en 0.15-0.35 m, contra 23 ± 3 s
-%   (x_o = r) y 32 ± 5 s (x_o = R - r).
+%   (x_o = r) y 32 ± 5 s (x_o = R - r). Densidad: <t_90> 27 ± 7, 23 ± 4, 23 ± 3 s en ρ = 31, 61,
+%   122 m^-2 (N = 25, 50, 100), indistinguibles; 31 ± 4 s en 184 m^-2 y crece. No hay datos debajo
+%   de 31 m^-2 en el 2.4a.
 \begin{frame}{Conclusiones}
   \begin{itemize}\setlength{\itemsep}{1em}
     \item La simulación por eventos tiene un costo inicial más bajo que por paso temporal, pero
@@ -512,6 +512,8 @@
       del sistema.
     \item Se encuentra un $x_o$ para minimizar $\langle t_{90} \rangle$ entre $0.15$ y
       $0.35\uni{m}$.
+    \item La densidad óptima para $\langle t_{90} \rangle$ y $\langle t_{100} \rangle$ también se
+      encuentra en un rango, entre $31$ y $122\uni{m^{-2}}$.
   \end{itemize}
 \end{frame}
 

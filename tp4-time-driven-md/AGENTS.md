@@ -295,7 +295,6 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
 ├── Table.java            # R, r, m, k, obstáculos en (±x_o, 0)
 ├── ContactForces.java    # resortes partícula-partícula (grilla de celdas), pared (imagen), obstáculos;
 │                         # registra la conversión fresca → usada en el paso del primer ξ > 0
-├── CollisionTracker.java # --log-collisions: un choque por episodio de contacto (ver 2.2)
 ├── Integrator.java, Scheme.java
 ├── VelocityVerlet.java, OriginalVerlet.java   # Verlet en forma sumada, v centrada, paso adelantado
 └── InitialState.java     # random: inserción secuencial al azar en |r| <= R − r (se traba en N ≈ 465)
@@ -471,6 +470,11 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
     15 ± 2, 25 ± 7 (R − r). Más ruidoso; mínimo nominal en 0.25–0.30, indistinguible dentro
     de las barras de casi toda la meseta; también peor en los extremos.
   - Con 5 realizaciones no se puede elegir un único `x_o` óptimo dentro de la meseta.
+  - **Conteo de choques eliminado (2026-10-21)**: no se usó en la presentación; se sacaron del
+    motor `--log-collisions`, `CollisionTracker` y los totales de `run.json`, y del post-proceso
+    `plot_collisions_xo.py` y sus figuras. Trayectoria sin cambios (N = 100, `x_o` = 0.25,
+    semilla 1: `dynamic.txt` y `conversions.csv` idénticos al barrido). Lo de abajo queda como
+    registro; los `collisions.csv` viejos siguen en `output/`.
   - **Registro de choques (2026-10-16, autorizado por la cátedra para la discusión)**: flag
     `--log-collisions` → `collisions.csv` (`t,kind,i,j`; kind `particle`/`wall`/`obstacle`) y
     totales por tipo en `run.json`. Un choque = un **episodio de contacto**: cuenta solo en la

@@ -5,8 +5,7 @@ import java.util.Arrays;
 /**
  * Aceleraciones por contacto (resorte lineal normal, {@code F_i = Σ_j −k ξ_ij ê_ij}) contra otras
  * partículas, los obstáculos fijos y la partícula imagen de la pared. También registra la
- * conversión fresca → usada en el paso en que una partícula toca un obstáculo por primera vez y,
- * si se le pasa un {@link CollisionTracker}, le informa cada contacto con {@code ξ > 0}.
+ * conversión fresca → usada en el paso en que una partícula toca un obstáculo por primera vez.
  *
  * <p>Búsqueda de pares con una grilla de celdas sobre {@code [−R, R]²} de lado {@code ≥ 2r} (el
  * alcance del contacto entre centros), sin periodicidad: cada par se revisa una vez recorriendo
@@ -32,14 +31,8 @@ public final class ContactForces {
     private final double[] conversionTime;
     private final int[] conversionId;
     private int conversions;
-    /** {@code null}: sin registro de choques. */
-    private final CollisionTracker collisions;
 
     public ContactForces(final Table table, final int n) {
-        this(table, n, null);
-    }
-
-    public ContactForces(final Table table, final int n, final CollisionTracker collisions) {
         this.table = table;
         this.n = n;
         this.contact = 2 * table.r();
@@ -53,19 +46,15 @@ public final class ContactForces {
         this.used = new boolean[n];
         this.conversionTime = new double[n];
         this.conversionId = new int[n];
-        this.collisions = collisions;
     }
 
     /**
      * Escribe en {@code ax, ay} la aceleración de cada partícula en las posiciones {@code x, y},
-     * correspondientes al instante {@code t} (que solo se usa para registrar conversiones y choques).
+     * correspondientes al instante {@code t} (que solo se usa para registrar conversiones).
      */
     public void accelerations(final double t, final double[] x, final double[] y,
                               final double[] ax, final double[] ay) {
         Arrays.fill(ax, 0, n, 0.0);
-        if (collisions != null) {
-            collisions.beginEvaluation(t);
-        }
         Arrays.fill(ay, 0, n, 0.0);
         fillGrid(x, y);
         for (int cy = 0; cy < cells; cy++) {
@@ -85,8 +74,8 @@ public final class ContactForces {
         final double[] obstacleX = table.obstacleX();
         for (int i = 0; i < n; i++) {
             wall(i, x, y, ax, ay);
-            for (int o = 0; o < obstacleX.length; o++) {
-                obstacle(t, i, o, obstacleX[o], x, y, ax, ay);
+            for (final double ox : obstacleX) {
+                obstacle(t, i, ox, x, y, ax, ay);
             }
         }
     }
@@ -114,9 +103,6 @@ public final class ContactForces {
             return;
         }
         final double dist = Math.sqrt(distSq);
-        if (collisions != null) {
-            collisions.particle(i, j);
-        }
         final double scale = kOverM * (contact - dist) / dist;
         final double fx = scale * dx;
         final double fy = scale * dy;
@@ -136,17 +122,14 @@ public final class ContactForces {
             return;
         }
         final double dist = Math.sqrt(distSq);
-        if (collisions != null) {
-            collisions.wall(i);
-        }
         final double scale = kOverM * (dist - wallStart) / dist;
         ax[i] -= scale * x[i];
         ay[i] -= scale * y[i];
     }
 
-    /** Obstáculo fijo {@code o} de radio r en {@code (ox, 0)}; el primer contacto convierte a la partícula. */
-    private void obstacle(final double t, final int i, final int o, final double ox, final double[] x,
-                          final double[] y, final double[] ax, final double[] ay) {
+    /** Obstáculo fijo de radio r en {@code (ox, 0)}; el primer contacto convierte a la partícula. */
+    private void obstacle(final double t, final int i, final double ox, final double[] x, final double[] y,
+                          final double[] ax, final double[] ay) {
         final double dx = ox - x[i];
         final double dy = -y[i];
         final double distSq = dx * dx + dy * dy;
@@ -154,9 +137,6 @@ public final class ContactForces {
             return;
         }
         final double dist = Math.sqrt(distSq);
-        if (collisions != null) {
-            collisions.obstacle(i, o);
-        }
         final double scale = kOverM * (contact - dist) / dist;
         ax[i] -= scale * dx;
         ay[i] -= scale * dy;

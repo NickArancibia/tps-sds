@@ -35,8 +35,6 @@ public final class BilliardRun {
               --save-dt <double>  Intervalo de guardado (s), múltiplo de dt         (default 5e-2)
               --stop-at-t100      Cortar en el primer paso con todas las partículas usadas
                                   (F_u = 1); tf pasa a ser el tiempo máximo
-              --log-collisions    Escribir collisions.csv con el comienzo de cada choque
-                                  (no admitido con --bench)
 
             Sistema:
               --n <int>           Cantidad de partículas                            (default 300)
@@ -67,12 +65,7 @@ public final class BilliardRun {
                                   1 = usada), cada save-dt incluyendo t = 0 y el último paso
                                   (t = tf o el de corte con --stop-at-t100; precisión completa)
               conversions.csv     t,id del primer contacto de cada partícula con un obstáculo (id desde 1)
-              collisions.csv      con --log-collisions: t,kind,i,j por choque, en el primer paso con
-                                  ξ > 0 de cada contacto (los pasos siguientes del mismo contacto no
-                                  cuentan); kind = particle (j = otra partícula), wall (j = 0) u
-                                  obstacle (j = obstáculo en el orden de static.txt); ids desde 1
-              run.json            inputs, pasos, choques por tipo y tiempo del lazo (loopTimeMs: solo la
-                                  integración)
+              run.json            inputs, pasos y tiempo del lazo (loopTimeMs: solo la integración)
             """;
 
     private static final int WARMUP_N = 150;
@@ -81,11 +74,10 @@ public final class BilliardRun {
 
     /** Inputs de una corrida. */
     private record Config(Scheme scheme, Table table, int n, long seed, String init, double v0, double dt,
-                          double tf, double saveDt, boolean stopAtT100, boolean logCollisions) {
+                          double tf, double saveDt, boolean stopAtT100) {
 
         Config withNAndSeed(final int newN, final long newSeed, final double newTf) {
-            return new Config(scheme, table, newN, newSeed, init, v0, dt, newTf, saveDt, stopAtT100,
-                    logCollisions);
+            return new Config(scheme, table, newN, newSeed, init, v0, dt, newTf, saveDt, stopAtT100);
         }
     }
 
@@ -111,15 +103,14 @@ public final class BilliardRun {
         final Config config = new Config(Scheme.fromCli(cli.string("scheme", "")), table, cli.integer("n", 300),
                 cli.longValue("seed", 1), cli.string("init", "random"), cli.number("v0", 1.0),
                 cli.number("dt", 1e-5), cli.number("tf", 10.0), cli.number("save-dt", 5e-2),
-                cli.has("stop-at-t100"), cli.has("log-collisions"));
+                cli.has("stop-at-t100"));
         if (config.dt() <= 0 || config.tf() <= 0 || config.saveDt() <= 0 || config.n() < 1) {
             throw new IllegalArgumentException("dt, tf, save-dt y n tienen que ser positivos");
         }
 
         if (cli.has("bench")) {
-            if (config.stopAtT100() || config.logCollisions()) {
-                throw new IllegalArgumentException("--bench mide t_f fijo sin escritura: no admite --stop-at-t100 "
-                        + "ni --log-collisions");
+            if (config.stopAtT100()) {
+                throw new IllegalArgumentException("--bench mide t_f fijo sin escritura: no admite --stop-at-t100");
             }
             bench(config, cli.integerList("bench", List.of()), cli.integer("seeds", 10),
                     cli.number("warmup-s", 30), Path.of(cli.string("out", "output/billiard/time_vs_n")));
@@ -193,73 +184,42 @@ public final class BilliardRun {
         Files.createDirectories(outDir);
         writeStatic(outDir.resolve("static.txt"), c.table(), c.n());
 
-        // El tracker tiene que existir antes del integrador: su constructor evalúa las fuerzas en t = 0.
-        final BufferedWriter collisionsOut = c.logCollisions()
-                ? Files.newBufferedWriter(outDir.resolve("collisions.csv")) : null;
-        final CollisionTracker tracker;
-        final ContactForces forces;
+        final ContactForces forces = new ContactForces(c.table(), c.n());
+        final Integrator integrator = c.scheme().create(forces, c.dt(), init.x, init.y, init.vx, init.vy);
         long step = 0;
         final long loopNs;
-        try {
-            tracker = collisionsOut == null ? null : collisionTracker(c, collisionsOut);
-            forces = new ContactForces(c.table(), c.n(), tracker);
-            final Integrator integrator = c.scheme().create(forces, c.dt(), init.x, init.y, init.vx, init.vy);
-            if (writeDynamic) {
-                final long start = System.nanoTime();
-                try (BufferedWriter out = Files.newBufferedWriter(outDir.resolve("dynamic.txt"))) {
-                    writeFrame(out, 0.0, integrator, forces);
-                    while (step < maxSteps) {
-                        step++;
-                        integrator.step(step * c.dt());
-                        final boolean stop = c.stopAtT100() && forces.conversions() == c.n();
-                        if (step % saveEvery == 0 || stop) {
-                            writeFrame(out, step * c.dt(), integrator, forces);
-                        }
-                        if (stop) {
-                            break;
-                        }
-                    }
-                }
-                loopNs = System.nanoTime() - start;
-            } else {
-                final long start = System.nanoTime();
+        if (writeDynamic) {
+            final long start = System.nanoTime();
+            try (BufferedWriter out = Files.newBufferedWriter(outDir.resolve("dynamic.txt"))) {
+                writeFrame(out, 0.0, integrator, forces);
                 while (step < maxSteps) {
                     step++;
                     integrator.step(step * c.dt());
-                    if (c.stopAtT100() && forces.conversions() == c.n()) {
+                    final boolean stop = c.stopAtT100() && forces.conversions() == c.n();
+                    if (step % saveEvery == 0 || stop) {
+                        writeFrame(out, step * c.dt(), integrator, forces);
+                    }
+                    if (stop) {
                         break;
                     }
                 }
-                loopNs = System.nanoTime() - start;
             }
-        } finally {
-            if (collisionsOut != null) {
-                collisionsOut.close();
+            loopNs = System.nanoTime() - start;
+        } else {
+            final long start = System.nanoTime();
+            while (step < maxSteps) {
+                step++;
+                integrator.step(step * c.dt());
+                if (c.stopAtT100() && forces.conversions() == c.n()) {
+                    break;
+                }
             }
+            loopNs = System.nanoTime() - start;
         }
 
         writeConversions(outDir.resolve("conversions.csv"), forces);
-        writeRunJson(outDir.resolve("run.json"), c, step, saveEvery, writeDynamic, forces, tracker, loopNs);
+        writeRunJson(outDir.resolve("run.json"), c, step, saveEvery, writeDynamic, forces, loopNs);
         return new Result(step, forces.conversions(), loopNs);
-    }
-
-    /** Tracker que escribe cada choque como "t,kind,i,j" (ids desde 1; j = 0 para la pared). */
-    private static CollisionTracker collisionTracker(final Config c, final BufferedWriter out) throws IOException {
-        out.write("t,kind,i,j\n");
-        return new CollisionTracker(c.n(), c.table().obstacleX().length, (t, kind, i, other) -> {
-            try {
-                out.write(Double.toString(t));
-                out.write(',');
-                out.write(kind.cli());
-                out.write(',');
-                out.write(Integer.toString(i + 1));
-                out.write(',');
-                out.write(Integer.toString(other + 1));
-                out.write('\n');
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
     }
 
     /** Cantidad entera de {@code dt} en {@code value}; error si no es un múltiplo exacto. */
@@ -318,16 +278,11 @@ public final class BilliardRun {
         }
     }
 
-    /** Con {@code tracker == null} (sin --log-collisions) los conteos de choques van en null. */
     private static void writeRunJson(final Path path, final Config c, final long steps, final long saveEvery,
-                                     final boolean dynamic, final ContactForces forces,
-                                     final CollisionTracker tracker, final long loopNs) throws IOException {
+                                     final boolean dynamic, final ContactForces forces, final long loopNs)
+            throws IOException {
         final Table table = c.table();
         final String xo = table.hasObstacles() ? Double.toString(table.obstacleX()[1]) : "null";
-        final String[] collisions = new String[CollisionTracker.Kind.values().length];
-        for (final CollisionTracker.Kind kind : CollisionTracker.Kind.values()) {
-            collisions[kind.ordinal()] = tracker == null ? "null" : Long.toString(tracker.count(kind));
-        }
         final String json = """
                 {
                   "system": "billiard",
@@ -351,17 +306,11 @@ public final class BilliardRun {
                   "dynamicWritten": %s,
                   "cellsPerSide": %d,
                   "conversions": %d,
-                  "collisionsLogged": %s,
-                  "particleCollisions": %s,
-                  "wallCollisions": %s,
-                  "obstacleCollisions": %s,
                   "loopTimeMs": %s
                 }
                 """.formatted(c.scheme().cliName(), c.n(), c.seed(), c.init(), table.bigR(), table.r(), table.m(),
                 table.k(), c.v0(), xo, c.dt(), c.tf(), c.stopAtT100(), steps * c.dt(), c.saveDt(), steps,
-                saveEvery, dynamic, forces.cellsPerSide(), forces.conversions(), tracker != null,
-                collisions[CollisionTracker.Kind.PARTICLE.ordinal()], collisions[CollisionTracker.Kind.WALL.ordinal()],
-                collisions[CollisionTracker.Kind.OBSTACLE.ordinal()], loopNs / 1e6);
+                saveEvery, dynamic, forces.cellsPerSide(), forces.conversions(), loopNs / 1e6);
         Files.writeString(path, json);
     }
 
