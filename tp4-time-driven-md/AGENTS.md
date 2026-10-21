@@ -138,10 +138,11 @@ movimiento se integran numéricamente; los contactos duran varios pasos (no hay 
   - Beeman: variante PC de la teórica; `a(t+dt)` se recalcula con la `v` corregida (la
     diapositiva no lo dice; mismo criterio que Velocity Verlet).
   - Arranques: `a(−dt)` (Beeman) por Euler en `−dt` (con la exacta da el mismo ECM).
-    `r(−dt)` (Verlet) por **Taylor hasta tercer orden** (2026-10-05):
-    `r(0) − dt v(0) + dt²/2 a(0) − dt³/6 j(0)`, `j = (df/dt)/m` (`Force.rate`; en el oscilador
-    `df/dt = −k v − γ a`). Con Euler en `−dt` (solo hasta dt², lo de la teórica) el ECM era ~9 %
-    mayor (C = 379 vs 348 m² s⁻⁴), mismo orden.
+    `r(−dt)` (Verlet) por **Euler en `−dt`** (`r(0) − dt v(0) + dt²/2 a(0)`, lo de la teórica;
+    decidido 2026-10-21). Del 2026-10-05 al 2026-10-21 fue Taylor hasta tercer orden (término
+    `−dt³/6 j(0)`, `j = (df/dt)/m`, con `Force.rate`, ya borrado): ECM ~9 % menor (C = 348 vs 379
+    m² s⁻⁴), misma pendiente, sin diferencia visible en la figura log-log; se volvió a Euler por
+    simplicidad. Con Euler, Velocity Verlet queda debajo de Verlet (orden de la leyenda cambiado).
 - **`t_f = 5 s` (sistema 1)**: es parámetro de la teórica (diap. 37) y ya es significativo:
   ~9.5 períodos, amplitud final 2.8 % de la inicial (`e^{−t/1.4}`); con un error que crece como
   `t e^{−t/τ}`, el 97 % de la integral del error cuadrático cae antes de 5 s. Alargarlo solo
@@ -251,7 +252,8 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/
   `plot_ecm.py` también escribe `analysis/figures/ej1/ecm_dt4_vs_dt.png` (2026-10-05, **solo para
   análisis, no va a la diapositiva**): ECM/dt⁴ vs dt de los tres esquemas de orden 2 en eje y
   lineal, en todo el barrido (desde 2026-10-16; antes solo dt ≥ 10⁻⁵ por el piso). Constantes
-  `C = ECM/dt⁴`: Beeman 330, Verlet original 348 (×1.06), Velocity Verlet 364 (×1.10) m² s⁻⁴,
+  `C = ECM/dt⁴` (desde 2026-10-21, arranque Euler de Verlet): Beeman 329, Velocity Verlet 363
+  (×1.10), Verlet original 380 (×1.15) m² s⁻⁴ (con Taylor, Verlet daba 348, ×1.06),
   planas en todo el rango (VV y Beeman suben ~2 % en dt = 5·10⁻³ por términos de orden
   superior). Descartado: lupa en dt = 10⁻³ dentro de `ecm_vs_dt.png` (no gustó).
   También `analysis/figures/ej1/ecm_vs_dt_tramo.png` (solo análisis): el log-log de `ecm_vs_dt.png`
@@ -457,7 +459,8 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   llegan las 5 (mismo criterio que el 2.4a), las dos densidades en `ej2/t90_vs_xo.png`;
   `<F_u(t)>` ± desvío para `x_o` = r, 0.25, R − r en `ej2/fu_vs_t_xo_N<N>.png` (`--fu-xo` para
   cambiarlos; **desde 2026-10-19 una sola realización**, `--fu-seed 1`, escalones, recta y rótulo
-  en `F_u` = 0.9: t_90 = 19.2 / 14.3 / 32.6 s en N = 100). Lanzado 2026-10-14 13:50 con `JOBS=11` (en paralelo con la semilla 1 de
+  en `F_u` = 0.9: t_90 = 19.2 / 14.3 / 32.6 s en N = 100; desde 2026-10-21 la leyenda rotula los
+  extremos con su valor, 0.0175 y 0.4925, en vez de r y R − r). Lanzado 2026-10-14 13:50 con `JOBS=11` (en paralelo con la semilla 1 de
   N = 625/650/675 del 2.4a, que no mide tiempos).
   **Resultados (2026-10-14, 13:50–13:58, 110/110, todas llegan a `t_90` antes de 100 s)**,
   `<t_90>` (s) promedio ± desvío entre 5 realizaciones:

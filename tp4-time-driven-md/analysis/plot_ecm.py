@@ -33,8 +33,8 @@ SWEEP = OUTPUT / "oscillator" / "sweep"
 # mayor ECM.
 SCHEMES = [
     ("beeman", "Beeman", "black", "s", 6, "none", 3),
-    ("verlet", "Verlet original", "tab:red", "o", 9, "none", 2),
     ("velocity-verlet", "Velocity Verlet", "tab:blue", "o", 3, "tab:blue", 4),
+    ("verlet", "Verlet original", "tab:red", "o", 9, "none", 2),
     ("euler-pc", "Euler predictor-corrector", "tab:purple", "^", 5, "tab:purple", 4),
 ]
 FIT_RANGE = (1e-4, 5e-3)  # tramo para informar la pendiente

@@ -17,11 +17,8 @@ package ar.edu.itba.sds.tp4.oscillator;
  * en cada paso al desplazamiento como un error de velocidad ~10⁻¹⁶/dt, y el ECM del oscilador
  * se aplanaba en ~10⁻¹⁹ m² para dt ≤ 2·10⁻⁶ s.</p>
  *
- * <p>Arranque: {@code r(-dt)} por Taylor hasta tercer orden,
- * {@code r(0) - dt v(0) + dt²/2 a(0) - dt³/6 j(0)} con {@code j = (df/dt)/m}, es decir
- * {@code d(0) = dt v(0) - dt²/2 a(0) + dt³/6 j(0)}. Con solo hasta {@code dt²} (Euler en
- * {@code -dt}, Teórica 4) el método sigue siendo de orden 2, pero el error del arranque se
- * arrastra y el ECM del oscilador es ~9 % mayor.</p>
+ * <p>Arranque: {@code r(-dt)} por Euler en {@code -dt} (Teórica 4),
+ * {@code r(0) - dt v(0) + dt²/2 a(0)}, es decir {@code d(0) = dt v(0) - dt²/2 a(0)}.</p>
  */
 public final class OriginalVerlet implements Integrator {
 
@@ -43,8 +40,7 @@ public final class OriginalVerlet implements Integrator {
         this.position = position0;
         this.velocity = velocity0;
         final double acceleration0 = force.at(position0, velocity0) / mass;
-        final double jerk0 = force.rate(position0, velocity0, acceleration0) / mass;
-        this.displacement = dt * velocity0 - dt * dt / 2 * acceleration0 + dt * dt * dt / 6 * jerk0;
+        this.displacement = dt * velocity0 - dt * dt / 2 * acceleration0;
         this.nextDisplacement = advance(velocity0);
     }
 

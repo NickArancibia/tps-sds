@@ -103,7 +103,7 @@
 % Enunciado: una sola diapositiva (ECM vs dt de los 4 métodos, sin intro ni animaciones). Pedido
 %   2026-10-19: sumar la evolución r(t) y, en la del ECM, cómo se obtiene la velocidad que falta.
 % Evolución: dt = 5e-3 s, el mayor del barrido. Dicho en vivo: máx |r_num - r_an| = 9.1e-4 m
-%   (Beeman), 9.3e-4 (Verlet), 9.6e-4 (Velocity Verlet), 0.15 m (Euler PC).
+%   (Beeman), 9.6e-4 (Velocity Verlet), 9.7e-4 (Verlet), 0.15 m (Euler PC).
 \begin{frame}{Oscilador: posición vs tiempo}
   \begin{columns}[c]
     \begin{column}{0.74\textwidth}
@@ -123,8 +123,9 @@
 %   (letra del enunciado), y ya no se declara en la diapositiva: decidir si se recalcula.
 % Detalle (tp4-time-driven-md/AGENTS.md §5): una corrección; la fuerza que pasa al paso
 %   siguiente se recalcula con la v corregida. Dicho en vivo: la fuerza -k r - gamma v necesita
-%   una v que el esquema todavía no calculó. r(-dt) de Verlet: Taylor hasta dt^3 (no es la v de
-%   la fuerza: es el arranque). Beeman usa la variante predictor-corrector de la teórica.
+%   una v que el esquema todavía no calculó. r(-dt) de Verlet: Euler en -dt, hasta dt^2 (no es la
+%   v de la fuerza: es el arranque). Beeman usa la variante predictor-corrector de la teórica.
+%   C = ECM/dt^4: Beeman 329, Velocity Verlet 363, Verlet 380 m^2 s^-4.
 \begin{frame}{Oscilador: error cuadrático medio vs paso temporal}
   \begin{columns}[c]
     \begin{column}{0.66\textwidth}
@@ -135,8 +136,8 @@
       \small
       Verlet y Velocity Verlet:
       \begin{itemize}\setlength{\itemsep}{0.6em}
-        \item $v$ en la fuerza: se predice con Euler y se corrige con la fórmula de $v$ del esquema
-        \item Verlet: $r(-dt)$ por Taylor desde $r(0)$ y $v(0)$
+        \item La velocidad que necesita la fuerza se estima con Euler y después se corrige.
+        \item Verlet arranca estimando la posición anterior a $t = 0$ con Euler.
       \end{itemize}
     \end{column}
   \end{columns}
@@ -180,7 +181,7 @@
 % Modelo general: segunda ley de Newton con fuerzas de a pares y la ley de contacto (resorte
 % normal; pedido 2026-10-19: va acá y no en Simulaciones) + avance en un paso + el esquema del
 % billar, Velocity Verlet. Los otros tres esquemas del oscilador no van (pedido 2026-10-19).
-% Obstáculos y pared (imagen) son del sistema particular: van en "Sistema: interacción".
+% Obstáculos y pared (imagen) son del sistema particular; su diapositiva se sacó (pedido 2026-10-21).
 \begin{frame}{Modelo: ecuación de movimiento y esquema de integración}
   \setlength{\abovedisplayskip}{3pt}\setlength{\belowdisplayskip}{3pt}
   \textbf{Segunda ley de Newton con contactos elásticos}
@@ -217,7 +218,7 @@
 %   (decisión abierta 1 de tp4-time-driven-md/AGENTS.md). Decidir cómo se justifica: si hace
 %   falta mostrarlo, energia_esquemas_dt.png (mismo <ε> que Verlet original en todo el rango)
 %   suma una diapositiva en Resultados.
-\begin{frame}{Motor: lazo de paso temporal}
+\begin{frame}{Motor}
   \centering
   \begin{tikzpicture}[>=Stealth, font=\small, scale=0.95, every node/.append style={scale=0.95},
       caja/.style={draw, rounded corners, align=center, inner sep=5pt, minimum height=1.3cm},
@@ -227,17 +228,18 @@
     \node[caja]  (med)  at (4.6, 0)    {$\vect{v}_i \leftarrow \vect{v}_i + \vect{a}_i\,dt/2$\\
                                         $\vect{r}_i \leftarrow \vect{r}_i + \vect{v}_i\,dt$};
     \node[clave] (fza)  at (10.2, 0)   {Fuerzas $\vect{F}_i$ en $t + dt$\\
-                                        {\footnotesize pares: grilla de celdas de lado $\ge 2r$}\\
-                                        {\footnotesize pared (imagen) y obstáculos}\\
-                                        {\footnotesize primer contacto con un obstáculo:}\\
-                                        {\footnotesize fresca $\to$ usada}};
-    \node[caja]  (vel)  at (10.2, -3.4) {$\vect{a}_i = \vect{F}_i/m$\\
+                                        {\footnotesize contactos con vecinas, pared y obstáculos}};
+    \node[caja]  (uso)  at (10.2, -2.1) {Marcar usadas\\
+                                        {\footnotesize fresca $\to$ usada al primer}\\
+                                        {\footnotesize contacto con un obstáculo}};
+    \node[caja]  (vel)  at (10.2, -4.2) {$\vect{a}_i = \vect{F}_i/m$\\
                                         $\vect{v}_i \leftarrow \vect{v}_i + \vect{a}_i\,dt/2$};
-    \node[caja]  (save) at (4.6, -3.4)  {Guardar estado\\ cada $dt_2$};
-    \node[caja, minimum height=0.9cm] (fin) at (0, -3.4) {Fin};
+    \node[caja]  (save) at (4.6, -4.2)  {Guardar estado\\ cada $dt_2$};
+    \node[caja, minimum height=0.9cm] (fin) at (0, -4.2) {Fin};
     \draw[->] (ini) -- (med);
     \draw[->] (med) -- (fza);
-    \draw[->] (fza) -- (vel);
+    \draw[->] (fza) -- (uso);
+    \draw[->] (uso) -- (vel);
     \draw[->] (vel) -- (save);
     \draw[->] (save) -- node[right, font=\footnotesize] {$t \leftarrow t + dt$} (med);
     \draw[->] (save) -- node[above, font=\footnotesize, align=center] {$t = t_f$ o\\ todas usadas} (fin);
@@ -254,18 +256,19 @@
 
 % Sistema 2. El sistema 1 no va acá: el enunciado limita el oscilador a una sola diapositiva,
 % en Resultados. La condición inicial va aparte de los parámetros (devolución TP3, D8).
-% dt fijo en el valor elegido (decisión del grupo, 2026-10-18): el barrido de dt del 2.1a no se
+% dt fijo en el valor elegido (decisión del grupo, 2026-10-18; pedido 2026-10-21: en los parámetros
+% fijos, sin bloque "Parámetros de simulación"): el barrido de dt del 2.1a no se
 % declara como variable. Pedido 2026-10-19: solo rangos de N y x_o (los valores se ven en cada
 % figura), sin t_f (cada figura muestra hasta dónde llega) y sin realizaciones (van en cada
 % observable). N: 25, 50, 100, 150, 200, 300, 400, 500, 600, 625, 650, 675 (2.1b y 2.4a) más 20
 % y 60 (2.2). t_f: 10 (2.1a), 20 (2.3), 30 (2.1b), 100 (2.2), 1500 (2.4a). Realizaciones: 10;
 % N = 650 y 675 solo la semilla 1 hasta 1500 s.
 \begin{frame}{Sistema}
-  \begin{columns}[T]
-    \begin{column}{0.52\textwidth}
+  \begin{columns}[c]
+    \begin{column}{0.50\textwidth}
       \centering
       % Esquema con las magnitudes (radios exagerados para que se vean).
-      \begin{tikzpicture}[scale=4.15, >=Stealth]
+      \begin{tikzpicture}[scale=5.6, >=Stealth]
         \draw[thick] (0,0) circle (0.51);
         \draw[->] (0,0) -- (125:0.51) node[pos=0.55, left] {$R$};
         \fill (-0.25,0) circle (0.022);
@@ -279,21 +282,13 @@
         \fill[red] (-0.2,-0.3) circle (0.022);
         \draw[->,red,thick] (-0.2,-0.3) -- ++(160:0.1);
       \end{tikzpicture}
-
-      \vspace{0.4em}
-      \raggedright
-      \textbf{Condición inicial}
-      \begin{itemize}\setlength{\itemsep}{2pt}
-        \item Posiciones al azar sobre una red hexagonal de lado $2r$
-        \item Dirección de $\vect{v}_0$ al azar
-      \end{itemize}
     \end{column}
-    \begin{column}{0.44\textwidth}
+    \begin{column}{0.48\textwidth}
       \textbf{Parámetros fijos}
       \begin{itemize}\setlength{\itemsep}{2pt}
         \item $R = 0.51\uni{m}$, $r = 0.0175\uni{m}$
         \item $m = 0.025\uni{kg}$, $k = 10^{4}\uni{N/m}$
-        \item $v_0 = 1\uni{m/s}$
+        \item $v_0 = 1\uni{m/s}$, $dt = 10^{-5}\uni{s}$
       \end{itemize}
       \vspace{0.3em}
       \textbf{Parámetros variables}
@@ -302,56 +297,11 @@
         \item $x_o$ en $[r, R - r]$
       \end{itemize}
       \vspace{0.3em}
-      \textbf{Parámetros de simulación}
+      \textbf{Condición inicial}
       \begin{itemize}\setlength{\itemsep}{2pt}
-        \item $dt = 10^{-5}\uni{s}$
+        \item Posiciones al azar sobre una red hexagonal de lado $2r$
+        \item Dirección de $\vect{v}_0$ al azar
       \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% Lo propio del sistema particular: con qué interactúa cada partícula con la ley de contacto del
-% Modelo (obstáculos fijos y pared por imagen). Sin definiciones redactadas (devolución TP3, D4):
-% los símbolos se leen en el esquema.
-\begin{frame}{Sistema: interacción}
-  \begin{columns}[c]
-    \begin{column}{0.54\textwidth}
-      \begin{itemize}\setlength{\itemsep}{0.8em}
-        \item $j$: otras partículas, obstáculos fijos en $(\pm x_o, 0)$ y la pared
-        \item Pared: partícula imagen
-          \[
-            \vect{r}_{\mathrm{img}} = (R + r)\,\hat{\vect{n}}, \qquad
-            \hat{\vect{n}} = \frac{\vect{r}_i}{|\vect{r}_i|}
-          \]
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.44\textwidth}
-      \centering
-      % Particula i superpuesta con otra particula j (izquierda) y con la pared (derecha); la
-      % imagen punteada esta del otro lado de C. No a escala. Centro de la pared a la izquierda,
-      % fuera de la figura: el arco arranca en ($(-3.5,0)+(-24:4)$) para no meter (-3.5,0) en el
-      % bounding box.
-      \begin{tikzpicture}[scale=1.0, >=Stealth]
-        \fill[blue!20] (-1.3,0) circle (0.8);
-        \fill[blue!20] (0,0) circle (0.8);
-        \draw[blue, thick] (-1.3,0) circle (0.8);
-        \draw[blue, thick] (0,0) circle (0.8);
-        \draw[black!60, dashed, thick] (1.3,0) circle (0.8);
-        \draw[very thick, black!70] ($(-3.5,0)+(-24:4)$) arc[start angle=-24, end angle=24, radius=4]
-          node[above, font=\small] {pared};
-        \draw[dotted] (-2.1,0) -- (2.1,0);
-        \draw[->, thick] (2.1,0) -- (2.7,0) node[above, font=\small] {$\hat{\vect{n}}$};
-        \draw[->, thick] (0,0.3) -- (-0.45,0.3) node[above, font=\small] {$\hat{\vect{e}}_{ij}$};
-        \fill (-1.3,0) circle (0.04) node[below, font=\small] {$\vect{r}_j$};
-        \fill (0,0) circle (0.04) node[below, font=\small] {$\vect{r}_i$};
-        \fill (1.3,0) circle (0.04) node[below, font=\small] {$\vect{r}_{\mathrm{img}}$};
-        \draw[thin, black!50] (-0.8,0) -- (-0.8,-1.05);
-        \draw[thin, black!50] (-0.5,0) -- (-0.5,-1.05);
-        \draw[<->] (-0.8,-1.0) -- (-0.5,-1.0) node[midway, below, font=\small] {$\xi_{ij}$};
-        \draw[thin, black!50] (0.5,0) -- (0.5,-1.05);
-        \draw[thin, black!50] (0.8,0) -- (0.8,-1.05);
-        \draw[<->] (0.5,-1.0) -- (0.8,-1.0) node[midway, below, font=\small] {$\xi_{i,\mathrm{img}}$};
-      \end{tikzpicture}
     \end{column}
   \end{columns}
 \end{frame}
@@ -390,12 +340,11 @@
         E(t) = \sum_{i=1}^{N} \tfrac{1}{2}\,m\,|\vect{v}_i(t)|^2
           + \sum_{\text{contactos}} \tfrac{1}{2}\,k\,\xi^2
       \]
-    \item Error relativo de la energía sobre los $K$ estados guardados ($\langle\varepsilon\rangle$
-      sobre 10 realizaciones):
+    \item Error relativo de la energía, calculado sobre 10 realizaciones:
       \[
         \varepsilon = \frac{1}{K}\sum_{\ell=1}^{K} \left|\frac{E(t_\ell) - E(0)}{E(0)}\right|
       \]
-    \item Tiempo de ejecución del lazo de integración, sobre 10 realizaciones
+    \item Tiempo de ejecución, calculado sobre 10 realizaciones
   \end{itemize}
 \end{frame}
 
@@ -406,13 +355,11 @@
 % (igual N en todas), sin barras de error.
 \begin{frame}{Observables: distribución de velocidades}
   \begin{itemize}\setlength{\itemsep}{0.6em}
-    \item $N_b(t)$: partículas de las 10 realizaciones con rapidez en el bin $b$ (centro $v_b$,
-      ancho $\Delta v$):
+    \item $N_b(t)$: partículas de las 10 realizaciones con rapidez en el bin $b$:
       \[
         f(v_b, t) = \frac{N_b(t)}{10\,N\,\Delta v}, \qquad
         \bar{v}(t) = \frac{1}{10\,N}\sum_{k=1}^{10}\sum_{i=1}^{N} |\vect{v}_{i,k}(t)|
       \]
-    \item $f(v_b)$ estacionaria: promedio de $f(v_b, t)$ en $t \ge t_{\mathrm{est}}$
     \item Ajuste de Maxwell-Boltzmann 2D: $\kT^{*}$ minimiza $\mathcal{E}(\kT)$
       \[
         f_{\mathrm{MB}}(v) = \frac{m\,v}{\kT}\,\exp\!\left(-\frac{m\,v^2}{2\,\kT}\right), \qquad
@@ -517,8 +464,8 @@
 \end{frame}
 
 % Ajuste de MB (pedido: mostrar la figura del ajuste y reportar k_BT*). k_BT* va solo en el eje
-%   horizontal de la figura (rótulo rojo); m v0^2/2 al costado: es la comparación que pide el
-%   enunciado. Dicho en vivo: m<v^2>/2 = 12.32 mJ (estacionario, t >= 1 s).
+%   horizontal de la figura (rótulo rojo); m<v^2>/2 (estacionario, t >= 1 s) y m v0^2/2 al
+%   costado: es la comparación que pide el enunciado.
 % k_BT* sin incerteza (decidido 2026-10-19; un solo ajuste sobre el histograma de todo el
 %   estacionario). E(k_BT*) = 3.8e-3 s^2/m^2 (eje y lineal acotado a 0.05 para que no parezca 0).
 % TODO: decidir la conclusión "0.7 % debajo de m v0^2/2": por estado k_BT* = 12.4 ± 1.0 mJ.
@@ -529,6 +476,8 @@
       \includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{ej2/error_ajuste_mb.png}
     \end{column}
     \begin{column}{0.26\textwidth}
+      \[ \frac{m\,\langle v^2\rangle}{2} = 12.32\uni{mJ} \]
+      \vspace{0.5em}
       \[ \frac{m\,v_0^2}{2} = 12.50\uni{mJ} \]
     \end{column}
   \end{columns}
@@ -551,26 +500,18 @@
 % TODO: el enunciado pregunta "¿por qué?" hay una densidad óptima. Las animaciones de N = 650 y
 %   675 muestran un anillo de usadas que no se mueve alrededor de los obstáculos (AGENTS.md §6):
 %   si se usa como explicación, tiene que estar mostrado en Resultados.
-% Beeman: C = ECM/dt^4 = 330 contra 348 (Verlet original) y 364 (Velocity Verlet) m^2 s^-4, en
-%   todo el rango de dt y en cada ventana de 1 s de t (tp4-time-driven-md/AGENTS.md §6).
+% Conclusiones del grupo (pedido 2026-10-21). Respaldo en Resultados, dicho en vivo: cruce de costos
+%   entre N = 400 y 500 (100 s contra 850 s en N = 675); <ε> = (5 ± 2) x 10^-6 en dt = 10^-5 s,
+%   diverge con dt >= 10^-3 s; N = 100: <t_90> ≈ 15 s con x_o en 0.15-0.35 m, contra 23 ± 3 s
+%   (x_o = r) y 32 ± 5 s (x_o = R - r).
 \begin{frame}{Conclusiones}
-  \small
-  \begin{itemize}\setlength{\itemsep}{0.5em}
-    \item Oscilador: Beeman da el menor ECM, por poco, en todo el rango de $dt$; Beeman,
-      Verlet original y Velocity Verlet, de $10^{4}$ a $10^{12}$ veces menor que Euler
-      predictor-corrector.
-    \item Con $dt = 10^{-5}\uni{s}$ la energía se conserva con
-      $\langle\varepsilon\rangle = (5 \pm 2)\ten{-6}$; con $dt \ge 10^{-3}\uni{s}$ diverge.
-    \item Costo: eventos es más rápido hasta $N = 400$ y paso temporal desde $N = 500$
-      ($100\uni{s}$ contra $850\uni{s}$ en $N = 675$).
-    \item Densidad: $\langle t_{90} \rangle$ mínimo, $23 \pm 4\uni{s}$, en
-      $\rho = 61\uni{m^{-2}}$; $1270 \pm 70\uni{s}$ en $\rho = 765\uni{m^{-2}}$; desde
-      $\rho = 795\uni{m^{-2}}$ no llega a $F_u = 0.9$ en $1500\uni{s}$.
-    \item Obstáculos ($N = 100$): $\langle t_{90} \rangle \approx 15\uni{s}$ con $x_o$ entre
-      $0.15$ y $0.35\uni{m}$, contra $23 \pm 3\uni{s}$ en $x_o = r$ y $32 \pm 5\uni{s}$ en
-      $x_o = R - r$; la misma meseta con $N = 60$ y $20$.
-    \item Velocidades: estacionario desde $t = 1\uni{s}$; Maxwell-Boltzmann con
-      $\kT^{*} = 12.41\uni{mJ}$, 0.7\,\% debajo de $m v_0^2/2$.
+  \begin{itemize}\setlength{\itemsep}{1em}
+    \item La simulación por eventos tiene un costo inicial más bajo que por paso temporal, pero
+      escala mucho más que esta con el número de partículas.
+    \item Pasos temporales más grandes presentan mayor error en la evolución de la energía total
+      del sistema.
+    \item Se encuentra un $x_o$ para minimizar $\langle t_{90} \rangle$ entre $0.15$ y
+      $0.35\uni{m}$.
   \end{itemize}
 \end{frame}
 
@@ -590,7 +531,8 @@
       \begin{itemize}\setlength{\itemsep}{0.4em}
         \item armado del código del motor de simulación;
         \item armado de scripts para las ejecuciones;
-        \item armado de scripts para el post-análisis y la generación de gráficos.
+        \item armado de scripts para el post-análisis y la generación de gráficos;
+        \item asistencia para el código de LaTeX.
       \end{itemize}
   \end{itemize}
 \end{frame}

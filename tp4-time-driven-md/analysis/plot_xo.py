@@ -122,8 +122,7 @@ def plot_fu(runs: dict[int, dict[float, list[Run]]], xos: list[float], seed: int
             end = t_end if math.isfinite(run.t100) else run.t_final
             t = np.concatenate(([0.0], run.times, [end]))
             fu = np.concatenate(([0.0], np.arange(1, run.times.size + 1), [run.times.size])) / n
-            label = xo_label(xo, by_xo, run.big_r)
-            ax.step(t, fu, where="post", color=color, lw=1.2, label=label)
+            ax.step(t, fu, where="post", color=color, lw=1.2, label=f"{xo:g}")
             print(f"F_u(t), N = {n}, semilla {seed}, x_o = {xo:g} m: t_90 = {run.t90:.1f} s")
         ax.set_xlim(0, t_end)
         ax.set_ylim(0, 1.02)
@@ -132,18 +131,6 @@ def plot_fu(runs: dict[int, dict[float, list[Run]]], xos: list[float], seed: int
         ax.set_ylabel(r"$F_u$")
         ax.legend(title="$x_o$ (m)", loc="lower right")
         save_figure(fig, "ej2", f"fu_vs_t_xo_N{n}.png")
-
-
-def xo_label(xo: float, by_xo: dict[float, list[Run]], big_r: float) -> str:
-    """x_o en m, salvo los extremos del barrido [r, R − r]: r (obstáculos en contacto) y R − r
-    (contra la pared). Se reconocen porque suman R; si no, se rotula el número."""
-    lo, hi = min(by_xo), max(by_xo)
-    if math.isclose(lo + hi, big_r, abs_tol=1e-9):
-        if math.isclose(xo, lo, abs_tol=1e-9):
-            return "$r$"
-        if math.isclose(xo, hi, abs_tol=1e-9):
-            return "$R - r$"
-    return f"{xo:g}"
 
 
 def main() -> None:
