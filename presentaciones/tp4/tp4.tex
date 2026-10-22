@@ -283,13 +283,23 @@
       \end{tikzpicture}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \textbf{Parámetros fijos}
-      \begin{itemize}\setlength{\itemsep}{2pt}
-        \item $R = 0.51\uni{m}$, $r = 0.0175\uni{m}$
-        \item $m = 0.025\uni{kg}$, $k = 10^{4}\uni{N/m}$
-        \item $v_0 = 1\uni{m/s}$, $dt = 10^{-5}\uni{s}$
-      \end{itemize}
-      \vspace{0.3em}
+      \textbf{Parámetros fijos}\par
+      % Dos columnas de bullets (pedido 2026-10-22), en lugar de pares separados por comas.
+      \begin{minipage}[t]{0.47\linewidth}
+        \begin{itemize}\setlength{\itemsep}{2pt}
+          \item $R = 0.51\uni{m}$
+          \item $m = 0.025\uni{kg}$
+          \item $v_0 = 1\uni{m/s}$
+        \end{itemize}
+      \end{minipage}\hfill
+      \begin{minipage}[t]{0.51\linewidth}
+        \begin{itemize}\setlength{\itemsep}{2pt}
+          \item $r = 0.0175\uni{m}$
+          \item $k = 10^{4}\uni{N/m}$
+          \item $dt = 10^{-5}\uni{s}$
+        \end{itemize}
+      \end{minipage}\par
+      \vspace{0.8em}
       \textbf{Parámetros variables}
       \begin{itemize}\setlength{\itemsep}{2pt}
         \item $N$ entre 20 y 675
