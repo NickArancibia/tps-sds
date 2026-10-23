@@ -408,6 +408,12 @@
 
 % --- Número de partículas (2.1b y 2.4a: mismas corridas) -----------------------
 
+% TODO: discutir el escalamiento (exponente local: paso temporal 0.15 -> 2, eventos 2.6 -> 13,
+%   AGENTS.md §6). Si se dice, mostrarlo.
+\begin{frame}{Número de partículas: tiempo de ejecución}
+  \figura{ej2/tiempo_vs_n.png}
+\end{frame}
+
 % N = 25: semilla 1 re-corrida con estado cada 0.01 s hasta t_100 = 38.4 s
 %   (output/billiard/anim/fina_N25_s1; conversions.csv idéntico al de t100_vs_n/N25/s1; video
 %   --stride 4 --fps 45, 21 s). N = 625: la corrida de 1500 s del 2.4a (t100_vs_n/N625/s1, estado
@@ -416,12 +422,6 @@
 \begin{frame}{Número de partículas: animaciones con $x_o = r$}
   \animdos{anim_densidad_N25.png}{$N = 25$}{\yt{SZW2tPXPaVg}}
           {anim_densidad_N625.png}{$N = 625$}{\yt{3r7h7GOtINI}}
-\end{frame}
-
-% TODO: discutir el escalamiento (exponente local: paso temporal 0.15 -> 2, eventos 2.6 -> 13,
-%   AGENTS.md §6). Si se dice, mostrarlo.
-\begin{frame}{Número de partículas: tiempo de ejecución}
-  \figura{ej2/tiempo_vs_n.png}
 \end{frame}
 
 % Evolución temporal del observable (../AGENTS.md §5.3): F_u(t) de UNA realización (semilla 1)
@@ -458,6 +458,15 @@
 \end{frame}
 
 % --- Distribución de velocidades (2.3) -----------------------------------------
+
+% Animación coloreada por rapidez |v| (pedido 2026-10-22): output/billiard/speed_dist/s1 (N = 100,
+%   sin obstáculos), t = 0 a 2.99 s, un cuadro por estado guardado (0.01 s), 20 fps, 15 s de video;
+%   viridis de 0 a 2.5 m/s. Video para YouTube: output/billiard/anim/rapidez_N100_s1_16x9.mp4.
+%   Fotograma: cuadro 100 del video (t = 1 s = t_est). Lectura: en t = 0 todas van a 1 m/s (un solo
+%   color); los choques reparten la rapidez y desde ~1 s la mezcla de colores deja de cambiar.
+\begin{frame}{Distribución de velocidades: animación con $N = 100$}
+  \animsola{anim_rapidez_N100.png}{\yt{yZXu5N3ooho}}
+\end{frame}
 
 % Orden (pedido 2026-10-19): primero cómo se encontró el estacionario (rapidez media) y después
 %   la f(v) en t = 10^-2, 10^-1 y 10^0 s (el último, el inicio del estacionario). Partículas de las
