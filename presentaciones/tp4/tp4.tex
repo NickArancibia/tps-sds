@@ -178,8 +178,9 @@
 \end{frame}
 
 % Modelo general: segunda ley de Newton con fuerzas de a pares y la ley de contacto (resorte
-% normal; pedido 2026-10-19: va acá y no en Simulaciones) + avance en un paso + el esquema del
-% billar, Velocity Verlet. Los otros tres esquemas del oscilador no van (pedido 2026-10-19).
+% normal; pedido 2026-10-19: va acá y no en Simulaciones) + avance en un paso, que es el esquema
+% del billar, Velocity Verlet (2026-10-23: se sacó el bloque de aceleración constante, no se
+% usa). Los otros tres esquemas del oscilador no van (pedido 2026-10-19).
 % Obstáculos y pared (imagen) son del sistema particular; su diapositiva se sacó (pedido 2026-10-21).
 \begin{frame}{Modelo: ecuación de movimiento y esquema de integración}
   \setlength{\abovedisplayskip}{3pt}\setlength{\belowdisplayskip}{3pt}
@@ -191,14 +192,7 @@
     \hat{\vect{e}}_{ij} = \frac{\vect{r}_j - \vect{r}_i}{|\vect{r}_j - \vect{r}_i|}
   \]
   \vspace{0.3em}
-  \textbf{Avance en un paso $dt$ con aceleración constante}
-  \[
-    \vect{r}_i(t + dt) = \vect{r}_i(t) + \vect{v}_i(t)\,dt + \tfrac{1}{2}\,\vect{a}_i(t)\,dt^2,
-    \qquad
-    \vect{v}_i(t + dt) = \vect{v}_i(t) + \vect{a}_i(t)\,dt
-  \]
-  \vspace{0.3em}
-  \textbf{Velocity Verlet}
+  \textbf{Avance en un paso $dt$: Velocity Verlet}
   \begin{align*}
     \vect{r}_i(t + dt) &= \vect{r}_i(t) + \vect{v}_i(t)\,dt + \tfrac{1}{2}\,\vect{a}_i(t)\,dt^2\\
     \vect{v}_i(t + dt) &= \vect{v}_i(t) + \tfrac{1}{2}\bigl[\vect{a}_i(t) + \vect{a}_i(t + dt)\bigr]\,dt
