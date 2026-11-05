@@ -17,6 +17,7 @@
         <module>tp2-cellular-automata/vicsek-java</module>
         <module>tp3-event-driven-md/billiard-java</module>
         <module>tp4-time-driven-md/md-java</module>
+        <module>tp5-pedestrian-dynamics/cpm-java</module>
     </modules>
 
     <properties>
