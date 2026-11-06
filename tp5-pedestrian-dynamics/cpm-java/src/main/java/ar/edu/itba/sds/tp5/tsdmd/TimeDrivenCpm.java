@@ -1,10 +1,10 @@
 package ar.edu.itba.sds.tp5.tsdmd;
 
 import ar.edu.itba.sds.tp5.cpm.Agents;
+import ar.edu.itba.sds.tp5.cpm.BodyConstraints;
 import ar.edu.itba.sds.tp5.cpm.Contacts;
 import ar.edu.itba.sds.tp5.cpm.CpmParams;
 import ar.edu.itba.sds.tp5.cpm.EventLog;
-import ar.edu.itba.sds.tp5.cpm.RigidWalls;
 import ar.edu.itba.sds.tp5.cpm.Room;
 import ar.edu.itba.sds.tp5.cpm.Targets;
 
@@ -17,7 +17,8 @@ import ar.edu.itba.sds.tp5.cpm.Targets;
  *   <li>Radios: con contacto {@code r = r_min}; sin contacto {@code r = min(r + Δr, r_max)}.</li>
  *   <li>Target y velocidad deseada {@code v_d(r) e_target}.</li>
  *   <li>Velocidad: con contacto {@code v_e Σe/|Σe|} (nula si la suma se anula); sin contacto
- *   {@code v_d}. Luego la restricción de pared rígida ({@link RigidWalls}, agregado propio).
+ *   {@code v_d}. Luego la restricción de cuerpo impenetrable contra paredes y agentes
+ *   ({@link BodyConstraints}, agregado propio), con las posiciones del comienzo del paso.
  *   Posición: {@code x(t) = x(t − Δt) + v(t) Δt}.</li>
  * </ol>
  *
@@ -30,10 +31,11 @@ public final class TimeDrivenCpm {
     private final Room room;
     private final CpmParams p;
     private final Contacts contacts;
+    private final BodyConstraints bodies;
     private final EventLog events;
     private final double dt;
     private final double dr;
-    /** Pasos-agente en que la pared rígida recortó una velocidad de escape o una deseada. */
+    /** Pasos-agente en que la restricción de cuerpo cambió una velocidad de escape o una deseada. */
     private long limitedEscape;
     private long limitedDesired;
 
@@ -43,6 +45,7 @@ public final class TimeDrivenCpm {
         this.p = params;
         this.events = events;
         this.contacts = new Contacts(room, params, agents.n());
+        this.bodies = new BodyConstraints(room, contacts, params, agents.n());
         this.dt = params.dt();
         this.dr = params.radiusIncrement();
         final int[] active = a.active();
@@ -83,7 +86,7 @@ public final class TimeDrivenCpm {
                 a.vx[i] = speed * dx;
                 a.vy[i] = speed * dy;
             }
-            if (RigidWalls.limit(a, i, room, p.rMin(), dt)) {
+            if (bodies.limit(a, i)) {
                 if (a.contact[i]) {
                     limitedEscape++;
                 } else {

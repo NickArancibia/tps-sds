@@ -2,9 +2,9 @@
 
 Problema 2 del enunciado (`docs/Enunciado.md`): evacuación de N = 500 agentes de una habitación de
 50 m × 50 m por una puerta de 0.8 m, con el Contractile Particle Model (Baglietto & Parisi, 2011).
-Por ahora está implementado el esquema regido por el paso temporal (TSDMD), con dos agregados
-propios declarados en `AGENTS.md` (sección 3): segundo target `(x_i, −1 m)` y pared rígida sobre
-el cuerpo de radio `r_min`.
+Implementados el esquema regido por el paso temporal (TSDMD) y el regido por eventos (EDMD puro),
+con dos agregados propios declarados en `AGENTS.md` (sección 3): segundo target `(x_i, −1 m)` y
+cuerpo impenetrable de radio `r_min` contra paredes y contra otros agentes.
 
 ## Compilar
 
@@ -29,6 +29,12 @@ java -jar cpm-java/target/cpm.jar tsdmd --N 500 --seed 1 --save-every 1 --save-t
 # Condición inicial desde archivo (una fila "x y" por agente): escenario de dos agentes
 java -jar cpm-java/target/cpm.jar tsdmd --init scenarios/dos_agentes.txt --save-every 1 \
     --out output/tsdmd/dos_agentes
+
+# EDMD puro: recuperación con los 8 radios intermedios de TSDMD (default) o con menos (--levels).
+# En EDMD --save-every cuenta eventos (sin los cruces de celda): un estado cada 5 eventos
+java -jar cpm-java/target/cpm.jar edmd --N 100 --seed 1 --save-every 5 --out output/edmd/N100_seed1_hold8
+java -jar cpm-java/target/cpm.jar edmd --N 100 --seed 1 --levels 1 --save-every 5 \
+    --out output/edmd/N100_seed1_hold1
 
 java -jar cpm-java/target/cpm.jar tsdmd --help   # todas las opciones
 ```

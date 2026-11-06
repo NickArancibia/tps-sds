@@ -14,7 +14,8 @@ public final class Main {
 
             Uso:
               java -jar cpm.jar tsdmd [opciones]   CPM regido por el paso temporal
-              java -jar cpm.jar tsdmd --help       Opciones
+              java -jar cpm.jar edmd [opciones]    CPM regido por eventos
+              java -jar cpm.jar tsdmd --help       Opciones (comunes a los dos esquemas)
             """;
 
     private Main() {
@@ -28,7 +29,7 @@ public final class Main {
         final String[] rest = Arrays.copyOfRange(args, 1, args.length);
         try {
             switch (args[0]) {
-                case "tsdmd" -> EvacuationRun.run(rest);
+                case "tsdmd", "edmd" -> EvacuationRun.run(args[0], rest);
                 default -> throw new IllegalArgumentException("Esquema desconocido: " + args[0] + "\n" + USAGE);
             }
         } catch (final IllegalArgumentException | IllegalStateException e) {

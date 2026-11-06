@@ -159,4 +159,15 @@ public final class Agents {
         active[k] = active[--activeCount];
         active[activeCount] = i;
     }
+
+    /** Retira al agente {@code i} (búsqueda lineal en la lista de activos: a lo sumo N veces). */
+    public void removeAgent(final int i) {
+        for (int k = 0; k < activeCount; k++) {
+            if (active[k] == i) {
+                remove(k);
+                return;
+            }
+        }
+        throw new IllegalStateException("Agente " + i + " no está activo");
+    }
 }

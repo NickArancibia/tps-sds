@@ -35,7 +35,6 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.animation import FFMpegWriter  # noqa: E402
 from matplotlib.collections import EllipseCollection  # noqa: E402
-from matplotlib.lines import Line2D  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
 from cpm_common import REMOVED, TP_ROOT, load_run  # noqa: E402
@@ -68,23 +67,23 @@ def main() -> None:
 
     run = load_run(args.run_dir)
     m = run.meta
-    big_l, r_min, r_max, dt = m["L"], m["rMin"], m["rMax"], m["dt"]
+    big_l, r_min, r_max = m["L"], m["rMin"], m["rMax"]
     if args.info and run.n > MAX_INFO_AGENTS:
         raise SystemExit(f"--info es para corridas de hasta {MAX_INFO_AGENTS} agentes (esta tiene {run.n})")
 
     plt.rcParams.update({"font.family": "STIXGeneral", "mathtext.fontset": "stix", "font.size": 20})
-    # Layout manual (matplotlib 3.6 no ubica leyendas de figura fuera de los ejes con constrained_layout).
+    # Layout manual: sin leyenda arriba (los colores se explican al costado de la animación).
     if args.panel_zoom:
-        fig, (ax_room, ax_zoom) = plt.subplots(1, 2, figsize=(17.0, 9.2))
-        fig.subplots_adjust(left=0.06, right=0.99, bottom=0.08, top=0.86, wspace=0.16)
+        fig, (ax_room, ax_zoom) = plt.subplots(1, 2, figsize=(17.0, 8.6))
+        fig.subplots_adjust(left=0.06, right=0.99, bottom=0.09, top=0.93, wspace=0.16)
         zoom = args.panel_zoom
     elif args.zoom:
-        fig, ax_zoom = plt.subplots(figsize=(9.6, 10.6))
-        fig.subplots_adjust(left=0.13, right=0.97, bottom=0.08, top=0.84)
+        fig, ax_zoom = plt.subplots(figsize=(9.6, 9.8))
+        fig.subplots_adjust(left=0.13, right=0.97, bottom=0.08, top=0.92)
         ax_room, zoom = None, args.zoom
     else:
-        fig, ax_room = plt.subplots(figsize=(9.0, 10.0))
-        fig.subplots_adjust(left=0.12, right=0.97, bottom=0.08, top=0.88)
+        fig, ax_room = plt.subplots(figsize=(9.0, 9.4))
+        fig.subplots_adjust(left=0.12, right=0.97, bottom=0.08, top=0.93)
         ax_zoom, zoom = None, None
 
     for ax in (a for a in (ax_room, ax_zoom) if a is not None):
@@ -103,16 +102,6 @@ def main() -> None:
             ax_room.add_patch(Rectangle((zx - half, zy - half), 2 * half, 2 * half, fill=False,
                                         edgecolor="0.3", linestyle="--", linewidth=1.5, zorder=6))
 
-    handles = [Line2D([], [], marker="o", linestyle="", markersize=13, color=c, label=name)
-               for c, name in STATE_NAMES.items()]
-    if ax_zoom is not None:
-        handles += [
-            Line2D([], [], marker="o", linestyle="", markersize=9, color="0.5", label="cuerpo ($r_{min}$)"),
-            Line2D([], [], marker="o", linestyle="", markersize=18, markerfacecolor="none",
-                   markeredgecolor="0.5", markeredgewidth=2, label="espacio personal ($r$)"),
-        ]
-    fig.legend(handles=handles, loc="upper center", ncol=len(handles) if args.panel_zoom else 3, fontsize=16,
-               frameon=False, handletextpad=0.3, columnspacing=1.2)
     title_ax = ax_room if ax_room is not None else ax_zoom
     label = title_ax.text(0.0, 1.01, "", transform=title_ax.transAxes, ha="left", va="bottom")
     info = None
@@ -167,8 +156,7 @@ def main() -> None:
                                               dy[ok] / norm[ok], angles="xy", scale_units="xy",
                                               scale=1 / DESIRED_LENGTH, width=0.004, color="0.5", zorder=5))
         inside = int(np.sum(run.phase[f] == 0))
-        label.set_text(f"t = {run.t[f]:.3f} s  (paso {round(run.t[f] / dt)})    "
-                       f"en la habitación: {inside}/{run.n}")
+        label.set_text(f"t = {run.t[f]:.3f} s    en la habitación: {inside}/{run.n}")
         if info is not None:
             lines = []
             for i in range(run.n):

@@ -9,38 +9,30 @@ package ar.edu.itba.sds.tp5.cpm;
  * contacto se suma el versor de escape {@code e_ij = (x_i − x_j)/|x_i − x_j|} (Ec. 7).</p>
  *
  * <p>La distancia de contacto es a lo sumo {@code 2 r_max}, así que con celdas de lado
- * {@code >= 2 r_max} alcanza con revisar las celdas contiguas. Se recorre la mitad de la vecindad
- * (derecha, arriba-derecha, arriba, arriba-izquierda) y cada par se registra en ambos agentes.</p>
+ * {@code >= 2 r_max} ({@link CellGrid}) alcanza con revisar las celdas contiguas. Se recorre la
+ * mitad de la vecindad (derecha, arriba-derecha, arriba, arriba-izquierda) y cada par se registra en
+ * ambos agentes.</p>
  */
 public final class Contacts {
 
     private static final int[][] HALF_NEIGHBORHOOD = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}};
 
     private final Room room;
-    private final double yMin;
-    private final int mx;
-    private final int my;
-    /** Lado de las celdas en cada eje (ambos {@code >= 2 r_max}); cubren {@code [0, L] × [yMin, L]}. */
-    private final double cellW;
-    private final double cellH;
+    private final CellGrid grid;
     private final int[] head;
     private final int[] next;
 
     public Contacts(final Room room, final CpmParams p, final int n) {
         this.room = room;
-        // Afuera los agentes se retiran a exitDistance del centro de la puerta.
-        this.yMin = -(room.exitDistance() + 2 * p.rMax());
-        final double minCell = 2 * p.rMax();
-        this.mx = Math.max(1, (int) Math.floor(room.l() / minCell));
-        this.my = Math.max(1, (int) Math.floor((room.l() - yMin) / minCell));
-        this.cellW = room.l() / mx;
-        this.cellH = (room.l() - yMin) / my;
-        this.head = new int[mx * my];
+        this.grid = new CellGrid(room, p);
+        this.head = new int[grid.cells()];
         this.next = new int[n];
     }
 
     /** Marca {@code contact[i]} y acumula {@code (ex, ey)} para todos los agentes activos. */
     public void compute(final Agents a) {
+        final int mx = grid.mx;
+        final int my = grid.my;
         final int[] active = a.active();
         final int count = a.activeCount();
         java.util.Arrays.fill(head, -1);
@@ -49,7 +41,7 @@ public final class Contacts {
             a.contact[i] = false;
             a.ex[i] = 0;
             a.ey[i] = 0;
-            final int c = cellX(a.x[i]) + mx * cellY(a.y[i]);
+            final int c = grid.cellX(a.x[i]) + mx * grid.cellY(a.y[i]);
             next[i] = head[c];
             head[c] = i;
         }
@@ -122,19 +114,39 @@ public final class Contacts {
         }
     }
 
-    private int cellX(final double x) {
-        return Math.max(0, Math.min(mx - 1, (int) (x / cellW)));
+    /**
+     * Agentes activos {@code j ≠ i} con {@code |x_i − x_j| < radius}, usando las celdas armadas en el
+     * último {@link #compute}: vale mientras no se muevan las posiciones. Requiere
+     * {@code radius <= 2 r_max} (lado mínimo de celda), así alcanza con las 9 celdas alrededor.
+     *
+     * @param out arreglo de largo {@code >= N − 1} donde se escriben los índices
+     * @return cantidad de vecinos escritos en {@code out}
+     */
+    public int neighbors(final Agents a, final int i, final double radius, final int[] out) {
+        final double xi = a.x[i];
+        final double yi = a.y[i];
+        final double r2 = radius * radius;
+        final int cx = grid.cellX(xi);
+        final int cy = grid.cellY(yi);
+        int count = 0;
+        for (int ny = Math.max(0, cy - 1); ny <= Math.min(grid.my - 1, cy + 1); ny++) {
+            for (int nx = Math.max(0, cx - 1); nx <= Math.min(grid.mx - 1, cx + 1); nx++) {
+                for (int j = head[nx + grid.mx * ny]; j >= 0; j = next[j]) {
+                    if (j == i) {
+                        continue;
+                    }
+                    final double dx = xi - a.x[j];
+                    final double dy = yi - a.y[j];
+                    if (dx * dx + dy * dy < r2) {
+                        out[count++] = j;
+                    }
+                }
+            }
+        }
+        return count;
     }
 
-    private int cellY(final double y) {
-        return Math.max(0, Math.min(my - 1, (int) ((y - yMin) / cellH)));
-    }
-
-    public int cellsX() {
-        return mx;
-    }
-
-    public int cellsY() {
-        return my;
+    public CellGrid grid() {
+        return grid;
     }
 }
