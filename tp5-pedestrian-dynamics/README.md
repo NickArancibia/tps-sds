@@ -37,9 +37,11 @@ java -jar cpm-java/target/cpm.jar edmd --N 100 --seed 1 --save-every 5 --out out
 java -jar cpm-java/target/cpm.jar edmd --N 100 --seed 1 --levels 1 --save-every 5 \
     --out output/edmd/N100_seed1_hold1
 
-# Híbrido: área de radio rh (m) alrededor de cada agente (mínimo 2 rmax = 0.5 m); --save-every cuenta
-# eventos (EDMD sin cruces de celda, y pasos con agentes en TSDMD); además de los archivos de siempre
-# escribe schemes.csv (agentes en cada esquema en cada paso)
+# Híbrido: área de radio rh (m) alrededor de cada agente. rh < 2 rmin (0.2 m): EDMD puro; rh >= 0.6 m:
+# todos los choques por paso temporal; rh mayor que la habitación: TSDMD puro. --levels vale para los
+# choques que se resuelven por eventos. --save-every cuenta eventos (EDMD sin cruces de celda, y pasos
+# con agentes en TSDMD); además de los archivos de siempre escribe schemes.csv (agentes en cada
+# esquema en cada paso)
 java -jar cpm-java/target/cpm.jar hybrid --N 100 --seed 1 --rh 1 --save-every 1 \
     --out output/hybrid/N100_seed1_rh1
 
@@ -48,6 +50,20 @@ java -jar cpm-java/target/cpm.jar tsdmd --help   # todas las opciones
 
 Cada corrida escribe `static.txt`, `dynamic.txt`, `events.csv` y `run.json` (y `schemes.csv` en el
 híbrido; formato en `AGENTS.md`, sección 5).
+
+## Campaña de mediciones y figuras
+
+```bash
+# Los tres esquemas (N = 500 y 200), barrido de R_h del híbrido (L = 50, 150 y 300 m), de los radios
+# intermedios de EDMD y escalamiento con N de 100 a 1000 (a L = 50 m y a densidad constante); 10 seeds
+# por configuración, sin guardar estados. Corre en serie (mide el tiempo de ejecución): no correr nada
+# pesado en paralelo. Retoma donde quedó; --fresh re-mide
+python3 scripts/run_campaign.py                       # → output/campaign/N<N>_L<L>/<config>/seed<k>/
+python3 scripts/run_campaign.py --studies base,levels # solo algunos (base, n200, levels, room, scaling)
+
+# Figuras (analysis/figures/campaign/) y, por stdout, la tabla de cada una
+python3 analysis/plot_campaign.py
+```
 
 ## Animar
 

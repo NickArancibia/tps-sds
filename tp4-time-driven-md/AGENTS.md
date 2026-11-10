@@ -649,3 +649,38 @@ md-java/src/main/java/ar/edu/itba/sds/tp4/billiard/
   más el estado fresca/usada), los tiempos de conversión, y `run.json` con todos los inputs
   (integrador, `dt`, `dt₂`, seed, `t_f`, `x_o`, N) y tiempos del lazo.
 - Guardado con contador entero de pasos (`paso % n == 0`), incluyendo `t = 0`.
+
+## 7. Devolución final de la cátedra (presentación, nota 9)
+
+Recibida el 2026-11-10. Lecciones destiladas en `../AGENTS.md` §8, marcadas **[TP4]**.
+
+Devolución textual:
+
+> **Comentarios generales:** Una presentación bastante bien en líneas generales, pero hay algunas
+> cosas para mejorar.
+>
+> **Presentación:**
+>
+> - D2 Esta diapositiva no debería estar, en el enunciado del TP dice que solo se debería mostrar
+>   una diapositiva referida al sistema 1 y que debía ser la de ECM vs dt. De los 5 colores de la
+>   leyenda sólo se distinguen 3, quizás la analítica no debería ser tan ancha y tapar las otras.
+> - D6 El método de integración es parte de la implementación. Faltan ecuaciones de colisiones con
+>   paredes y obstáculos fijos.
+> - D10 Las flechas de x0 deberían salir desde el centro de la circunferencia, hay un tramo recto
+>   que confunde en la imagen.
+> - D19 La animación con 625 partículas cambia fotograma cada 5 segundos de simulación, lo que
+>   genera que a la vista se vea que las partículas se usan de forma espontánea y confunde.
+>   Entiendo que querían mostrar la animación hasta que todas queden usadas y para eso necesitaba
+>   refrescar a esa tasa, pero me parece más descriptivo del caso que tenga la misma tasa que con
+>   densidad baja y que quede la impresión de que como la densidad es muy alta las partículas
+>   tardan mucho en usarse.
+> - D21 ¿Por qué el numérica en densidad?.
+> - D23 Los simbolos centrales (cuadrados, triangulos y circunferencias) son muy grandes o quizas
+>   innecesarios, con el codigo de color ya alcanza para diferenciar los valores de N y asi no
+>   queda tan cargado el grafico.
+> - D26 La leyenda es extraña, si la idea es decir cual es el tiempo visualizado, debería estar
+>   afuera. En general, una leyenda con un solo elemento es prescindible. Además, al poner un
+>   gráfico al lado del otro se genera una comparación inconsciente, más viendo que los tres llegan
+>   a la misma altura, pero en realidad los ejes y están en distintas escalas, entonces engaña un
+>   poco. Quizás hubiera sido mejor poner los tres gráficos en el mismo, así se ve mucho mejor como
+>   los módulos de las velocidades se van distribuyendo.

@@ -41,14 +41,17 @@ public final class EvacuationRun {
               --ve <m/s>           rapidez de escape (default = vd)
               --beta <num>         default 0.9
               --tau <s>            default 0.5
-            Recuperación en EDMD:
+            Recuperación por eventos (EDMD y agentes en EDMD del híbrido):
               --levels <int>       radios intermedios de TSDMD que se recorren, un dt cada uno desde
                                    r_min + dr; el último se sostiene hasta el final de la
                                    recuperación (0: quieto en r_min; 8 = TSDMD) (default 8)
             Híbrido:
               --rh <m>             radio del área de cada agente (entre centros; contra paredes,
                                    rh/2): otro agente dentro del área lo pasa a TSDMD; vuelve a EDMD
-                                   libre y sin nadie en el área. Mínimo 2 rmax (default 1)
+                                   libre y sin nadie a menos de max(rh, 2 rmax). Con rh < 2 rmin
+                                   nadie pasa a TSDMD (EDMD puro); con rh >= 2 rmax + 2 v dt todos
+                                   los choques son por paso temporal; rh mayor que la habitación es
+                                   TSDMD puro (default 1)
             Corrida:
               --seed <long>        semilla de la condición inicial y de los targets en la franja
                                    de la puerta (default 1)
@@ -94,9 +97,9 @@ public final class EvacuationRun {
         if (saveEvery < 1) {
             throw new IllegalArgumentException("--save-every debe ser >= 1");
         }
-        final Recovery recovery = "edmd".equals(scheme)
-                ? new Recovery(p, cli.integer("levels", Recovery.maxLevels(p)))
-                : null;
+        final Recovery recovery = "tsdmd".equals(scheme)
+                ? null
+                : new Recovery(p, cli.integer("levels", Recovery.maxLevels(p)));
 
         final EventLog events = new EventLog(n);
         Files.createDirectories(outDir);
@@ -140,7 +143,7 @@ public final class EvacuationRun {
                         engine.limitedEscape(), engine.limitedDesired());
                 summary = step + " pasos";
             } else if ("hybrid".equals(scheme)) {
-                final HybridCpm engine = new HybridCpm(agents, room, p, cli.number("rh", 1.0), events);
+                final HybridCpm engine = new HybridCpm(agents, room, p, cli.number("rh", 1.0), recovery, events);
                 final long maxSteps = (long) Math.ceil(tMax / dt);
                 try (BufferedWriter schemes = Files.newBufferedWriter(outDir.resolve("schemes.csv"))) {
                     schemes.write("t,tsdmd,edmd\n0.0," + engine.tsdmdCount() + "," + (n - engine.tsdmdCount()) + "\n");
@@ -169,12 +172,13 @@ public final class EvacuationRun {
                 }
                 schemeJson = """
                           "rh": %s,
+                          "levels": %d,
                           "cells": [%d, %d],
                           "areaCells": [%d, %d],
                           "bodyLimitedEscape": %d,
                           "bodyLimitedDesired": %d,
                           "events": %s,
-                        """.formatted(cli.number("rh", 1.0), engine.tsdmd().contacts().grid().mx,
+                        """.formatted(cli.number("rh", 1.0), recovery.levels(), engine.tsdmd().contacts().grid().mx,
                         engine.tsdmd().contacts().grid().my, engine.grid().mx, engine.grid().my,
                         engine.tsdmd().limitedEscape(), engine.tsdmd().limitedDesired(), engine.statsJson());
                 summary = engine.steps() + " pasos";

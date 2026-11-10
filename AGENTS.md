@@ -217,7 +217,7 @@ Basado en la "Guía para Redacción de Informe" de la cátedra. Los informes son
 
 ## 8. Errores frecuentes en devoluciones de la cátedra
 
-Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devoluciones propias del TP2 (G2, nota 6/10; los ítems marcados **[TP2]** costaron puntos) y del TP3 (G2, nota 9/10; **[TP3]**, devolución textual en `tp3-event-driven-md/AGENTS.md` §12). Revisar antes de entregar.
+Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devoluciones propias del TP2 (G2, nota 6/10; los ítems marcados **[TP2]** costaron puntos), del TP3 (G2, nota 9/10; **[TP3]**, devolución textual en `tp3-event-driven-md/AGENTS.md` §12) y del TP4 (G2, nota 9/10; **[TP4]**, devolución textual en `tp4-time-driven-md/AGENTS.md` §7). Revisar antes de entregar.
 
 ### 8.1 Modelo vs. Simulaciones
 - Los **escenarios/sistemas particulares** (geometrías, casos a estudiar) van en **Simulaciones**, NO en Modelo. El Modelo es solo ecuaciones generales.
@@ -230,7 +230,9 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devol
 - **[TP2] Coherencia entre diapositivas**: el inicio del estacionario declarado en Simulaciones/definición del observable tiene que ser **el mismo** que se marca en las figuras de evolución de Resultados. Distintos valores en distintas diapositivas es una observación directa del corrector.
 - **[TP3] La Introducción tampoco lleva el sistema particular**: la mesa, los arcos y los obstáculos de la diapositiva de introducción (D3) "corresponden a simulaciones". La Introducción describe el sistema real y el fenómeno en general; la geometría y la configuración concretas van recién en Simulaciones.
 - **[TP3] La condición inicial al azar no es un parámetro**: "posiciones iniciales al azar" figuraba entre los parámetros fijos (D8); la cátedra: "no son un parámetro, y tampoco están fijas". Describir la condición inicial en un renglón propio (ej.: "Condición inicial: posiciones al azar sin superposición, distinta en cada realización"), fuera de las listas de parámetros fijos y variables.
-- **Modelo = ecuaciones generales del movimiento** (TP4): segunda ley de Newton con la fuerza total como suma de fuerzas de a pares (`m_i a_i = F_i = Σ_j F_ij`, como en la teórica) y la ley de fuerza entre partículas (pedido TP4: va acá y no en Simulaciones), avance en un paso y el esquema de integración usado en el sistema estudiado, en una sola diapositiva. Lo propio del **sistema particular** (obstáculos, imagen de la pared, etc.) va en Simulaciones, con su esquema.
+- **Modelo = ecuaciones generales del movimiento** (TP4): segunda ley de Newton con la fuerza total como suma de fuerzas de a pares (`m_i a_i = F_i = Σ_j F_ij`, como en la teórica) y la ley de fuerza entre partículas (pedido TP4: va acá y no en Simulaciones). Lo propio del **sistema particular** (obstáculos, imagen de la pared, etc.) va en Simulaciones, con su esquema.
+- **[TP4] El método de integración es parte de la Implementación, no del Modelo** (D6): en el TP4 el esquema de integración (Velocity Verlet) estaba en la diapositiva de Modelo. El avance en el tiempo (integrador, paso, lazo de eventos) va en Implementación.
+- **[TP4] El Modelo incluye los choques con paredes y obstáculos fijos** (D6: "faltan ecuaciones de colisiones con paredes y obstáculos fijos"): no alcanza con la interacción entre partículas; escribir también la ecuación del contacto con cada cuerpo fijo.
 
 ### 8.2 Observables y consistencia
 - Las figuras deben medir **exactamente** los observables definidos; si el eje no respeta la definición, no mostrarlo.
@@ -251,11 +253,17 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devol
 - NO duplicar en tablas datos que ya están en los gráficos.
 - **[TP2] Aprovechar el espacio**: cada figura ocupa el **máximo espacio disponible** en la diapositiva. Una figura chica con media diapositiva vacía es una observación segura. Esquemas ilustrativos (geometría, sistema) también grandes.
 - **[TP3] Escalamiento → ejes logarítmicos** (regla de la sección 3, incumplida): el tiempo de ejecución vs N se mostró en ejes lineales (D16) y la cátedra pidió "ejes logarítmicos para mostrar cambios por escalas". Toda figura de escalamiento (costo vs N, etc.) va en log-log; la pendiente da el exponente, y eso es lo que se afirma.
+- **[TP4] Curvas que coinciden** (D2): "de los 5 colores de la leyenda sólo se distinguen 3"; la curva de referencia era tan ancha que tapaba a las otras. Si varias curvas caen una sobre otra, la de referencia va detrás y fina, o con otro estilo de línea; verificar que cada entrada de la leyenda se vea en el gráfico.
+- **[TP4] Símbolos solo si aportan** (D23): con una escala de color para el parámetro, sumar un marcador distinto por valor (cuadrados, triángulos, círculos grandes) recarga el gráfico. Un solo tipo de marcador chico y el color alcanzan.
+- **[TP4] Leyendas de un solo elemento, afuera** (D26): una leyenda con una sola entrada es prescindible; si lo que dice es un dato de la figura (ej.: el instante mostrado), va al costado.
+- **[TP4] No poner lado a lado gráficos con escalas distintas** (D26): tres paneles con ejes verticales en escalas distintas inducen a comparar alturas que no son comparables. Si se quiere comparar, van en el mismo gráfico, con los mismos ejes.
+- **[TP4] Esquemas geométricos exactos** (D10): las flechas que marcan una distancia al centro salen del centro del círculo; un tramo que no corresponde a la magnitud señalada confunde.
 
 ### 8.4 Animaciones
 - El sujeto de interés (ej.: líder) debe estar **centrado**, no en el borde.
 - Animaciones **grandes** y legibles; NO en formato "shorts" (dificulta ir y venir); título preciso ("Animaciones", no descripciones vagas).
 - **[TP2] El link tiene que poder copiarse del PDF**: escribir la URL como texto plano (`\url{...}` en LaTeX, sin caracteres especiales que se conviertan al copiar) y **verificar copiándola desde el PDF final** antes de enviar. Durante la presentación en vivo, reproducir las animaciones a **tamaño grande** (pantalla completa o casi).
+- **[TP4] Misma tasa de cuadros en las animaciones que se comparan** (D19): la animación de alta densidad refrescaba cada 5 s de simulación y las partículas parecían cambiar de estado de golpe. Usar el mismo intervalo de simulación por cuadro que en el caso con el que se compara, aunque no se llegue al final del proceso: que se vea que tarda más es el resultado.
 
 ### 8.5 Conclusiones
 - **Cuantificar** explícitamente cada afirmación; si se compara (ej.: entre densidades), que exista un gráfico que muestre esa comparación.
@@ -270,3 +278,5 @@ Lecciones destiladas de devoluciones a otro grupo (G6, TP2–TP4) y de las devol
 - **[TP3] Afirmaciones orales justificadas**: comentarios como "crece exponencialmente" o "pendiente agresiva" fueron observados por no estar justificados. Toda afirmación sobre la forma de una curva tiene que estar cuantificada y mostrada (ej.: "pendiente 3 en log-log, tiempo ∝ N³"); no decir "exponencial" si no se ajustó una exponencial. Revisar el guion con este criterio al ensayar.
 - Lo que la cátedra marcó como **bien** en TP2 y hay que mantener: títulos de sección como diapositivas separadas, cantidad de diapositivas, extensión y presentación general del informe, formato "valor ± error".
 - Lo que la cátedra marcó como **bien** en TP3 y hay que mantener: ver 5.6 (cantidad de texto, diapositivas de una sola figura, esquemas de las propuestas propias, observables, relato de las decisiones).
+- **[TP4] Respetar la cantidad de diapositivas que fija el enunciado** (D2): el enunciado pedía una sola diapositiva del sistema 1 (ECM vs dt) y se agregó otra; "esta diapositiva no debería estar".
+- Lo que la cátedra marcó como **bien** en TP4: "una presentación bastante bien en líneas generales"; mismo formato que el TP3 (poco texto, explicación oral).

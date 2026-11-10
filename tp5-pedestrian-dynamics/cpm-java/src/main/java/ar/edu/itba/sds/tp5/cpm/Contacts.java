@@ -21,48 +21,61 @@ public final class Contacts {
     private final CellGrid grid;
     private final int[] head;
     private final int[] next;
+    /** Celdas con algún agente del último {@link #compute}, en orden creciente. */
+    private final int[] occupied;
+    private int occupiedCount;
 
     public Contacts(final Room room, final CpmParams p, final int n) {
         this.room = room;
         this.grid = new CellGrid(room, p);
         this.head = new int[grid.cells()];
+        java.util.Arrays.fill(head, -1);
         this.next = new int[n];
+        this.occupied = new int[n];
     }
 
     /**
      * Marca {@code contact[i]} y acumula {@code (ex, ey)} para los agentes {@code ids[0..count)}
      * (todos los activos en TSDMD puro, los que están en TSDMD en el híbrido). Solo se buscan
-     * contactos entre ellos y con las paredes.
+     * contactos entre ellos y con las paredes. Recorre solo las celdas ocupadas, en el mismo orden
+     * que un barrido de toda la grilla: el costo no depende del tamaño de la habitación.
      */
     public void compute(final Agents a, final int[] ids, final int count) {
         final int mx = grid.mx;
         final int my = grid.my;
-        java.util.Arrays.fill(head, -1);
+        for (int o = 0; o < occupiedCount; o++) {
+            head[occupied[o]] = -1;
+        }
+        occupiedCount = 0;
         for (int k = 0; k < count; k++) {
             final int i = ids[k];
             a.contact[i] = false;
             a.ex[i] = 0;
             a.ey[i] = 0;
             final int c = grid.cellX(a.x[i]) + mx * grid.cellY(a.y[i]);
+            if (head[c] < 0) {
+                occupied[occupiedCount++] = c;
+            }
             next[i] = head[c];
             head[c] = i;
         }
-        for (int cy = 0; cy < my; cy++) {
-            for (int cx = 0; cx < mx; cx++) {
-                final int c = cx + mx * cy;
-                for (int i = head[c]; i >= 0; i = next[i]) {
-                    for (int j = next[i]; j >= 0; j = next[j]) {
-                        pair(a, i, j);
+        java.util.Arrays.sort(occupied, 0, occupiedCount);
+        for (int o = 0; o < occupiedCount; o++) {
+            final int c = occupied[o];
+            final int cx = c % mx;
+            final int cy = c / mx;
+            for (int i = head[c]; i >= 0; i = next[i]) {
+                for (int j = next[i]; j >= 0; j = next[j]) {
+                    pair(a, i, j);
+                }
+                for (final int[] off : HALF_NEIGHBORHOOD) {
+                    final int nx = cx + off[0];
+                    final int ny = cy + off[1];
+                    if (nx < 0 || nx >= mx || ny >= my) {
+                        continue;
                     }
-                    for (final int[] off : HALF_NEIGHBORHOOD) {
-                        final int nx = cx + off[0];
-                        final int ny = cy + off[1];
-                        if (nx < 0 || nx >= mx || ny >= my) {
-                            continue;
-                        }
-                        for (int j = head[nx + mx * ny]; j >= 0; j = next[j]) {
-                            pair(a, i, j);
-                        }
+                    for (int j = head[nx + mx * ny]; j >= 0; j = next[j]) {
+                        pair(a, i, j);
                     }
                 }
             }
