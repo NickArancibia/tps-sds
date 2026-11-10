@@ -2,9 +2,10 @@
 
 Problema 2 del enunciado (`docs/Enunciado.md`): evacuación de N = 500 agentes de una habitación de
 50 m × 50 m por una puerta de 0.8 m, con el Contractile Particle Model (Baglietto & Parisi, 2011).
-Implementados el esquema regido por el paso temporal (TSDMD) y el regido por eventos (EDMD puro),
-con dos agregados propios declarados en `AGENTS.md` (sección 3): segundo target `(x_i, −1 m)` y
-cuerpo impenetrable de radio `r_min` contra paredes y contra otros agentes.
+Implementados los tres esquemas del enunciado: regido por el paso temporal (TSDMD), regido por
+eventos (EDMD puro) e híbrido, con dos agregados propios declarados en `AGENTS.md` (sección 3):
+segundo target `(x_i, −1 m)` y cuerpo impenetrable de radio `r_min` contra paredes y contra otros
+agentes.
 
 ## Compilar
 
@@ -36,11 +37,17 @@ java -jar cpm-java/target/cpm.jar edmd --N 100 --seed 1 --save-every 5 --out out
 java -jar cpm-java/target/cpm.jar edmd --N 100 --seed 1 --levels 1 --save-every 5 \
     --out output/edmd/N100_seed1_hold1
 
+# Híbrido: área de radio rh (m) alrededor de cada agente (mínimo 2 rmax = 0.5 m); --save-every cuenta
+# eventos (EDMD sin cruces de celda, y pasos con agentes en TSDMD); además de los archivos de siempre
+# escribe schemes.csv (agentes en cada esquema en cada paso)
+java -jar cpm-java/target/cpm.jar hybrid --N 100 --seed 1 --rh 1 --save-every 1 \
+    --out output/hybrid/N100_seed1_rh1
+
 java -jar cpm-java/target/cpm.jar tsdmd --help   # todas las opciones
 ```
 
-Cada corrida escribe `static.txt`, `dynamic.txt`, `events.csv` y `run.json` (formato en
-`AGENTS.md`, sección 5).
+Cada corrida escribe `static.txt`, `dynamic.txt`, `events.csv` y `run.json` (y `schemes.csv` en el
+híbrido; formato en `AGENTS.md`, sección 5).
 
 ## Animar
 
@@ -56,6 +63,10 @@ python3 analysis/animate_evacuation.py output/tsdmd/N500_seed1_t3-9 --zoom 25 1.
 # Dos agentes: 1/6 de la velocidad real, con trayectorias y r, |v| y distancia de cada agente
 python3 analysis/animate_evacuation.py output/tsdmd/dos_agentes --t0 1.8 --zoom 25 0 1.2 --arrows --desired \
     --trails --info --fps 5 --out output/tsdmd/dos_agentes/choque_dos_agentes.mp4
+
+# Híbrido: coloreado solo por esquema (azul EDMD, rojo TSDMD)
+python3 analysis/animate_evacuation.py output/hybrid/N100_seed1_rh1 --panel-zoom 25 1.2 2 \
+    --out output/hybrid/N100_seed1_rh1/evacuacion.mp4
 
 # PNG de un instante
 python3 analysis/animate_evacuation.py output/tsdmd/N500_seed1 --snapshot 60

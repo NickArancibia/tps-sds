@@ -13,9 +13,10 @@ public final class Main {
             SdS TP5 - Evacuación con el CPM
 
             Uso:
-              java -jar cpm.jar tsdmd [opciones]   CPM regido por el paso temporal
-              java -jar cpm.jar edmd [opciones]    CPM regido por eventos
-              java -jar cpm.jar tsdmd --help       Opciones (comunes a los dos esquemas)
+              java -jar cpm.jar tsdmd [opciones]    CPM regido por el paso temporal
+              java -jar cpm.jar edmd [opciones]     CPM regido por eventos
+              java -jar cpm.jar hybrid [opciones]   esquema híbrido (EDMD + TSDMD)
+              java -jar cpm.jar tsdmd --help        Opciones (comunes a los tres esquemas)
             """;
 
     private Main() {
@@ -29,7 +30,7 @@ public final class Main {
         final String[] rest = Arrays.copyOfRange(args, 1, args.length);
         try {
             switch (args[0]) {
-                case "tsdmd", "edmd" -> EvacuationRun.run(args[0], rest);
+                case "tsdmd", "edmd", "hybrid" -> EvacuationRun.run(args[0], rest);
                 default -> throw new IllegalArgumentException("Esquema desconocido: " + args[0] + "\n" + USAGE);
             }
         } catch (final IllegalArgumentException | IllegalStateException e) {

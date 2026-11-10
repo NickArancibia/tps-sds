@@ -6,7 +6,7 @@ package ar.edu.itba.sds.tp5.edmd;
  * de la pared para un contacto con pared) y el contador de cambios de cada agente al momento de
  * predecirlo: si alguno cambió después, el evento quedó obsoleto y se descarta al sacarlo.
  */
-final class EventQueue {
+public final class EventQueue {
 
     private double[] time = new double[1 << 12];
     private byte[] type = new byte[1 << 12];
@@ -18,22 +18,27 @@ final class EventQueue {
     private long pushed;
 
     /** Campos del último evento sacado con {@link #pop()}. */
-    double topTime;
-    byte topType;
-    int topA;
-    int topB;
-    int topCa;
-    int topCb;
+    public double topTime;
+    public byte topType;
+    public int topA;
+    public int topB;
+    public int topCa;
+    public int topCb;
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return size == 0;
     }
 
-    long pushed() {
+    /** Instante del próximo evento (infinito si la cola está vacía). */
+    public double peekTime() {
+        return size == 0 ? Double.POSITIVE_INFINITY : time[0];
+    }
+
+    public long pushed() {
         return pushed;
     }
 
-    void push(final double t, final byte kind, final int i, final int j, final int ci, final int cj) {
+    public void push(final double t, final byte kind, final int i, final int j, final int ci, final int cj) {
         if (size == time.length) {
             final int cap = 2 * size;
             time = java.util.Arrays.copyOf(time, cap);
@@ -61,7 +66,7 @@ final class EventQueue {
         cb[k] = cj;
     }
 
-    void pop() {
+    public void pop() {
         topTime = time[0];
         topType = type[0];
         topA = a[0];

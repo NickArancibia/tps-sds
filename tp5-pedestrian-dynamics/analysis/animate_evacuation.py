@@ -1,8 +1,10 @@
 """Animación de una corrida del CPM a partir de los estados guardados (sin interpolar).
 
-Cada cuadro es un estado de dynamic.txt dibujado tal cual. Color del estado de cada agente:
-azul = libre (r = r_max), negro = recuperando (r_min < r < r_max, sin contacto),
-rojo = en contacto (r = r_min, velocidad de escape). Los agentes retirados no se dibujan.
+Cada cuadro es un estado de dynamic.txt dibujado tal cual. Colores:
+- TSDMD y EDMD puros, por estado del CPM: azul = libre (r = r_max), negro = recuperando
+  (r_min < r < r_max, sin contacto), rojo = en contacto (r = r_min, velocidad de escape).
+- Híbrido, solo por esquema (lo pide el enunciado): azul = EDMD, rojo = TSDMD.
+Los agentes retirados no se dibujan.
 
 Dos estilos de dibujo:
 - Habitación completa: un punto de tamaño fijo por agente (a esa escala el radio no se distingue).
@@ -37,10 +39,11 @@ from matplotlib.animation import FFMpegWriter  # noqa: E402
 from matplotlib.collections import EllipseCollection  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
-from cpm_common import REMOVED, TP_ROOT, load_run  # noqa: E402
+from cpm_common import EDMD, REMOVED, TP_ROOT, load_run  # noqa: E402
 
 FREE, RECOVERING, CONTACT, WALL = "tab:blue", "black", "tab:red", "0.35"
 STATE_NAMES = {FREE: "libre", RECOVERING: "recuperando", CONTACT: "en contacto"}
+SCHEME_EDMD, SCHEME_TSDMD = "tab:blue", "tab:red"
 DOT_SIZE = 30  # pt², puntos de la vista completa
 ARROW_LENGTH_AT_VD = 0.35  # m de flecha para la rapidez deseada máxima
 DESIRED_LENGTH = 0.25  # m
@@ -68,6 +71,7 @@ def main() -> None:
     run = load_run(args.run_dir)
     m = run.meta
     big_l, r_min, r_max = m["L"], m["rMin"], m["rMax"]
+    by_scheme = m.get("scheme") == "hybrid"
     if args.info and run.n > MAX_INFO_AGENTS:
         raise SystemExit(f"--info es para corridas de hasta {MAX_INFO_AGENTS} agentes (esta tiene {run.n})")
 
@@ -118,7 +122,10 @@ def main() -> None:
         alive = run.phase[f] != REMOVED
         xs, ys, rs = run.x[f, alive], run.y[f, alive], run.r[f, alive]
         contact = run.contact[f, alive]
-        colors = state_colors(contact, rs, r_max)
+        if by_scheme:
+            colors = np.where(run.scheme[f, alive] == EDMD, SCHEME_EDMD, SCHEME_TSDMD)
+        else:
+            colors = state_colors(contact, rs, r_max)
         if ax_room is not None:
             artists.append(ax_room.scatter(xs, ys, s=DOT_SIZE, c=colors, linewidths=0, zorder=3))
         if ax_zoom is not None:

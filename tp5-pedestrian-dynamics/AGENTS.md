@@ -149,12 +149,47 @@ Parámetros: `r_min = 0.10 m`, `r_max = 0.25 m` y `v_dmax = 1.5 m/s` (enunciado)
   guardaba el primer evento después de cada `Δt`, lo que equivale a muestrear en tiempo y daba
   una reproducción casi en tiempo real; se descartó.
 
+### Tomadas (conversación 2026-11-06): híbrido
+
+- Área de radio `R_h` alrededor del centro de cada agente (propuesta del grupo; parámetro
+  principal del criterio de pasaje, punto c), medida entre centros y contra paredes con `R_h/2`.
+  Mínimo `R_h = 2 r_max = 0.5 m`: el área coincide con el contacto de los espacios personales y el
+  pasaje ocurre en el mismo paso en que TSDMD puro detectaría ese contacto. Con `R_h` grande todo
+  queda en TSDMD (con `R_h = 100 m`, N = 100, seed 1: misma corrida que TSDMD puro, 1447 pasos).
+- EDMD → TSDMD: cuando otro agente entra al área (o una pared a `R_h/2`), evento predicho con la
+  cuadrática `|Δx + Δv t| = R_h`; el pasaje se hace en el próximo paso de la grilla.
+- TSDMD → EDMD: en un paso de la grilla, si el agente está libre (`r = r_max`, sin contacto) y no
+  hay nadie en el área. Sin margen extra (decisión del grupo). Choque, escape y recuperación son
+  siempre por paso temporal: un agente en EDMD solo camina libre (MRU y cambios de target), así que
+  `levels` no se usa en el híbrido (queda para EDMD puro).
+- Convivencia: grilla global `t_n = nΔt`. Entre dos pasos se procesan en orden los eventos EDMD
+  (franja, puerta, retiro, cruce de celda, entrada al área). Dentro de un paso un agente TSDMD tiene
+  velocidad constante (regla del CPM), así que su entrada al área de un agente EDMD se predice con
+  la misma cuadrática, válida hasta el paso siguiente. En cada paso: se mueven los agentes TSDMD y
+  se actualizan sus fases; se guarda el estado; los marcados pasan a TSDMD; los libres sin nadie en
+  el área pasan a EDMD; paso del CPM solo para los agentes TSDMD (contactos entre ellos y con
+  paredes, restricción de cuerpo); se predicen sus entradas al área de los agentes EDMD.
+- Sin contactos perdidos ni superposiciones: un agente EDMD no tiene a nadie a menos de
+  `R_h ≥ 2 r_max` (ni pared a menos de `R_h/2 ≥ r_max`); entre la entrada al área y el pasaje
+  (menos de `Δt`) se acerca a lo sumo `2vΔt = r_min`, así que los cuerpos no se tocan y el paso del
+  CPM detecta el contacto de los espacios personales como TSDMD puro (con `R_h` cerca de 0.5 m los
+  espacios personales llegan a superponerse unos milímetros antes del pasaje, como en TSDMD).
+- Celdas del área de lado `>= R_h + 2vΔt`: dos agentes que llegan a distancia `R_h` dentro de un
+  paso están en celdas contiguas al comienzo del paso.
+- Estados guardados por eventos, como en EDMD: uno cada `save-every` eventos del sistema, que son
+  los eventos EDMD que cambian algo (no los cruces de celda ni una entrada al área de un agente ya
+  marcado) y los pasos de la grilla con al menos un agente en TSDMD (un paso sin agentes TSDMD no es
+  un evento). Las posiciones EDMD van en el instante de ese evento. Versiones descartadas: guardar
+  cada paso de la grilla, incluidos los pasos sin agentes TSDMD; y contar toda entrada al área (el
+  par se predice desde los dos agentes y los dos eventos caen en el mismo instante): 340 de 1843
+  estados repetían el instante del anterior y la animación parecía congelarse. Con N = 100 y
+  `R_h` = 1 m hay agentes TSDMD en todos los pasos (de a pares que caminan a menos de `R_h`, unos
+  12 agentes entre 0.3 y 5 s), así que igual hay un estado por `Δt` como mínimo: la animación del
+  híbrido se ve más continua que la de EDMD puro por eso, no por interpolar.
+
 ### Abiertas
 
-- Híbrido: criterio de pasaje y su parámetro principal (candidato: distancia a la puerta);
-  TSDMD → EDMD solo con la partícula libre (`r = r_max`, sin contactos); resolución de un contacto
-  EDMD–TSDMD. Dentro de un paso del CPM, `v` y `r` son constantes; tomar ese tramo como MRU
-  permite predecir contactos EDMD–TSDMD con la cuadrática del TP3 (decisión a declarar).
+- Barrido de `R_h` para el punto (c) y escalamiento del punto (d).
 
 ## 4. Diagnósticos previstos sobre TSDMD (para diseñar EDMD e híbrido)
 
@@ -178,23 +213,29 @@ Motor en `cpm-java/` (módulo Maven `cpm`, paquete `ar.edu.itba.sds.tp5`):
 | `cpm/Targets` | Regla de targets (paper + segundo target) |
 | `cpm/Contacts` | Contactos agente–agente (CIM) y agente–pared; suma de versores de escape |
 | `cpm/EventLog` | Instantes de cruce de puerta y de retiro |
-| `tsdmd/TimeDrivenCpm` | Un paso del CPM en cuatro iteraciones sincrónicas |
+| `tsdmd/TimeDrivenCpm` | Un paso del CPM en cuatro iteraciones sincrónicas (`updateVelocities` sobre un subconjunto, usado por el híbrido) |
 | `cpm/BodyConstraints` | Cuerpo `r_min` impenetrable contra paredes y agentes en TSDMD (agregado propio) |
 | `cpm/VelocityProjection` | Velocidad más cercana que cumple restricciones `v·n ≥ c` (TSDMD y colapsos de EDMD) |
-| `cpm/CellGrid` | Grilla del CIM común a los dos esquemas |
+| `cpm/CellGrid` | Grilla del CIM común a los esquemas (lado mínimo configurable) |
+| `cpm/Kinematics` | Tiempos de eventos en MRU: acercamiento a una distancia, pared, retiro |
 | `edmd/EventDrivenCpm` | EDMD puro: eventos, predicción con la cuadrática, colapsos |
 | `edmd/Recovery` | Tramos de recuperación (`levels` radios intermedios desde `r_min + Δr`) |
 | `edmd/EventQueue` | Heap de eventos sobre arreglos primitivos, con invalidación por contadores |
+| `hybrid/HybridCpm` | Híbrido: área `R_h`, eventos EDMD entre pasos, paso del CPM para los agentes TSDMD |
 | `io/Output` | `static.txt`, `dynamic.txt`, `events.csv` |
-| `EvacuationRun`, `Main` | CLI (`tsdmd` y `edmd`) |
+| `EvacuationRun`, `Main` | CLI (`tsdmd`, `edmd`, `hybrid`) |
 
 Outputs en `output/<esquema>/<corrida>/` (ignorado por git): `static.txt` (`N`, `L`, `r_min r_max`
-por agente), `dynamic.txt` (por estado: `t` y N filas `x y vx vy r tx ty fase contacto`; fase 0 =
-en la habitación, 1 = cruzó la puerta, 2 = retirado; en EDMD `contacto` = escapando), `events.csv`
-(`t,id,event` con door/exit) y `run.json` (inputs, `Δt`, `Δr`, tiempo de evacuación, tiempo de
-ejecución del lazo; TSDMD: pasos y en cuántos pasos-agente la restricción de cuerpo cambió la
-velocidad, `bodyLimitedEscape` y `bodyLimitedDesired`; EDMD: `recovery`, `levels` y `events` con
-los eventos procesados por tipo, descartados, colapsos y colapsos por salto de radio). Con la misma
+por agente), `dynamic.txt` (por estado: `t` y N filas `x y vx vy r tx ty fase contacto esquema`;
+fase 0 = en la habitación, 1 = cruzó la puerta, 2 = retirado; en EDMD `contacto` = escapando;
+esquema 0 = TSDMD, 1 = EDMD; las corridas anteriores al 2026-11-06 no tienen la columna de esquema y
+`cpm_common.py` las sigue leyendo), `events.csv` (`t,id,event` con door/exit), en el híbrido
+`schemes.csv` (`t,tsdmd,edmd`: agentes activos en cada esquema en cada paso, para la fracción vs t)
+y `run.json` (inputs, `Δt`, `Δr`, tiempo de evacuación, tiempo de ejecución del lazo; TSDMD: pasos
+y en cuántos pasos-agente la restricción de cuerpo cambió la velocidad, `bodyLimitedEscape` y
+`bodyLimitedDesired`; EDMD: `levels` y `events` con los eventos procesados por tipo, descartados,
+colapsos y colapsos por salto de radio; híbrido: `rh`, contadores de la restricción de cuerpo y
+`events` con eventos por tipo, pasos, pasos-agente en TSDMD y pasajes en cada sentido). Con la misma
 seed la corrida es idéntica: para ver un intervalo paso a paso se re-corre con `--save-every 1
 --save-t0 --save-t1` (verificado: posiciones idénticas a la corrida completa en los estados
 comunes).
@@ -204,7 +245,8 @@ que la sorteada). Escenario de prueba: `scenarios/dos_agentes.txt`, dos agentes 
 del eje de la puerta.
 
 Post-proceso en `analysis/`: `cpm_common.py` (carga) y `animate_evacuation.py` (animación o PNG).
-Colores: azul libre, negro recuperando, rojo en contacto. En la habitación completa cada agente es
+Colores: en TSDMD y EDMD puros por estado (azul libre, negro recuperando, rojo en contacto); en el
+híbrido solo por esquema (azul EDMD, rojo TSDMD). En la habitación completa cada agente es
 un punto de tamaño fijo; en el zoom (`--zoom`, o panel derecho con `--panel-zoom`) se dibuja el
 cuerpo (disco sólido de `r_min`) y el espacio personal (círculo de radio `r` vigente). Opciones del
 zoom: `--arrows` velocidad, `--desired` dirección deseada de los agentes en contacto, `--trails`
@@ -323,6 +365,37 @@ tiempo de ejecución del lazo sin escritura de estados. TSDMD con la restricció
   `evacuacion.mp4`. Con 1 nivel (r₁ = 0.117 m, 0.21 m/s) la evacuación de la seed 1 tarda 76.3 s:
   55 % de los colapsos son por salto de radio (75 % con 0 niveles), y a menos de 4 m de la puerta,
   entre 15 y 60 s, 62 % de los agentes se está recuperando y 35 % escapando.
+
+### 6.3 Híbrido: primeras corridas (2026-11-06)
+
+Exploratorias; media ± desvío entre realizaciones; lazo sin escritura de estados (sí escribe
+`schemes.csv`). N = 500: seeds 1–3; N = 100: seeds 1–5.
+
+| Esquema | Evacuación N = 100 (s) | Lazo N = 100 (s) | Evacuación N = 500 (s) | Lazo N = 500 (s) |
+| :--- | ---: | ---: | ---: | ---: |
+| TSDMD | 48.8 ± 1.6 | 0.11 | 166 ± 2 | 0.92 |
+| EDMD (8 niveles) | 59.7 ± 1.7 | 0.17 | 255 ± 3 | 10.0 |
+| Híbrido, `R_h` = 0.5 m | 49.0 ± 0.9 | 0.12 | 165 ± 3 | 0.93 |
+| Híbrido, `R_h` = 1 m | 48.7 ± 1.2 | 0.13 | 165 ± 2 | 0.97 |
+| Híbrido, `R_h` = 2 m | 49.4 ± 1.6 | 0.15 | 165 ± 1 | 1.00 |
+| Híbrido, `R_h` = 5 m | 49.0 ± 1.3 | 0.16 | 166 ± 2 | 1.02 |
+
+- El tiempo de evacuación del híbrido coincide con TSDMD para todo `R_h` (también 0.75, 1.5 y 3 m).
+- Invariantes verificados en doble precisión en cada paso (N = 100 con `R_h` = 0.5, 1 y 2 m;
+  N = 500 con 0.5 y 1 m, seed 1): cuerpos nunca superpuestos (mínimo de `d − 2 r_min` del orden de
+  `−10⁻¹⁵ m`), y después de los pasajes todo agente EDMD tiene a los demás a más de `R_h` y a las
+  paredes a más de `R_h/2`. Espacios personales con un agente EDMD: superposición de hasta 6 mm
+  (N = 100) y 1.5 cm (N = 500) con `R_h` = 0.5 m, en el lapso previo al pasaje; ninguna con 1 m.
+- Sin ganancia de tiempo de ejecución con N = 500 y L = 50 m: desde t ≈ 30 s todos los agentes que
+  quedan están en el atasco y por lo tanto en TSDMD para todo `R_h` (seed 1, fracción en TSDMD = 1.00
+  entre 50 y 100 s; figura en `output/hybrid/fraccion_tsdmd_N500_seed1.png`). EDMD solo actúa en los
+  primeros ~30 s y con los últimos agentes. Con `R_h` = 0.5 m, 80 % de los pasos-agente siguen en
+  TSDMD. Una primera versión recorría en cada paso los vecinos de cada agente TSDMD buscando agentes
+  EDMD y costaba hasta 75 % más que TSDMD; se recorre desde los agentes EDMD (mismos pares).
+- Pasajes EDMD → TSDMD con N = 500 (media por corrida): 1655 con `R_h` = 0.5 m, 318 con 1 m, 40 con
+  2 m.
+- Animación N = 100, seed 1, `R_h` = 1 m (coloreada por esquema, un estado por evento del sistema):
+  `output/hybrid/N100_seed1_rh1/evacuacion.mp4`.
 
 ## 7. Escenario de dos agentes (`scenarios/dos_agentes.txt`, seed 1)
 

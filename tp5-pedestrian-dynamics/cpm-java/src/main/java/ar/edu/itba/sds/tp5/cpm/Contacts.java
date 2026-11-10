@@ -29,15 +29,17 @@ public final class Contacts {
         this.next = new int[n];
     }
 
-    /** Marca {@code contact[i]} y acumula {@code (ex, ey)} para todos los agentes activos. */
-    public void compute(final Agents a) {
+    /**
+     * Marca {@code contact[i]} y acumula {@code (ex, ey)} para los agentes {@code ids[0..count)}
+     * (todos los activos en TSDMD puro, los que están en TSDMD en el híbrido). Solo se buscan
+     * contactos entre ellos y con las paredes.
+     */
+    public void compute(final Agents a, final int[] ids, final int count) {
         final int mx = grid.mx;
         final int my = grid.my;
-        final int[] active = a.active();
-        final int count = a.activeCount();
         java.util.Arrays.fill(head, -1);
         for (int k = 0; k < count; k++) {
-            final int i = active[k];
+            final int i = ids[k];
             a.contact[i] = false;
             a.ex[i] = 0;
             a.ey[i] = 0;
@@ -66,7 +68,7 @@ public final class Contacts {
             }
         }
         for (int k = 0; k < count; k++) {
-            walls(a, active[k]);
+            walls(a, ids[k]);
         }
     }
 

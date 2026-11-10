@@ -10,6 +10,12 @@ import ar.edu.itba.sds.tp5.cpm.VelocityProjection;
 
 import java.io.IOException;
 
+import static ar.edu.itba.sds.tp5.cpm.Kinematics.INF;
+import static ar.edu.itba.sds.tp5.cpm.Kinematics.approachTime;
+import static ar.edu.itba.sds.tp5.cpm.Kinematics.retireTime;
+import static ar.edu.itba.sds.tp5.cpm.Kinematics.segmentParam;
+import static ar.edu.itba.sds.tp5.cpm.Kinematics.wallTime;
+
 /**
  * CPM regido por eventos (EDMD puro). Entre eventos cada agente hace MRU con radio constante, así que
  * los contactos se predicen con la cuadrática {@code |Δx + Δv t| = r_i + r_j}.
@@ -63,9 +69,6 @@ public final class EventDrivenCpm {
 
     /** Tolerancia de contacto (m): a esta distancia dos superficies se consideran en contacto. */
     private static final double TOUCH = 1e-9;
-    /** Umbral de acercamiento {@code Δx·Δv} (m²/s) para predecir un contacto. */
-    private static final double APPROACH = 1e-12;
-    private static final double INF = Double.POSITIVE_INFINITY;
 
     private final Agents a;
     private final Room room;
@@ -134,6 +137,7 @@ public final class EventDrivenCpm {
             cy[i] = grid.cellY(a.y[i]);
             link(i);
             a.r[i] = params.rMin();
+            a.scheme[i] = Agents.EDMD;
             mode[i] = recovery.segments() > 0 ? RECOVER : FREE;
         }
         for (int k = 0; k < a.activeCount(); k++) {
@@ -475,7 +479,7 @@ public final class EventDrivenCpm {
             if (y > 0 && vy < 0) {
                 queue.push(now - y / vy, DOOR, i, -1, ci, 0);
             }
-            final double tr = retireTime(x, y, vx, vy);
+            final double tr = retireTime(room, x, y, vx, vy);
             if (tr < INF) {
                 queue.push(now + tr, RETIRE, i, -1, ci, 0);
             }
@@ -535,83 +539,6 @@ public final class EventDrivenCpm {
         if (dir >= 0) {
             queue.push(now + Math.max(0, best), CELL, i, dir, count[i], 0);
         }
-    }
-
-    /**
-     * Tiempo hasta que dos superficies que se acercan quedan a distancia {@code reach} entre centros
-     * ({@code reach} = suma de radios, o radio contra un punto fijo). {@code 0} si ya están a esa
-     * distancia o menos y acercándose.
-     */
-    private static double approachTime(final double dx, final double dy, final double dvx, final double dvy,
-                                       final double reach) {
-        final double b = dx * dvx + dy * dvy;
-        if (b >= -APPROACH) {
-            return INF;
-        }
-        final double c = dx * dx + dy * dy - reach * reach;
-        if (c <= 0) {
-            return 0;
-        }
-        final double vv = dvx * dvx + dvy * dvy;
-        final double disc = b * b - vv * c;
-        if (disc < 0) {
-            return INF;
-        }
-        return c / (-b + Math.sqrt(disc));
-    }
-
-    /** Tiempo hasta que el centro queda a distancia {@code r} del segmento de pared {@code s}. */
-    private static double wallTime(final double x, final double y, final double vx, final double vy, final double r,
-                                   final double[] s) {
-        final double sx = s[2] - s[0];
-        final double sy = s[3] - s[1];
-        final double len = Math.hypot(sx, sy);
-        final double ux = sx / len;
-        final double uy = sy / len;
-        final double rx = x - s[0];
-        final double ry = y - s[1];
-        final double side = -rx * uy + ry * ux;
-        final double rate = -vx * uy + vy * ux;
-        double best = INF;
-        if (side * rate < 0) {
-            final double gap = Math.abs(side) - r;
-            final double t = gap <= 0 ? 0 : gap / Math.abs(rate);
-            final double u = (rx + vx * t) * ux + (ry + vy * t) * uy;
-            if (u >= 0 && u <= len) {
-                best = t;
-            }
-        }
-        best = Math.min(best, approachTime(rx, ry, vx, vy, r));
-        return Math.min(best, approachTime(x - s[2], y - s[3], vx, vy, r));
-    }
-
-    /** Tiempo hasta salir del círculo de retiro con {@code y < 0}. */
-    private double retireTime(final double x, final double y, final double vx, final double vy) {
-        final double e = room.exitDistance();
-        final double dx = x - room.doorCenterX();
-        final double b = dx * vx + y * vy;
-        final double c = dx * dx + y * y - e * e;
-        final double vv = vx * vx + vy * vy;
-        if (c >= 0) {
-            if (y < 0) {
-                return 0;
-            }
-            if (b >= 0) {
-                return INF;
-            }
-        }
-        final double disc = b * b - vv * c;
-        if (disc < 0) {
-            return INF;
-        }
-        final double t = (-b + Math.sqrt(disc)) / vv;
-        return y + vy * t < 0 ? t : INF;
-    }
-
-    private static double segmentParam(final double x, final double y, final double[] s) {
-        final double sx = s[2] - s[0];
-        final double sy = s[3] - s[1];
-        return Math.max(0, Math.min(1, ((x - s[0]) * sx + (y - s[1]) * sy) / (sx * sx + sy * sy)));
     }
 
     // ---------------------------------------------------------------------------------- estado

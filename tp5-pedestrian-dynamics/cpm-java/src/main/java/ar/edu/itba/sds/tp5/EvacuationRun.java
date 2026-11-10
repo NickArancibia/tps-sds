@@ -8,6 +8,7 @@ import ar.edu.itba.sds.tp5.cpm.EventLog;
 import ar.edu.itba.sds.tp5.cpm.Room;
 import ar.edu.itba.sds.tp5.edmd.EventDrivenCpm;
 import ar.edu.itba.sds.tp5.edmd.Recovery;
+import ar.edu.itba.sds.tp5.hybrid.HybridCpm;
 import ar.edu.itba.sds.tp5.io.Output;
 import ar.edu.itba.sds.tp5.tsdmd.TimeDrivenCpm;
 
@@ -18,14 +19,14 @@ import java.nio.file.Path;
 import java.util.Random;
 
 /**
- * Evacuación de la habitación con el CPM, regida por el paso temporal (TSDMD) o por eventos (EDMD).
- * Corre hasta que se retira el último agente (o hasta {@code t-max}) y escribe outputs crudos: los
- * observables y las animaciones se calculan offline.
+ * Evacuación de la habitación con el CPM: regida por el paso temporal (TSDMD), por eventos (EDMD) o
+ * híbrida. Corre hasta que se retira el último agente (o hasta {@code t-max}) y escribe outputs
+ * crudos: los observables y las animaciones se calculan offline.
  */
 public final class EvacuationRun {
 
     private static final String USAGE = """
-            Uso: java -jar cpm.jar tsdmd|edmd [opciones]
+            Uso: java -jar cpm.jar tsdmd|edmd|hybrid [opciones]
 
             Sistema (enunciado):
               --N <int>            agentes (default 500)
@@ -44,15 +45,21 @@ public final class EvacuationRun {
               --levels <int>       radios intermedios de TSDMD que se recorren, un dt cada uno desde
                                    r_min + dr; el último se sostiene hasta el final de la
                                    recuperación (0: quieto en r_min; 8 = TSDMD) (default 8)
+            Híbrido:
+              --rh <m>             radio del área de cada agente (entre centros; contra paredes,
+                                   rh/2): otro agente dentro del área lo pasa a TSDMD; vuelve a EDMD
+                                   libre y sin nadie en el área. Mínimo 2 rmax (default 1)
             Corrida:
               --seed <long>        semilla de la condición inicial y de los targets en la franja
                                    de la puerta (default 1)
               --init <archivo>     posiciones iniciales "x y" (una fila por agente) en lugar de
                                    sortearlas; N sale del archivo
               --save-every <int>   TSDMD: guardar un estado cada k pasos de dt (default 3). EDMD:
-                                   guardar el estado cada k eventos, sin contar los cruces de celda
-                                   (default 1000; 1 = todos, para animar). El último estado se
-                                   guarda siempre que caiga en [save-t0, save-t1]
+                                   cada k eventos, sin contar los cruces de celda (default 1000).
+                                   Híbrido: cada k eventos, contando los eventos EDMD (sin cruces
+                                   de celda) y los pasos de dt con agentes en TSDMD (default 3).
+                                   1 = todos, para animar. El último estado se guarda siempre que
+                                   caiga en [save-t0, save-t1]
               --save-t0 <s>        guardar solo estados con t >= save-t0 (default 0)
               --save-t1 <s>        guardar solo estados con t <= save-t1 (default sin límite)
               --t-max <s>          corte si no evacuaron todos (default 3000)
@@ -106,7 +113,7 @@ public final class EvacuationRun {
                 output.writeFrame(out, 0.0, agents);
                 window.saved(0);
             }
-            if (recovery == null) {
+            if ("tsdmd".equals(scheme)) {
                 final TimeDrivenCpm engine = new TimeDrivenCpm(agents, room, p, events);
                 final long maxSteps = (long) Math.ceil(tMax / dt);
                 long step = 0;
@@ -132,6 +139,45 @@ public final class EvacuationRun {
                         """.formatted(step, engine.contacts().grid().mx, engine.contacts().grid().my,
                         engine.limitedEscape(), engine.limitedDesired());
                 summary = step + " pasos";
+            } else if ("hybrid".equals(scheme)) {
+                final HybridCpm engine = new HybridCpm(agents, room, p, cli.number("rh", 1.0), events);
+                final long maxSteps = (long) Math.ceil(tMax / dt);
+                try (BufferedWriter schemes = Files.newBufferedWriter(outDir.resolve("schemes.csv"))) {
+                    schemes.write("t,tsdmd,edmd\n0.0," + engine.tsdmdCount() + "," + (n - engine.tsdmdCount()) + "\n");
+                    long systemEvents = 0;
+                    while (agents.activeCount() > 0 && engine.steps() < maxSteps) {
+                        final boolean gridStep = engine.processNext();
+                        final double t = engine.time();
+                        if (gridStep) {
+                            final int ts = engine.tsdmdCount();
+                            schemes.write(t + "," + ts + "," + (agents.activeCount() - ts) + "\n");
+                        }
+                        if (engine.lastWasSystemEvent(gridStep) && ++systemEvents % saveEvery == 0
+                                && window.contains(t)) {
+                            engine.writeState(() -> output.writeFrame(out, t, agents));
+                            window.saved(t);
+                        }
+                        if (gridStep && agents.activeCount() > 0) {
+                            engine.prepareNextStep();
+                        }
+                    }
+                }
+                finalTime = engine.time();
+                if (window.lastSaved != finalTime && window.contains(finalTime)) {
+                    engine.writeState(() -> output.writeFrame(out, finalTime, agents));
+                    window.saved(finalTime);
+                }
+                schemeJson = """
+                          "rh": %s,
+                          "cells": [%d, %d],
+                          "areaCells": [%d, %d],
+                          "bodyLimitedEscape": %d,
+                          "bodyLimitedDesired": %d,
+                          "events": %s,
+                        """.formatted(cli.number("rh", 1.0), engine.tsdmd().contacts().grid().mx,
+                        engine.tsdmd().contacts().grid().my, engine.grid().mx, engine.grid().my,
+                        engine.tsdmd().limitedEscape(), engine.tsdmd().limitedDesired(), engine.statsJson());
+                summary = engine.steps() + " pasos";
             } else {
                 final EventDrivenCpm engine = new EventDrivenCpm(agents, room, p, recovery, events);
                 long changes = 0;

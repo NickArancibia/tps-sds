@@ -15,9 +15,9 @@ import java.nio.file.Path;
  * <ul>
  *   <li>{@code static.txt}: {@code N}, {@code L} y una fila {@code r_min r_max} por agente.</li>
  *   <li>{@code dynamic.txt}: por cada estado guardado, una línea con {@code t} y N filas
- *   {@code x y vx vy r tx ty fase contacto} (fila = id). {@code (tx, ty)} es el target vigente;
- *   fase 0 = en la habitación, 1 = cruzó la puerta, 2 = retirado (posición congelada);
- *   contacto 0/1.</li>
+ *   {@code x y vx vy r tx ty fase contacto esquema} (fila = id). {@code (tx, ty)} es el target
+ *   vigente; fase 0 = en la habitación, 1 = cruzó la puerta, 2 = retirado (posición congelada);
+ *   contacto 0/1; esquema 0 = TSDMD, 1 = EDMD.</li>
  *   <li>{@code events.csv}: {@code t,id,event} con {@code event} = door | exit.</li>
  * </ul>
  */
@@ -57,7 +57,8 @@ public final class Output {
             fixed(a.tx[i], POS_DECIMALS);
             sb.append(' ');
             fixed(a.ty[i], POS_DECIMALS);
-            sb.append(' ').append(a.phase[i]).append(' ').append(a.contact[i] ? '1' : '0').append('\n');
+            sb.append(' ').append(a.phase[i]).append(' ').append(a.contact[i] ? '1' : '0')
+                    .append(' ').append(a.scheme[i]).append('\n');
         }
         out.append(sb);
     }

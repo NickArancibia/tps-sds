@@ -11,13 +11,17 @@ import java.util.Random;
  *
  * <p>Fase de cada agente: {@link #IN_ROOM} (target en la puerta), {@link #EXITING} (cruzó la línea
  * de la puerta; target afuera) y {@link #REMOVED} (se alejó {@code exitDistance} y salió de la
- * simulación). Los agentes no retirados están en {@link #active()}.</p>
+ * simulación). Los agentes no retirados están en {@link #active()}. Esquema con el que se resuelve
+ * cada agente: {@link #TSDMD} (default) o {@link #EDMD}.</p>
  */
 public final class Agents {
 
     public static final byte IN_ROOM = 0;
     public static final byte EXITING = 1;
     public static final byte REMOVED = 2;
+
+    public static final byte TSDMD = 0;
+    public static final byte EDMD = 1;
 
     private final int n;
     public final double[] x;
@@ -32,6 +36,8 @@ public final class Agents {
     public final double[] bandX;
     public final byte[] phase;
     public final boolean[] contact;
+    /** Esquema vigente de cada agente ({@link #TSDMD} o {@link #EDMD}). */
+    public final byte[] scheme;
     /** Suma de los versores de escape {@code Σ_j e_ij} del paso en curso. */
     public final double[] ex;
     public final double[] ey;
@@ -51,6 +57,7 @@ public final class Agents {
         bandX = new double[n];
         phase = new byte[n];
         contact = new boolean[n];
+        scheme = new byte[n];
         ex = new double[n];
         ey = new double[n];
         active = new int[n];

@@ -59,15 +59,42 @@ public final class TimeDrivenCpm {
         final int[] active = a.active();
         final int count = a.activeCount();
 
-        contacts.compute(a);
+        updateVelocities(active, count);
 
         for (int k = 0; k < count; k++) {
             final int i = active[k];
+            a.x[i] += a.vx[i] * dt;
+            a.y[i] += a.vy[i] * dt;
+        }
+
+        // De atrás hacia adelante: remove(k) trae a la posición k el último activo, ya revisado.
+        for (int k = count - 1; k >= 0; k--) {
+            final int i = active[k];
+            if (a.phase[i] == Agents.IN_ROOM && a.y[i] <= 0) {
+                a.phase[i] = Agents.EXITING;
+                events.add(t, i, EventLog.DOOR);
+            }
+            if (a.phase[i] == Agents.EXITING && room.hasLeft(a.x[i], a.y[i])) {
+                a.remove(k);
+                events.add(t, i, EventLog.EXIT);
+            }
+        }
+    }
+
+    /**
+     * Iteraciones 1–4 del paso del CPM (contactos, radios, targets y velocidades, restricción de
+     * cuerpo) para los agentes {@code ids[0..count)}, con sus posiciones actuales. No mueve.
+     */
+    public void updateVelocities(final int[] ids, final int count) {
+        contacts.compute(a, ids, count);
+
+        for (int k = 0; k < count; k++) {
+            final int i = ids[k];
             a.r[i] = a.contact[i] ? p.rMin() : Math.min(a.r[i] + dr, p.rMax());
         }
 
         for (int k = 0; k < count; k++) {
-            final int i = active[k];
+            final int i = ids[k];
             Targets.update(a, i, room);
             if (a.contact[i]) {
                 final double norm = Math.hypot(a.ex[i], a.ey[i]);
@@ -92,25 +119,6 @@ public final class TimeDrivenCpm {
                 } else {
                     limitedDesired++;
                 }
-            }
-        }
-
-        for (int k = 0; k < count; k++) {
-            final int i = active[k];
-            a.x[i] += a.vx[i] * dt;
-            a.y[i] += a.vy[i] * dt;
-        }
-
-        // De atrás hacia adelante: remove(k) trae a la posición k el último activo, ya revisado.
-        for (int k = count - 1; k >= 0; k--) {
-            final int i = active[k];
-            if (a.phase[i] == Agents.IN_ROOM && a.y[i] <= 0) {
-                a.phase[i] = Agents.EXITING;
-                events.add(t, i, EventLog.DOOR);
-            }
-            if (a.phase[i] == Agents.EXITING && room.hasLeft(a.x[i], a.y[i])) {
-                a.remove(k);
-                events.add(t, i, EventLog.EXIT);
             }
         }
     }
