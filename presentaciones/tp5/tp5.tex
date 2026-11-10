@@ -29,12 +29,14 @@
 %% Pendientes marcados con "% TODO:" (grep -n "TODO" tp5.tex).
 % TODO: animaciones (propuesta del grupo: eventos con n_r = 0, paso temporal y dos del hibrido).
 %   Falta generarlas, subirlas y poner fotograma (figuras/) y enlace.
-% TODO: ensayar: son 9 diapositivas de Implementacion; recortar segun el tiempo.
+% TODO: ensayar: son 8 diapositivas de Implementacion; recortar segun el tiempo.
 % TODO: confirmar si este TP pide la diapositiva de uso de agentes de IA (el enunciado no la menciona).
-% Figuras de analysis/figures/campaign sin usar: las de N = 200 (alternativa opcional de la
-%   catedra), caudal_esquemas, hibrido_caudal_vs_rh_*, fraccion_paso_temporal_*,
-%   hibrido_ejecucion_vs_rh_N500_zoom, hibrido_agentes_por_esquema_N200_*, eventos_evacuacion_vs_niveles
-%   (con n_r = 0 no todas evacuan: se usa t_90), eventos_ejecucion_vs_niveles.
+% Todas las figuras son del sistema base, N = 500 (pedido 2026-11-10; la campaña tambien tiene
+%   N = 200, que da las mismas conclusiones y no se grafica).
+% Figuras de analysis/figures/campaign sin usar: caudal_esquemas, hibrido_caudal_vs_rh_N500,
+%   fraccion_paso_temporal_N500, hibrido_ejecucion_vs_rh_N500_zoom,
+%   hibrido_ejecucion_vs_rh_por_L_N500_zoom, hibrido_agentes_por_esquema_N500_L300_rh0.5,
+%   eventos_evacuacion_vs_niveles (con n_r = 0 no todas evacuan: se usa t_90).
 
 \documentclass[aspectratio=169]{beamer}
 \makeatletter\def\input@path{{../}}\makeatother
@@ -637,6 +639,17 @@
           {anim_paso_temporal.png}{Paso temporal}{enlace pendiente}
 \end{frame}
 
+% Pedido 2026-11-10: después de las animaciones de eventos, el tiempo de ejecución según n_r; sin
+% texto al costado (la leyenda de la figura ya nombra la recta de trazos; lo demás se dice en vivo).
+% Dicho en vivo (N = 500): 9.5-9.7 s con n_r de 1 a 8, o sea que no depende de n_r; con n_r = 0,
+% 6.8 ± 0.2 s, pero solo evacuaron 7 de las 10 realizaciones (las otras 3 se cortaron con 2 agentes
+% trabados y no entran en el promedio). Paso temporal: 0.88 ± 0.03 s.
+% Las otras dos diapositivas de n_r (t_90 y caudal) siguen más abajo, después de la comparación de
+% esquemas: decidir si se traen acá para que el estudio de n_r quede junto.
+\begin{frame}{Radios intermedios: tiempo de ejecución vs $n_r$}
+  \figura{campaign/eventos_ejecucion_vs_niveles.png}
+\end{frame}
+
 % TODO: decidir los dos R_h (propuesta: 0.5 m con L = 50 m, y uno con L = 300 m, donde el híbrido
 %   gana). Agentes coloreados por esquema: azul eventos, rojo paso temporal.
 \begin{frame}{Esquemas: animaciones del híbrido}
@@ -644,22 +657,24 @@
           {anim_hibrido_2.png}{Híbrido, $R_h$ a definir}{enlace pendiente}
 \end{frame}
 
-% Punto a: fracción de agentes en cada esquema vs t. Una corrida (seed 1), N = 500, L = 50 m.
-% Dicho en vivo: los primeros 0.37 s todos están en paso temporal (radios iniciales en r_min, es
-% la línea roja pegada a t = 0); paso temporal supera a eventos desde t = 16.6 s y llega a 421
-% agentes en t = 30.4 s; 81 % de los pasos-agente son de paso temporal.
+% Punto a: fracción de los N agentes en cada esquema vs t. Una corrida (seed 1), N = 500, L = 50 m.
+% Dicho en vivo: en t = 0 los 500 arrancan en eventos (nadie tiene a otro dentro del área); paso
+% temporal supera a eventos desde t = 17.1 s y llega a 419 agentes en t = 31.1 s; 80 % de los
+% pasos-agente son de paso temporal. Las dos curvas suman la fracción que todavía no se retiró.
 \begin{frame}{Híbrido: agentes en cada esquema con $R_h = 0.5\uni{m}$}
   \figura{campaign/hibrido_agentes_por_esquema_N500_L50_rh0.5.png}
 \end{frame}
 
-% Punto b: evolución temporal del observable. 10 realizaciones por esquema; híbrido con R_h = 0.5 m
-% (cae sobre paso temporal). N = 500.
+% Punto b: evolución temporal del observable. Una sola corrida por esquema (seed 1; pedido
+% 2026-11-10), para ver el comportamiento; los promedios van en las diapositivas siguientes.
+% Híbrido con R_h = 0.5 m (cae sobre paso temporal). N = 500. Dicho en vivo, tiempo de evacuación de
+% esa seed: 165.2 s (paso temporal), 253.3 s (eventos), 164.9 s (híbrido).
 \begin{frame}{Esquemas: agentes en la habitación vs tiempo}
   \figura{campaign/poblacion_N500.png}
 \end{frame}
 
 % Dicho en vivo (N = 500): paso temporal 166.1 ± 1.4 s, eventos (n_r = 8) 255.9 ± 1.8 s, híbrido
-% (R_h = 0.5 m) 165.2 ± 1.0 s. N = 200: 79.4 ± 1.3, 107.0 ± 2.0 y 79.5 ± 1.1 s.
+% (R_h = 0.5 m) 165.2 ± 1.0 s.
 \begin{frame}{Esquemas: tiempo de evacuación}
   \figura{campaign/evacuacion_esquemas.png}
 \end{frame}
@@ -671,19 +686,17 @@
 
 % --- Radios intermedios de eventos (estudio propio) -------------------------
 
-% t_90 y no t_ev: con n_r = 0 no evacuaron 3 de 10 realizaciones con N = 500 y 1 de 10 con N = 200
-% (quedan 2 agentes trabados frente a la puerta: resultado válido según la cátedra).
+% t_90 y no t_ev: con n_r = 0 no evacuaron 3 de las 10 realizaciones (quedan 2 agentes trabados
+% frente a la puerta: resultado válido según la cátedra).
 % Dicho en vivo (N = 500): 1510 ± 50 s con n_r = 0, 280 ± 3 s con 1, 227-229 s de 4 a 8, contra
 % 146.0 ± 1.4 s de paso temporal.
 \begin{frame}{Radios intermedios: tiempo de salida del 90\,\% vs $n_r$}
-  \figuranota{campaign/eventos_t90_vs_niveles.png}{%
-    Trazos: paso temporal con el mismo $N$.}
+  \figura{campaign/eventos_t90_vs_niveles.png}
 \end{frame}
 
 % Dicho en vivo (N = 500): 0.30, 1.64, 1.89, 1.98 y 2.00-2.02 1/s, contra 3.29 de paso temporal.
 \begin{frame}{Radios intermedios: caudal vs $n_r$}
-  \figuranota{campaign/eventos_caudal_vs_niveles.png}{%
-    Trazos: paso temporal con el mismo $N$.}
+  \figura{campaign/eventos_caudal_vs_niveles.png}
 \end{frame}
 
 % --- Radio del área del híbrido (punto c) -----------------------------------

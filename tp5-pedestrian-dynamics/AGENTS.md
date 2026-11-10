@@ -552,6 +552,14 @@ realizaciones que evacuaron. Tablas completas por stdout de `analysis/plot_campa
 | EDMD (8 niveles) | 107.0 ± 2.0 | 2.00 ± 0.04 | 0.97 ± 0.05 | 255.9 ± 1.8 | 2.00 ± 0.02 | 9.7 ± 0.2 |
 | Híbrido, `R_h` = 0.5 m | 79.5 ± 1.1 | 2.90 ± 0.05 | 0.242 ± 0.020 | 165.2 ± 1.0 | 3.29 ± 0.03 | 0.95 ± 0.03 |
 
+- Agentes en cada esquema vs t con el motor actual (punto a; una corrida, seed 1, `R_h` = 0.5 m; eje
+  único, fracción de los N agentes): en t = 0 todos arrancan en EDMD (criterio de pasaje en t = 0;
+  ya no existen los 0.37 s iniciales en TSDMD del motor anterior, sección 6.4). N = 500, L = 50 m:
+  TSDMD supera a EDMD desde t = 17.1 s y llega a 419 agentes en t = 31.1 s (80 % de los
+  pasos-agente en TSDMD; 58 % con N = 200). L = 300 m: a lo sumo 65 agentes en TSDMD (11 %).
+- Curva de población (`poblacion_N*.png`): una sola corrida por esquema (seed 1; pedido del grupo),
+  para ver el comportamiento. N = 500: evacuación de esa seed 165.2 s (TSDMD), 253.3 s (EDMD) y
+  164.9 s (híbrido).
 - Barrido de `R_h` (punto c), ejecución con L = 50 m: N = 500, 9.72 ± 0.20 s con `R_h` = 0.1 m
   (EDMD: 9.7 ± 0.2 s) y 0.95–1.03 s con `R_h` de 0.2 a 10 m (TSDMD: 0.88 ± 0.03 s); N = 200,
   1.03 ± 0.04 s con 0.1 m (EDMD: 0.97 ± 0.05 s) y 0.239–0.260 s desde 0.2 m (TSDMD: 0.201 ± 0.013 s).
@@ -659,6 +667,14 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
 - El cuerpo impenetrable (agregado propio) no tiene diapositiva (se sacó por pedido del grupo):
   queda como recuadro en el diagrama de paso temporal y hay que declararlo en vivo ahí. La de
   estados de eventos lleva solo el diagrama; la lista de eventos se dice en vivo.
+- Todas las figuras son del sistema base, N = 500 (pedido del grupo, 2026-11-10). La campaña también
+  midió N = 200 (alternativa opcional de la cátedra): da las mismas conclusiones y
+  `plot_campaign.py` ya no lo grafica. Con una sola serie por figura, las de esquemas no llevan
+  leyenda y las de `n_r` nombran en la leyenda a eventos y a la recta de paso temporal, sin texto
+  al costado.
+- En Resultados, después de las animaciones de eventos y paso temporal va "Radios intermedios:
+  tiempo de ejecución vs `n_r`" (pedido del grupo); las otras dos de `n_r` (t₉₀ y caudal) quedaron
+  después de la comparación de esquemas: decidir si se juntan.
 - Devolución del TP4 aplicada: el avance en el tiempo va en Implementación y no en Modelo; el Modelo
   incluye el contacto con paredes; flechas desde el centro; sin leyendas de un solo elemento.
 - Pendiente (`grep -n TODO tp5.tex`): las cuatro animaciones (propuesta del grupo: eventos con

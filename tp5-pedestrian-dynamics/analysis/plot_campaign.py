@@ -9,14 +9,17 @@ Escalares de una realización:
                         número n_p = p N / 100 (events.csv, "door": primer cruce de cada agente)
   tiempo de ejecución   loopTimeMs de run.json (lazo de simulación, sin guardar estados; sin dato si
                         no evacuaron todos: la corrida se cortó en t-max)
-Curva de población de una realización: N_in(t) = N − (cruces de puerta hasta t).
-Agentes en cada esquema (híbrido, punto a): una sola corrida, schemes.csv tal cual (agentes activos en
-paso temporal y en eventos en cada paso); eje derecho, la misma cantidad como fracción de N.
+Curva de población: N_in(t) = N − (cruces de puerta hasta t), de una sola corrida por esquema (misma
+seed), para ver el comportamiento; los promedios van en los escalares.
+Agentes en cada esquema (híbrido, punto a): una sola corrida, schemes.csv (agentes activos en paso
+temporal y en eventos en cada paso) dividido por N: fracción de los N agentes iniciales.
 Por configuración: promedio entre realizaciones ± desvío estándar entre realizaciones (ddof = 1; un
 escalar por realización). Las realizaciones sin dato (no evacuaron) se excluyen del promedio y se
 informan por stdout, igual que los valores alejados de la mediana (posibles atascos).
 
-Figuras en analysis/figures/campaign/; por stdout, la tabla de cada figura (lo que va al costado).
+Figuras en analysis/figures/campaign/, todas con el sistema base N = 500 (la campaña también tiene
+N = 200, la alternativa opcional de la cátedra: da las mismas conclusiones y no se grafica); por
+stdout, la tabla de cada figura (lo que va al costado).
 
 Uso: python3 analysis/plot_campaign.py
 """
@@ -43,6 +46,7 @@ RH_STEPPED = tuple(rh for rh in RH if rh >= 2 * R_MIN)  # con R_h menor nadie pa
 LEVELS = tuple(range(9))
 SCALING_N = (100, 200, 300, 500, 700, 1000)
 RH_BEST = 0.5  # híbrido de la comparación entre esquemas
+N_BASE = 500  # sistema base del enunciado
 
 # (config, leyenda, marcador, color); el híbrido se dibuja último, encima del paso temporal. Colores de
 # los esquemas como en la animación del híbrido: azul eventos, rojo paso temporal.
@@ -144,20 +148,21 @@ def rh_axis(ax, values=RH) -> None:
 
 # ------------------------------------------------------------------------------- esquemas (b, c)
 
-def population(n: int) -> None:
-    print(f"\nCurvas de población, N = {n}, L = 50 m (híbrido con R_h = {RH_BEST:g} m)")
+def population(n: int, seed: int = 1) -> None:
+    """Agentes en la habitación vs t: una corrida por esquema (misma seed)."""
+    print(f"\nCurvas de población, N = {n}, L = 50 m, seed {seed} (híbrido con R_h = {RH_BEST:g} m)")
     fig, ax = plt.subplots()
     for config, label, _, color in SCHEMES:
-        runs = load(n, 50, config)
+        runs = [run for run in load(n, 50, config) if run.seed == seed]
         if not runs:
             continue
+        run = runs[0]
         thick = config == "tsdmd"  # el híbrido cae encima: paso temporal grueso y detrás
-        for k, run in enumerate(runs):
-            t = np.concatenate(([0.0], run.door))
-            inside = n - np.arange(run.door.size + 1)
-            ax.step(t, inside, where="post", color=color, lw=2.6 if thick else 0.7,
-                    alpha=0.35 if thick else 0.9, zorder=1 if thick else 2, label=label if k == 0 else None)
-        print(f"    {label}: {len(runs)} realizaciones")
+        t = np.concatenate(([0.0], run.door))
+        inside = n - np.arange(run.door.size + 1)
+        ax.step(t, inside, where="post", color=color, lw=3.0 if thick else 1.0,
+                alpha=0.4 if thick else 1.0, zorder=1 if thick else 2, label=label)
+        print(f"    {label}: evacuación {run.scalar('evac'):.1f} s, último cruce de puerta {run.door[-1]:.1f} s")
     ax.set_xlabel("Tiempo (s)")
     ax.set_ylabel("Agentes en la habitación")
     ax.set_xlim(left=0)
@@ -168,28 +173,27 @@ def population(n: int) -> None:
     save_figure(fig, GROUP, f"poblacion_N{n}.png")
 
 
-def schemes(key: str) -> None:
+def schemes(key: str, n: int) -> None:
+    """Escalar de cada esquema puro y del híbrido: un punto por esquema, con su color; sin leyenda."""
     ylabel, name = SCALARS[key]
-    print(f"\n{ylabel} por esquema, L = 50 m (híbrido con R_h = {RH_BEST:g} m)")
+    print(f"\n{ylabel} por esquema, N = {n}, L = 50 m (híbrido con R_h = {RH_BEST:g} m)")
     fig, ax = plt.subplots()
     plotted = []
-    for n, color, marker, shift in ((200, "tab:blue", "o", -0.08), (500, "tab:red", "s", 0.08)):
-        print(f"  N = {n}")
-        data = [row(label, n, 50, config, key) for config, label, _, _ in SCHEMES]
-        mean, std = np.array(data).T
-        if not np.isfinite(mean).any():
-            continue
-        ax.errorbar(np.arange(len(SCHEMES)) + shift, mean, yerr=std, fmt=marker, color=color, capsize=5,
-                    elinewidth=1.3, label=str(n))
-        plotted += list(mean - std) + list(mean + std)
+    for k, (config, label, marker, color) in enumerate(SCHEMES):
+        mean, std = row(label, n, 50, config, key)
+        if np.isfinite(mean):
+            ax.errorbar([k], [mean], yerr=[std], fmt=marker, color=color, capsize=6, elinewidth=1.3, ms=6)
+            plotted += [mean - std, mean + std]
+    if not plotted:
+        plt.close(fig)
+        return
     ax.set_xticks(range(len(SCHEMES)), [label for _, label, _, _ in SCHEMES])
     ax.set_xlim(-0.5, len(SCHEMES) - 0.5)
     ax.set_ylabel(ylabel)
     if key == "loop":
         log_limits(ax, plotted)
     else:
-        ax.set_ylim(bottom=0)
-    ax.legend(title="$N$", loc="best")
+        ax.set_ylim(0, 1.1 * max(plotted))
     save_figure(fig, GROUP, f"{name}_esquemas.png")
 
 
@@ -224,7 +228,7 @@ def hybrid_vs_rh(n: int, key: str, zoom: bool = False) -> None:
 
 
 def scheme_population(n: int, length: int, rh: float, seed: int = 1) -> None:
-    """Una corrida del híbrido: agentes en cada esquema en cada paso (eje derecho: fracción de N)."""
+    """Una corrida del híbrido: fracción de los N agentes que está en cada esquema en cada paso."""
     print(f"\nAgentes en cada esquema vs t (híbrido), N = {n}, L = {length} m, R_h = {rh:g} m, seed {seed}")
     path = CAMPAIGN / f"N{n}_L{length}" / f"hybrid_rh{rh:g}" / f"seed{seed}" / "schemes.csv"
     if not path.is_file():
@@ -232,21 +236,19 @@ def scheme_population(n: int, length: int, rh: float, seed: int = 1) -> None:
         return
     t, ts, ed = np.loadtxt(path, delimiter=",", skiprows=1, unpack=True)
     fig, ax = plt.subplots()
-    ax.plot(t, ed, color="tab:blue", lw=1.0, label="eventos")
-    ax.plot(t, ts, color="tab:red", lw=1.0, label="paso temporal")
+    ax.plot(t, ed / n, color="tab:blue", lw=1.0, label="eventos")
+    ax.plot(t, ts / n, color="tab:red", lw=1.0, label="paso temporal")
     ax.set_xlabel("Tiempo (s)")
-    ax.set_ylabel("Agentes")
+    ax.set_ylabel("Fracción de agentes")
     ax.set_xlim(left=0)
-    ax.set_ylim(0, n * 1.03)
-    right = ax.secondary_yaxis("right", functions=(lambda count: count / n, lambda fraction: fraction * n))
-    right.set_ylabel("Fracción de agentes")
+    ax.set_ylim(0, 1.03)
     ax.legend(loc="best")
-    walking = t > 1.0  # el primer segundo todos están en paso temporal: los radios arrancan en r_min
-    cross = t[walking][np.argmax(ts[walking] >= ed[walking])]
-    peak = np.argmax(ts[walking])
-    print(f"    todos en paso temporal hasta t = {t[np.argmax(ed > 0)]:.2f} s (radios iniciales en r_min)")
+    # Condición inicial: el criterio de pasaje en t = 0 (quien no tiene a nadie en el área arranca en eventos).
+    cross = t[np.argmax(ts >= ed)]
+    peak = np.argmax(ts)
+    print(f"    en t = 0: {int(ed[0])} agentes en eventos y {int(ts[0])} en paso temporal")
     print(f"    paso temporal supera a eventos desde t = {cross:.1f} s; máximo en paso temporal: "
-          f"{int(ts[walking][peak])} agentes en t = {t[walking][peak]:.1f} s")
+          f"{int(ts[peak])} agentes en t = {t[peak]:.1f} s")
     print(f"    pasos-agente en paso temporal: {ts.sum() / (ts + ed).sum():.2f} del total")
     save_figure(fig, GROUP, f"hibrido_agentes_por_esquema_N{n}_L{length}_rh{rh:g}.png")
 
@@ -279,7 +281,7 @@ def scheme_fraction(n: int, seed: int = 1) -> None:
     save_figure(fig, GROUP, f"fraccion_paso_temporal_N{n}.png")
 
 
-def room_size(n: int = 500, zoom: bool = False) -> None:
+def room_size(n: int, zoom: bool = False) -> None:
     """Tiempo de ejecución del híbrido vs R_h para varios L; la recta de trazos del mismo color es el
     paso temporal en esa habitación (no depende de R_h). Con todos los R_h, en escala logarítmica: el
     punto con R_h < 2 r_min es eventos puro. `zoom`: escala lineal y solo R_h ≥ 2 r_min."""
@@ -326,26 +328,23 @@ def room_size(n: int = 500, zoom: bool = False) -> None:
 
 # ------------------------------------------------------------------------------ EDMD: niveles
 
-def edmd_levels(key: str) -> None:
+def edmd_levels(key: str, n: int) -> None:
+    """Escalar de eventos vs radios intermedios, con paso temporal de referencia (recta de trazos)."""
     ylabel, name = SCALARS[key]
-    print(f"\n{ylabel} de eventos vs radios intermedios, L = 50 m (línea de trazos: paso temporal)")
-    fig, ax = plt.subplots()
-    plotted = []
-    for n, color, marker in ((200, "tab:blue", "o"), (500, "tab:red", "s")):
-        print(f"  N = {n}")
-        data = [row(f"{k} niveles", n, 50, f"edmd_lv{k}", key) for k in LEVELS]
-        mean, std = np.array(data).T
-        if not np.isfinite(mean).any():
-            continue
-        ax.errorbar(LEVELS, mean, yerr=std, fmt=marker + "-", color=color, capsize=4, elinewidth=1.3, label=str(n))
-        plotted += list(mean - std) + list(mean + std)
-        ref, _ = row("paso temporal", n, 50, "tsdmd", key)
-        if np.isfinite(ref):
-            ax.axhline(ref, color=color, ls="--", lw=0.9, zorder=0)
-            plotted.append(ref)
-    if not plotted:
-        plt.close(fig)
+    print(f"\n{ylabel} de eventos vs radios intermedios, N = {n}, L = 50 m")
+    data = [row(f"{k} niveles", n, 50, f"edmd_lv{k}", key) for k in LEVELS]
+    mean, std = np.array(data).T
+    if not np.isfinite(mean).any():
         return
+    fig, ax = plt.subplots()
+    plotted = list(mean - std) + list(mean + std)
+    ref, ref_std = row("paso temporal", n, 50, "tsdmd", key)
+    if np.isfinite(ref):
+        ax.axhspan(ref - ref_std, ref + ref_std, color="tab:red", alpha=0.18, lw=0, zorder=0)
+        ax.axhline(ref, color="tab:red", ls="--", label="paso temporal", zorder=1)
+        plotted += [ref - ref_std, ref + ref_std]
+    ax.errorbar(LEVELS, mean, yerr=std, fmt="s-", color="tab:blue", capsize=4, elinewidth=1.3, label="eventos",
+                zorder=3)
     ax.set_xticks(LEVELS)
     ax.set_xlabel("Radios intermedios de la recuperación")
     ax.set_ylabel(ylabel)
@@ -353,7 +352,7 @@ def edmd_levels(key: str) -> None:
         log_limits(ax, plotted)
     else:
         ax.set_ylim(bottom=0)
-    ax.legend(title="$N$", loc="best")
+    ax.legend(loc="best")
     save_figure(fig, GROUP, f"eventos_{name}_vs_niveles.png")
 
 
@@ -398,22 +397,21 @@ def scaling(constant_density: bool) -> None:
 
 def main() -> None:
     use_style()
-    for n in (500, 200):
-        population(n)
+    n = N_BASE
+    population(n)
     for key in ("evac", "q", "loop"):
-        schemes(key)
-    for n in (500, 200):
-        hybrid_vs_rh(n, "loop")
-        hybrid_vs_rh(n, "loop", zoom=True)
-        hybrid_vs_rh(n, "evac")
-        hybrid_vs_rh(n, "q")
-        scheme_fraction(n)
-    for n, length in ((500, 50), (200, 50), (500, 300)):
+        schemes(key, n)
+    hybrid_vs_rh(n, "loop")
+    hybrid_vs_rh(n, "loop", zoom=True)
+    hybrid_vs_rh(n, "evac")
+    hybrid_vs_rh(n, "q")
+    scheme_fraction(n)
+    for length in (50, 300):
         scheme_population(n, length, RH_BEST)
-    room_size()
-    room_size(zoom=True)
+    room_size(n)
+    room_size(n, zoom=True)
     for key in ("t90", "evac", "q", "loop"):
-        edmd_levels(key)
+        edmd_levels(key, n)
     for constant_density in (False, True):
         scaling(constant_density)
 
