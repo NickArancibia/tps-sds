@@ -27,13 +27,12 @@
 %%   - curvas que coinciden: la que tapa va detras (D2).
 %%
 %% Pendientes marcados con "% TODO:" (grep -n "TODO" tp5.tex).
-% TODO: animaciones (propuesta del grupo: eventos con n_r = 0, paso temporal y dos del hibrido).
-%   Falta generarlas, subirlas y poner fotograma (figuras/) y enlace.
-% TODO: ensayar: son 8 diapositivas de Implementacion; recortar segun el tiempo.
-% TODO: confirmar si este TP pide la diapositiva de uso de agentes de IA (el enunciado no la menciona).
+% TODO: subir las cuatro animaciones (tp5-pedestrian-dynamics/output/animaciones/*.mp4) y
+%   reemplazar cada "enlace pendiente" por \yt{<id>}. Los fotogramas ya estan en figuras/.
+% TODO: ensayar: son 7 diapositivas de Implementacion; recortar segun el tiempo.
 % Todas las figuras son del sistema base, N = 500 (pedido 2026-11-10; la campaña tambien tiene
 %   N = 200, que da las mismas conclusiones y no se grafica).
-% Figuras de analysis/figures/campaign sin usar: caudal_esquemas, hibrido_caudal_vs_rh_N500,
+% Figuras de analysis/figures/campaign sin usar: caudal_esquemas,
 %   fraccion_paso_temporal_N500, hibrido_ejecucion_vs_rh_N500_zoom,
 %   hibrido_ejecucion_vs_rh_por_L_N500_zoom, hibrido_agentes_por_esquema_N500_L300_rh0.5,
 %   eventos_evacuacion_vs_niveles (con n_r = 0 no todas evacuan: se usa t_90).
@@ -42,7 +41,7 @@
 \makeatletter\def\input@path{{../}}\makeatother
 \usepackage{sdsbeamer}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,decorations.pathreplacing}
 \microtypesetup{expansion=false}
 
 \graphicspath{{../../tp5-pedestrian-dynamics/analysis/figures/}{figuras/}}
@@ -106,6 +105,19 @@
 \newcommand{\rmin}{r_{\min}}
 \newcommand{\rmax}{r_{\max}}
 \newcommand{\vdmax}{v_d^{\max}}
+% Salida angosta: agentes lejos (azul, eventos) y en el atasco (rojo, paso temporal).
+\newcommand{\atasco}{%
+  \fill[black!25] (-3,-0.25) rectangle (-0.45,0);
+  \fill[black!25] (0.45,-0.25) rectangle (3,0);
+  \draw[thick] (-3,0) -- (-0.45,0);
+  \draw[thick] (0.45,0) -- (3,0);
+  \foreach \x/\y in {-2.4/2.7, -0.9/3.2, 1.2/3.0, 2.5/2.3, -2.3/1.4, 2.2/1.2}
+    {\agente{ev}{\x}{\y}{0.28}
+     \draw[->,ev,thick] (\x,\y) -- ($(\x,\y)!0.6cm!(0,0)$);}
+  % Rojos: radio intermedio (0.17 m), o sea rapidez v_d(r) = 0.75 m/s: flecha de la mitad de largo.
+  \foreach \x/\y in {-0.3/0.3, 0.32/0.36, -0.72/0.72, 0.02/0.82, 0.7/0.8, -0.35/1.25, 0.42/1.3}
+    {\agente{ts}{\x}{\y}{0.17}
+     \draw[->,ts,thick] (\x,\y) -- ($(\x,\y)!0.3cm!(0,-0.4)$);}}
 
 \title{Dinámica peatonal: evacuación con un esquema híbrido}
 \subtitle{Simulación de Sistemas - ITBA}
@@ -131,26 +143,16 @@
 \begin{frame}{Sistema}
   \begin{columns}[c]
     \begin{column}{0.52\textwidth}
-      \begin{itemize}\setlength{\itemsep}{0.9em}
-        \item Peatones que caminan hacia una salida angosta.
-        \item Lejos de la salida casi no interactúan; cerca se forma un atasco con contactos
-          continuos.
-        \item Tres formas de avanzar en el tiempo: paso temporal, eventos y un esquema híbrido.
+      \begin{itemize}\setlength{\itemsep}{0.8em}
+        \item Peatones que caminan hacia una salida angosta y forman un atasco.
+        \item Su movimiento se avanza por paso temporal, por eventos o con un esquema híbrido.
       \end{itemize}
     \end{column}
     \begin{column}{0.46\textwidth}
       \centering
       % Lejos (azul, candidatos a eventos) y atasco (rojo, paso temporal), como la Fig. 1 del enunciado.
       \begin{tikzpicture}[scale=1.05, >=Stealth]
-        \fill[black!25] (-3,-0.25) rectangle (-0.45,0);
-        \fill[black!25] (0.45,-0.25) rectangle (3,0);
-        \draw[thick] (-3,0) -- (-0.45,0);
-        \draw[thick] (0.45,0) -- (3,0);
-        \foreach \x/\y in {-2.4/2.7, -0.9/3.2, 1.2/3.0, 2.5/2.3, -2.3/1.4, 2.2/1.2}
-          {\agente{ev}{\x}{\y}{0.28}
-           \draw[->,ev,thick] (\x,\y) -- ($(\x,\y)!0.6cm!(0,0)$);}
-        \foreach \x/\y in {-0.3/0.3, 0.32/0.36, -0.72/0.72, 0.02/0.82, 0.7/0.8, -0.35/1.25, 0.42/1.3}
-          {\agente{ts}{\x}{\y}{0.17}}
+        \atasco
       \end{tikzpicture}
     \end{column}
   \end{columns}
@@ -287,11 +289,48 @@
 % 2 r_min)/(2 Δt) y v_i·e_ip >= -(d_ip - r_min)/Δt) se sacó (pedido 2026-11-10). Declararlo en
 % vivo sobre el recuadro "Cuerpo impenetrable" del diagrama anterior: no es parte del CPM del paper.
 
-% Eventos: entre eventos, MRU con radio constante. Estados de un agente; solo el diagrama (pedido
-% 2026-11-10: sin la lista de eventos al costado).
-% Dicho en vivo: los eventos son el contacto con un agente o una pared, el fin de escape, el fin de
-% cada tramo de recuperación, el cambio de target y el retiro. Un contacto durante el escape o la
-% recuperación reinicia el escape; cada escape dura Δt > 0, así que no hay cadenas en tiempo cero.
+% Eventos: lazo del motor, con el mismo formato que el de paso temporal (pedido 2026-11-12;
+% reemplaza a "Eventos: instante del contacto"; la ecuación del contacto se sacó de la diapositiva).
+% Dicho en vivo: entre eventos cada agente va en línea recta con velocidad y radio constantes, así
+% que el instante de cada evento se calcula en lugar de buscarlo paso a paso. Contacto con un
+% agente: menor raíz positiva t_c de |(x_i - x_j) + (v_i - v_j) t_c| = r_i + r_j; con una pared,
+% |x_i + v_i t_c - p_i| = r_i; el fin de escape y el fin de cada tramo son duraciones conocidas.
+% Evento vigente (como en el TP3): cada agente tiene un contador que sube cuando cambia su radio o
+% su velocidad, y cada evento guarda el contador de sus agentes al predecirlo; al sacarlo de la
+% cola, si algún contador cambió se descarta sin procesarlo. El lazo avanza a todos hasta el evento
+% (el mismo x <- x + v t de paso temporal, con t_c en lugar de Δt), lo aplica (cambia radio y
+% velocidad de sus agentes: diapositiva siguiente) y predice los eventos nuevos de esos agentes.
+% Los cuerpos nunca se superponen: el contacto salta cuando se tocan los espacios personales. (En
+% el motor el contacto se llama "colapso".)
+\begin{frame}{Eventos: motor}
+  \centering
+  \begin{tikzpicture}[>=Stealth, font=\small, scale=0.95, every node/.append style={scale=0.95},
+      caja/.style={draw, rounded corners, align=center, inner sep=5pt, minimum height=1.35cm},
+      clave/.style={caja, fill=blue!10}]
+    \node[caja]  (ini)  at (0, 0)       {Estado inicial\\ $r_i = \rmin$};
+    \node[clave] (pre)  at (4.6, 0)     {Predecir eventos\\ {\footnotesize contacto, fin de escape, fin de}\\
+                                         {\footnotesize tramo, cambio de target, retiro}};
+    \node[caja]  (nxt)  at (10.2, 0)    {Próximo evento vigente: $t_c$\\
+                                         {\footnotesize descarta los que ya no valen}};
+    \node[caja]  (mov)  at (10.2, -3.4) {$\vect{x}_i \leftarrow \vect{x}_i + \vect{v}_i\,t_c$};
+    \node[clave] (apl)  at (4.6, -3.4)  {Aplicar el evento\\
+                                         {\footnotesize nuevos $r_i$ y $\vect{v}_i$ de sus agentes}};
+    \node[caja, minimum height=0.9cm] (fin) at (0, -3.4) {Fin};
+    \draw[->] (ini) -- (pre);
+    \draw[->] (pre) -- (nxt);
+    \draw[->] (nxt) -- (mov);
+    \draw[->] (mov) -- (apl);
+    \draw[->] (apl) -- node[right, font=\footnotesize] {$t \leftarrow t + t_c$} (pre);
+    \draw[->] (apl) -- node[above, font=\footnotesize] {sin agentes} (fin);
+  \end{tikzpicture}
+\end{frame}
+
+% Qué hace "Aplicar el evento" con un agente: sus estados. Solo el diagrama (pedido 2026-11-10: sin
+% la lista de eventos al costado).
+% Dicho en vivo: la regla de contacto es la del CPM (r_min y velocidad de escape, como en paso
+% temporal); lo propio de eventos es que se aplica en el instante exacto del contacto, a todos los
+% agentes en contacto en ese instante. Un contacto durante el escape o la recuperación reinicia el
+% escape; cada escape dura Δt > 0, así que no hay cadenas en tiempo cero.
 \begin{frame}{Eventos: estados de un agente}
   \centering
   \begin{tikzpicture}[>=Stealth, scale=1.2, transform shape,
@@ -302,244 +341,201 @@
     \node[est] (rec) at (2.8, -0.6) {Recuperación\\ {\footnotesize $n_r$ radios intermedios}};
     \draw[->] (lib) -- node[above, font=\footnotesize] {contacto} (esc);
     \draw[->] (esc) -- node[pos=0.42, right=3pt, font=\footnotesize] {$\Delta t$ después} (rec);
-    \draw[->] (rec) -- node[pos=0.58, left=3pt, font=\footnotesize] {último tramo} (lib);
+    \draw[->] (rec) -- node[pos=0.58, left=3pt, font=\footnotesize] {$8\,\Delta t$ después} (lib);
     \draw[->] (rec.east) to[bend right=40] node[right, font=\footnotesize] {contacto} (esc.south east);
     \path[->] (esc) edge[loop above] node[above, font=\footnotesize] {contacto} (esc);
   \end{tikzpicture}
 \end{frame}
 
-% La regla de contacto es la del CPM (siempre r_min y escape, como en paso temporal); lo propio de
-% eventos es CUÁNDO se aplica: en el instante exacto t_c en que se tocan los espacios personales, y
-% no al comienzo del paso siguiente. Dicho en vivo: se toma la menor raíz positiva; la regla se
-% aplica a todos los agentes en contacto en ese instante; los cuerpos nunca se superponen porque
-% el contacto salta cuando se tocan los espacios personales. (En el motor esto se llama "colapso".)
-\begin{frame}{Eventos: instante del contacto}
-  \begin{columns}[c]
-    \begin{column}{0.58\textwidth}
-      \setlength{\abovedisplayskip}{4pt}\setlength{\belowdisplayskip}{4pt}
-      \textbf{Instante $t_c$ del contacto}
-      \[
-        \bigl|\Delta\vect{x}_{ij} + \Delta\vect{v}_{ij}\,t_c\bigr| = r_i + r_j
-        \qquad\qquad
-        \bigl|\vect{x}_i + \vect{v}_i\,t_c - \vect{p}_i\bigr| = r_i
-      \]
-      \vspace{0.6em}
-      \textbf{En $t_c$: regla de contacto del modelo}
-      \[
-        r_i \leftarrow \rmin, \qquad
-        \vect{v}_i \leftarrow \vect{v}^{e}_i
-        \quad \text{durante } \Delta t
-      \]
-    \end{column}
-    \begin{column}{0.40\textwidth}
-      \centering
-      % Arriba: justo antes de t_c, los espacios personales se tocan. Abajo: justo después, los
-      % dos en r_min (solo el cuerpo) y escapando.
-      \begin{tikzpicture}[scale=1.9, >=Stealth]
-        \foreach \x in {-0.5, 0.5}
-          {\draw[ev] (\x,1.5) circle (0.5); \fill[ev!55] (\x,1.5) circle (0.2);}
-        \draw[->, thick] (-0.5,1.5) -- ++(-20:0.38);
-        \draw[->, thick] (0.5,1.5) -- ++(200:0.38);
-        \node[font=\small] at (0,2.18) {$t_c^{-}$};
-        \draw[->, black!60] (0,0.86) -- (0,0.42);
-        \foreach \x in {-0.5, 0.5}
-          {\fill[ev!55] (\x,0) circle (0.2); \draw[ev] (\x,0) circle (0.2);}
-        \draw[->, thick] (-0.5,0) -- ++(180:0.5) node[above] {$\vect{v}^{e}_i$};
-        \draw[->, thick] (0.5,0) -- ++(0:0.5) node[above] {$\vect{v}^{e}_j$};
-        \node[font=\small] at (0,0) {$t_c^{+}$};
-      \end{tikzpicture}
-    \end{column}
-  \end{columns}
-\end{frame}
-
 % Parámetro propio con nombre y ejemplos dibujados (como D11-D13 del TP3; pedido 2026-11-10: con
-% dibujos y no con un gráfico). A escala: 1 cm = 0.29 m (r_min 0.34 cm, r_1 0.40 cm, r_2 0.45 cm,
+% dibujos y no con un gráfico). Eje horizontal = tiempo desde el contacto, 1.08 cm por Δt, con los
+% instantes debajo de cada corte y sin duraciones en los rótulos (pedido 2026-11-12: "r_2: 7 Δt" se
+% leía como un instante). Agentes a escala: 1 cm = 0.29 m (r_min 0.34 cm, r_1 0.40 cm, r_2 0.45 cm,
 % r_max 0.85 cm); flechas de velocidad 0.7 cm por m/s (v_e = v_dmax = 1.5; v_d(r_1) = 0.21;
-% v_d(r_2) = 0.39 m/s). Debajo de cada estado: radio y cuánto dura.
-% Dicho en vivo: con n_r = 0 el agente queda quieto en r_min hasta 9 Δt después del contacto y
-% vuelve de golpe a r_max; con n_r = 2 recorre los dos primeros radios de paso temporal y sostiene
-% el segundo; con n_r = 8 recorre los mismos radios que paso temporal. Al empezar un tramo el radio
-% salta: si pisa a un vecino, hay contacto en ese instante.
+% v_d(r_2) = 0.39 m/s).
+% Dicho en vivo: la recuperación dura siempre 8 Δt (el agente queda libre 9 Δt después del
+% contacto, igual que en paso temporal); n_r es cuántos radios distintos recorre en ese lapso. Con
+% n_r = 0 no recorre ninguno: queda quieto en r_min y vuelve de golpe a r_max; con n_r = 2 recorre
+% los dos primeros radios de paso temporal: está un Δt en r_1 y sostiene r_2 los 7 Δt que faltan
+% (si pasara a r_max en 3 Δt se recuperaría antes que en paso temporal); con n_r = 8 recorre los
+% mismos radios que paso temporal. Al empezar un tramo el radio salta: si pisa a un vecino, hay
+% contacto en ese instante.
 \begin{frame}{Eventos: recuperación con $n_r$ radios intermedios}
   \centering
   \begin{tikzpicture}[>=Stealth, font=\small,
-      paso/.style={->, black!45, shorten >=3pt, shorten <=3pt}]
-    \node at (0,1.35) {escape};
-    \node at (4.95,1.35) {recuperación};
-    \node at (9.9,1.35) {libre};
+      corte/.style={black!40, dashed},
+      llave/.style={decorate, decoration={brace, amplitude=4pt}}]
+    \draw[llave] (0.06,1.0) -- (1.02,1.0) node[midway, above=5pt] {escape};
+    \draw[llave] (1.14,1.0) -- (9.66,1.0) node[midway, above=5pt] {recuperación};
+    \node[above=5pt] at (10.97,1.0) {libre};
+    % Instantes, medidos desde el contacto, debajo de cada corte.
+    \foreach \x/\lab in {0/{contacto}, 1.08/{$\Delta t$}, 9.72/{$9\,\Delta t$}}
+      {\draw[corte] (\x,0.9) -- (\x,-3.75) node[below, black] {\lab};}
+    \draw[corte] (2.16,-1.55) -- (2.16,-3.75) node[below, black] {$2\,\Delta t$};
     % n_r = 0
-    \node[left] at (-1.3,0) {$n_r = 0$};
-    \estado{0}{0}{0.34}{130}{1.05}{$\rmin$, \ $\Delta t$}
-    \estado{4.95}{0}{0.34}{0}{0}{$\rmin$, \ $8\,\Delta t$}
-    \estado{9.9}{0}{0.85}{-50}{1.05}{$\rmax$}
-    \draw[paso] (0.7,0) -- (4.25,0);
-    \draw[paso] (5.65,0) -- (8.75,0);
+    \node[left] at (-0.8,0) {$n_r = 0$};
+    \estado{0.54}{0}{0.34}{130}{1.05}{$\rmin$}
+    \estado{5.4}{0}{0.34}{0}{0}{$\rmin$, \ $\vect{v}_i = 0$}
+    \estado{10.97}{0}{0.85}{-50}{1.05}{$\rmax$}
     % n_r = 2
-    \begin{scope}[yshift=-2.5cm]
-      \node[left] at (-1.3,0) {$n_r = 2$};
-      \estado{0}{0}{0.34}{130}{1.05}{$\rmin$, \ $\Delta t$}
-      \estado{3.3}{0}{0.40}{-50}{0.15}{$r_1$, \ $\Delta t$}
-      \estado{6.6}{0}{0.45}{-50}{0.27}{$r_2$, \ $7\,\Delta t$}
-      \estado{9.9}{0}{0.85}{-50}{1.05}{$\rmax$}
-      \draw[paso] (0.7,0) -- (2.6,0);
-      \draw[paso] (4.0,0) -- (5.9,0);
-      \draw[paso] (7.35,0) -- (8.75,0);
+    \begin{scope}[yshift=-2.3cm]
+      \node[left] at (-0.8,0) {$n_r = 2$};
+      \estado{0.54}{0}{0.34}{130}{1.05}{$\rmin$}
+      \estado{1.62}{0}{0.40}{-50}{0.15}{$r_1$}
+      \estado{5.94}{0}{0.45}{-50}{0.27}{$r_2$}
+      \estado{10.97}{0}{0.85}{-50}{1.05}{$\rmax$}
     \end{scope}
   \end{tikzpicture}
-  \vspace{0.2em}
+  \vspace{-0.6em}
   \[
     r_k = \rmin + k\,\Delta r, \qquad |\vect{v}| = v_d(r_k), \qquad k = 1, \dots, n_r
   \]
 \end{frame}
 
-% Híbrido: criterio de pasaje. D = max(R_h, 2 r_max): un agente en eventos pasa antes de tocar a
-% uno en paso temporal. Dicho en vivo: el pasaje se hace en el próximo paso de la grilla, con el
-% radio que tenga el agente, y arrastra a los agentes en eventos que queden a menos de D.
+% Híbrido: criterio de pasaje, como un diagrama de dos estados dibujados (pedido 2026-11-12: menos
+% letras; solo los símbolos del Modelo y R_h, y una sola condición por flecha). Área = círculo de
+% radio R_h alrededor del centro.
+% Dicho en vivo: si el centro de otro agente entra al área (o una pared queda a menos de R_h/2), los
+% dos pasan a paso temporal; un agente vuelve a eventos cuando recuperó r_max y su área quedó vacía
+% (y no tiene paredes a menos de R_h/2).
+% Solo si preguntan: un contacto entre un agente en eventos y uno en paso temporal no se resuelve
+% por eventos, así que el de eventos tiene que pasar antes de que se toquen los espacios
+% personales; por eso, frente a un agente en paso temporal el área mide max(R_h, 2 r_max). Cambia
+% algo solo con R_h < 2 r_max = 0.5 m (los puntos de 0.2 y 0.3 m del barrido). El pasaje arrastra a
+% los agentes en eventos que queden dentro de esa distancia de uno recién pasado.
 \begin{frame}{Híbrido: criterio de pasaje con el área $R_h$}
-  \begin{columns}[c]
-    \begin{column}{0.44\textwidth}
-      \centering
-      \begin{tikzpicture}[scale=2.5, >=Stealth]
-        \draw[ev, dashed] (0,0) circle (0.95);
-        \agente{ev}{0}{0}{0.3}
-        \draw[->, ev] (0,0) -- (115:0.95) node[midway, left] {$R_h$};
-        \fill (0,0) circle (0.02) node[below right] {$i$};
-        \agente{ev}{-0.62}{-0.85}{0.3}
-        \draw[->, ev, thick] (-0.62,-0.85) -- ++(55:0.4);
-        \node[ev] at (-0.98,-0.98) {$k$};
-        \agente{ts}{1.15}{0.4}{0.2}
-        \draw[->, ts, thick] (1.15,0.4) -- ++(195:0.35);
-        \node[ts] at (1.38,0.58) {$j$};
-        \draw[<->, black!60] (0,0) -- (1.15,0.4) node[midway, above] {$d_{ij}$};
-      \end{tikzpicture}
-    \end{column}
-    \begin{column}{0.54\textwidth}
-      \setlength{\abovedisplayskip}{4pt}\setlength{\belowdisplayskip}{4pt}
-      \textbf{Eventos $\to$ paso temporal:} alguna
-      \begin{align*}
-        d_{ik} &\le R_h && (k \text{ en eventos})\\
-        d_{ij} &\le D = \max(R_h,\ 2\,\rmax) && (j \text{ en paso temporal})\\
-        d_{ip} &\le \tfrac{1}{2} R_h && (\text{pared})
-      \end{align*}
-      \vspace{0.3em}
-      \textbf{Paso temporal $\to$ eventos:} todas
-      \begin{align*}
-        r_i &= \rmax, \ \text{sin contacto}\\
-        d_{ij} &> D \quad \forall j\\
-        d_{ip} &> \tfrac{1}{2} D
-      \end{align*}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% Convivencia: grilla global t_n = n Δt. Dicho en vivo: dentro de un paso el agente en paso
-% temporal tiene velocidad constante, así que su llegada a distancia D de un agente en eventos se
-% predice con la misma cuadrática; esa predicción vale hasta t_{n+1}.
-\begin{frame}{Híbrido: sincronización entre eventos y pasos}
   \centering
-  \begin{tikzpicture}[>=Stealth, font=\small, x=3.5cm, y=1.05cm]
-    \foreach \k/\lab in {0/t_n, 1/t_{n+1}, 2/t_{n+2}, 3/t_{n+3}}
-      {\draw[ts, thick] (\k,0.3) -- (\k,3.7) node[above] {$\lab$};}
-    \foreach \y/\lab/\c in {3/j/ts, 2/i/ev, 1/k/ev}
-      {\draw[black!35] (-0.12,\y) -- (3.12,\y); \node[left, \c] at (-0.16,\y) {$\lab$};}
-    % j: paso temporal en todos los pasos
-    \draw[ts, line width=2.4pt, opacity=0.35] (0,3) -- (3,3);
-    \foreach \k in {0,1,2,3} {\node[fill=ts, minimum size=6pt, inner sep=0pt] at (\k,3) {};}
-    % i: eventos; llega a distancia D de j y pasa en el paso siguiente
-    \fill[ev] (0.35,2) circle (3pt);
-    \node[diamond, fill=ev, minimum size=9pt, inner sep=0pt] (near) at (1.38,2) {};
-    \node[draw=ts, very thick, fill=white, minimum size=6pt, inner sep=0pt] (pass) at (2,2) {};
-    \draw[->, ev, dashed, thick] (near) -- (pass);
-    \draw[ts, line width=2.4pt, opacity=0.35] (2,2) -- (3,2);
-    \node[fill=ts, minimum size=6pt, inner sep=0pt] at (3,2) {};
-    % k: solo eventos
-    \foreach \x in {0.62, 1.74, 2.55} {\fill[ev] (\x,1) circle (3pt);}
-    % referencias
-    \begin{scope}[shift={(0,-0.25)}]
-      \node[fill=ts, minimum size=6pt, inner sep=0pt] at (0.0,0) {};
-      \node[right] at (0.04,0) {paso del CPM};
-      \fill[ev] (0.92,0) circle (3pt);
-      \node[right] at (0.96,0) {evento};
-      \node[diamond, fill=ev, minimum size=9pt, inner sep=0pt] at (1.52,0) {};
-      \node[right] at (1.57,0) {$d_{ij} = D$};
-      \node[draw=ts, very thick, fill=white, minimum size=6pt, inner sep=0pt] at (2.2,0) {};
-      \node[right] at (2.24,0) {pasa a paso temporal};
+  \begin{tikzpicture}[>=Stealth, scale=1.7, font=\small]
+    % Eventos: nadie dentro del área de i.
+    \node[ev, font=\normalsize\bfseries] at (0,1.45) {Eventos};
+    \draw[ev, dashed] (0,0) circle (1.0);
+    \agente{ev}{0}{0}{0.3}
+    \draw[->, ev] (0,0) -- (125:1.0) node[midway, left] {$R_h$};
+    \node[ev] at (0,-0.45) {$i$};
+    \agente{ev}{1.3}{-0.5}{0.3}
+    \node[ev] at (1.3,-0.95) {$j$};
+    % Paso temporal: j dentro del área de i.
+    \begin{scope}[xshift=5.9cm]
+      \node[ts, font=\normalsize\bfseries] at (0,1.45) {Paso temporal};
+      \draw[ts, dashed] (0,0) circle (1.0);
+      \agente{ts}{0}{0}{0.22}
+      \node[ts] at (0,-0.42) {$i$};
+      \agente{ts}{0.6}{0}{0.22}
+      \node[ts] at (0.6,-0.42) {$j$};
     \end{scope}
+    \draw[->, thick] (1.85,0.3) -- (4.65,0.3)
+      node[midway, above] {$|\vect{x}_i - \vect{x}_j| \le R_h$};
+    \draw[->, thick] (4.65,-0.3) -- (1.85,-0.3)
+      node[midway, below] {$r_i = \rmax$ \ y \ $|\vect{x}_i - \vect{x}_j| > R_h \ \ \forall j$};
   \end{tikzpicture}
 \end{frame}
 
-% Lazo del híbrido. En azul lo que es por eventos, en rojo lo que es por paso temporal.
+% Convivencia, como tres instantes de un mismo paso (pedido 2026-11-12: la línea de tiempo con
+% marcas no se entendía). j está en paso temporal e i en eventos.
+% Dicho en vivo: los agentes en paso temporal solo cambian de velocidad en los pasos (múltiplos de
+% Δt); los eventos caen en cualquier instante entre dos pasos. (1) En el paso t, el modelo le fija a
+% j la velocidad de todo el paso; como es constante, su entrada al área de i se predice igual que
+% un contacto, con la distancia del área en lugar de r_i + r_j. (2) Ese evento ocurre entre los dos
+% pasos y solo marca a i, que sigue por eventos. (3) En el paso siguiente i pasa a paso temporal,
+% con el radio que tenga. Entre dos agentes en eventos es igual: el evento marca a los dos.
+% "Marcar" es anotar que el agente tiene que pasar; no pasa en ese instante porque los agentes en
+% paso temporal se actualizan todos juntos en los múltiplos de Δt (regla del CPM: contactos y
+% velocidades de todos en el mismo instante, y Δt no se puede cambiar). Si pasara en el instante
+% del evento quedaría desfasado de los demás o necesitaría un paso más corto. Mientras espera
+% (menos de Δt) sigue por eventos: un contacto en ese lapso es un evento.
+% Solo si preguntan (el enunciado pide garantizar que no haya superposiciones en el pasaje; el
+% renglón con la distancia se sacó de la diapositiva, pedido 2026-11-12): cuando
+% j entra al área están a 2 r_max o más (ver la diapositiva anterior); hasta el pasaje pasa menos
+% de Δt y se acercan a lo sumo 2 v Δt = r_min (definición de Δt), así que al pasar están a
+% 2 r_max - r_min > 2 r_min: los cuerpos no se tocan y el primer paso del CPM detecta el contacto
+% de los espacios personales como en paso temporal puro.
+\begin{frame}{Híbrido: sincronización entre eventos y pasos}
+  \centering
+  \begin{tikzpicture}[>=Stealth, font=\small, scale=1.2]
+    % j avanza en línea recta: (1.234, 0.547) -> borde del área en (0.914, 0.406) -> (0.594, 0.265).
+    \draw[ev, dashed] (0,0) circle (1.0);
+    \agente{ev}{0}{0}{0.22}
+    \node[ev] at (0,-0.42) {$i$};
+    \draw[->, ev] (0,0) -- (150:1.0) node[midway, above] {$R_h$};
+    \agente{ts}{1.234}{0.547}{0.22}
+    \node[ts] at (1.36,0.96) {$j$};
+    \draw[->, ts, thick] (1.234,0.547) -- (0.594,0.265);
+    \begin{scope}[xshift=4.1cm]
+      \draw[ev, dashed] (0,0) circle (1.0);
+      \agente{ev}{0}{0}{0.22}
+      \node[ev] at (0,-0.42) {$i$};
+      \agente{ts}{0.914}{0.406}{0.22}
+      \node[ts] at (1.04,0.82) {$j$};
+    \end{scope}
+    \begin{scope}[xshift=8.2cm]
+      \draw[ts, dashed] (0,0) circle (1.0);
+      \agente{ts}{0}{0}{0.22}
+      \node[ts] at (0,-0.42) {$i$};
+      \agente{ts}{0.594}{0.265}{0.22}
+      \node[ts] at (0.72,0.68) {$j$};
+    \end{scope}
+    % Eje de tiempo: dos pasos y, entre ellos, el evento.
+    \draw[->, black!60] (-1.0,-1.6) -- (9.6,-1.6);
+    \draw[ts, very thick] (0,-1.46) -- (0,-1.74) node[below] {$t$};
+    \node[diamond, fill=ev, minimum size=9pt, inner sep=0pt] at (4.1,-1.6) {};
+    \node[below, ev] at (4.1,-1.74) {evento};
+    \draw[ts, very thick] (8.2,-1.46) -- (8.2,-1.74) node[below] {$t + \Delta t$};
+    \node[align=center] at (0,-2.8)   {paso del CPM de $j$:\\ se predice el evento};
+    \node[align=center] at (4.1,-2.8) {$j$ entra al área de $i$:\\ $i$ queda marcado};
+    \node[align=center] at (8.2,-2.8) {paso siguiente:\\ $i$ pasa a paso temporal};
+  \end{tikzpicture}
+\end{frame}
+
+% Lazo del híbrido, con el mismo formato que los otros dos. En azul lo que es por eventos, en rojo
+% lo que es por paso temporal. Cada vuelta es un paso Δt de la diapositiva anterior.
+% Dicho en vivo: (1) se procesan en orden los eventos de los agentes en eventos hasta el próximo
+% instante de la grilla: los mismos de eventos puro, más la entrada de otro agente al área, que
+% solo marca; (2) se mueven un paso los agentes en paso temporal; (3) pasajes: los marcados pasan a
+% paso temporal y los libres con el área vacía vuelven a eventos; (4) paso del CPM solo para los
+% agentes en paso temporal, que les fija la velocidad del paso siguiente; (5) con esas velocidades
+% nuevas se predice cuándo entran al área de un agente en eventos. Las entradas entre dos agentes
+% en eventos ya se predicen en (1), cada vez que uno cambia de velocidad; las de (5) hay que
+% rehacerlas en cada paso porque los agentes en paso temporal cambian de velocidad en cada paso.
 \begin{frame}{Híbrido: motor}
   \centering
   \begin{tikzpicture}[>=Stealth, font=\small, scale=0.95, every node/.append style={scale=0.95},
       caja/.style={draw, rounded corners, align=center, inner sep=5pt, minimum height=1.35cm},
       cev/.style={caja, fill=blue!10}, cts/.style={caja, fill=red!10}]
     \node[caja] (ini)  at (0, 0)      {Estado inicial\\ {\footnotesize criterio de pasaje en $t = 0$}};
-    \node[cev]  (eve)  at (4.9, 0)    {Eventos hasta $t_{n+1}$\\
-                                       {\footnotesize contacto, escape, tramo, target,}\\
-                                       {\footnotesize retiro, entrada al área}};
+    \node[cev]  (eve)  at (4.6, 0)    {Eventos hasta $t + \Delta t$\\
+                                       {\footnotesize los de eventos puro}\\
+                                       {\footnotesize y las entradas al área}};
     \node[cts]  (mov)  at (10.3, 0)   {Mover los agentes\\ en paso temporal\\
                                        {\footnotesize puerta y retiro}};
-    \node[caja] (pas)  at (10.3, -2.3) {Pasajes entre esquemas};
-    \node[cts]  (cpm)  at (10.3, -4.6) {Paso del CPM\\ {\footnotesize solo agentes en paso temporal}};
-    \node[cev]  (pre)  at (4.9, -4.6)  {Predecir $d_{ij} = D$\\ {\footnotesize válido hasta $t_{n+2}$}};
+    \node[caja] (pas)  at (10.3, -2.3) {Pasajes entre esquemas\\ {\footnotesize criterio del área $R_h$}};
+    \node[cts]  (cpm)  at (10.3, -4.6) {Paso del CPM\\ {\footnotesize contactos, radios y velocidades}\\
+                                        {\footnotesize solo agentes en paso temporal}};
+    \node[cev]  (pre)  at (4.6, -4.6)  {Predecir entradas al área\\
+                                        {\footnotesize con las velocidades nuevas}};
     \node[caja, minimum height=0.9cm] (fin) at (0, -4.6) {Fin};
     \draw[->] (ini) -- (eve);
     \draw[->] (eve) -- (mov);
     \draw[->] (mov) -- (pas);
     \draw[->] (pas) -- (cpm);
     \draw[->] (cpm) -- (pre);
-    \draw[->] (pre) -- node[right, font=\footnotesize] {$n \leftarrow n + 1$} (eve);
+    \draw[->] (pre) -- node[right, font=\footnotesize] {$t \leftarrow t + \Delta t$} (eve);
     \draw[->] (pre) -- node[above, font=\footnotesize] {sin agentes} (fin);
   \end{tikzpicture}
 \end{frame}
 
-% Valores característicos de R_h (el parámetro principal del criterio, punto c) y garantía de que
-% no se pierden contactos. Dicho en vivo: por debajo de 2 r_min nadie puede entrar al área de otro
-% (los cuerpos lo impiden) y la corrida es idéntica a eventos puro; desde 2 r_max + 2 v Δt el
-% pasaje llega siempre antes que el contacto.
-\begin{frame}{Híbrido: valores de $R_h$ y contactos}
-  \centering
-  \begin{tikzpicture}[>=Stealth, font=\small, x=1.0cm, y=1.0cm]
-    \draw[->, thick] (0,0) -- (13.6,0) node[right] {$R_h$};
-    \foreach \x/\lab in {2.6/{2\,\rmin}, 6.4/{2\,\rmax}, 8.3/{2\,\rmax + 2\,v\,\Delta t}, 12.2/{L\sqrt{2}}}
-      {\draw[thick] (\x,0.14) -- (\x,-0.14) node[below] {$\lab$};}
-    \fill[blue!12] (0,0.3) rectangle (2.55,1.5);
-    \node[align=center, ev] at (1.28,0.9) {eventos\\ puro};
-    \fill[black!7] (2.65,0.3) rectangle (8.25,1.5);
-    \node[align=center] at (5.45,0.9) {choques aislados por eventos\\ atasco por paso temporal};
-    \fill[red!8] (8.35,0.3) rectangle (12.15,1.5);
-    \node[align=center] at (10.25,0.9) {todos los choques\\ por paso temporal};
-    \fill[red!18] (12.25,0.3) rectangle (13.5,1.5);
-    \node[align=center, ts] at (12.88,0.9) {paso\\ temp.\\[-0.1em] puro};
-  \end{tikzpicture}
-  \vspace{1.2em}
-
-  \setlength{\abovedisplayskip}{4pt}\setlength{\belowdisplayskip}{4pt}
-  \textbf{Sin contactos perdidos ni cuerpos superpuestos}
-  \begin{columns}[T]
-    \begin{column}{0.36\textwidth}
-      \centering
-      Dos agentes en eventos\\[0.4em]
-      el contacto es un evento
-    \end{column}
-    \begin{column}{0.60\textwidth}
-      \centering
-      Uno en eventos y uno en paso temporal
-      \[
-        d_{ij} \ \ge\ D - 2\,v\,\Delta t \ \ge\ 2\,\rmax - \rmin \ >\ 2\,\rmin
-      \]
-    \end{column}
-  \end{columns}
-\end{frame}
+% La diapositiva "Híbrido: valores de R_h y contactos" se sacó (pedido 2026-11-12): la garantía de
+% que no hay superposiciones quedó en la de sincronización, y los valores característicos de R_h
+% se dicen sobre la figura de Resultados "Radio del área: tiempo de evacuación vs R_h".
 
 % ==========================================================================
 \section{Simulaciones}
 % Sistema particular, parámetros, observables. Sin resultados.
 % ==========================================================================
 
-% Puerta y distancia de retiro exageradas para que se vean. La condición inicial va aparte de los
-% parámetros (devolución TP3, D8). Valores de cada barrido: se ven en cada figura.
+% Puerta y distancia de retiro exageradas para que se vean. Sin el renglón de la condición inicial
+% (pedido 2026-11-12). Dicho en vivo: posiciones al azar sin superposición, distintas en cada
+% realización; r_i = r_min está en "Estado inicial" de los diagramas de Implementación.
+% Valores de cada barrido: se ven en cada figura.
 \begin{frame}{Sistema}
   \begin{columns}[c]
     \begin{column}{0.46\textwidth}
@@ -574,51 +570,72 @@
           \item $\Delta t = 1/30\uni{s}$
         \end{itemize}
       \end{minipage}\par
-      \vspace{0.4em}
+      \vspace{0.6em}
       \textbf{Parámetros variables}
       \begin{itemize}\setlength{\itemsep}{1pt}
-        \item $R_h$ entre $0.1$ y $10\uni{m}$; \ $n_r$ entre 0 y 8
+        \item $R_h$ entre $0.1$ y $10\uni{m}$ (base: 0.5)
+        \item $n_r$ entre 0 y 8 (base: 8)
         \item $N$ entre 100 y 1000 (base: 500)
         \item $L$ entre 22 y $300\uni{m}$ (base: 50)
-      \end{itemize}
-      \vspace{0.2em}
-      \textbf{Condición inicial}
-      \begin{itemize}\setlength{\itemsep}{1pt}
-        \item Posiciones al azar sin superposición; $r_i = \rmin$
       \end{itemize}
     \end{column}
   \end{columns}
 \end{frame}
 
-% Observables. La curva de población cuenta cruces de la puerta ("dentro de la habitación"); el
-% tiempo de evacuación es el último retiro (decisión del grupo, 2026-11-10): la curva llega a 0
-% unos 0.9 s antes. Caudal: ventana provisoria entre el 20 % y el 80 % de los cruces.
+% Observables, en dos diapositivas como en el TP3 y el TP4 (pedido 2026-11-12). La curva de
+% población cuenta cruces de la puerta ("dentro de la habitación"); el tiempo de evacuación es el
+% último retiro (decisión del grupo, 2026-11-10): la curva llega a 0 unos 0.9 s antes. Caudal:
+% ventana provisoria entre el 20 % y el 80 % de los cruces (t_a y t_b; no t_20 y t_80, para no
+% confundirlos con t_90, que se mide sobre los retiros).
+% Dicho en vivo: las barras de error son el desvío estándar entre las 10 realizaciones; N_in(t) y
+% la fracción por esquema se muestran para una realización.
 % TODO: justificar la ventana del caudal sobre la curva de población (o sacar el caudal).
-\begin{frame}{Observables}
+\begin{frame}{Observables: evacuación}
   \begin{columns}[c]
-    \begin{column}{0.58\textwidth}
-      \begin{itemize}\setlength{\itemsep}{0.6em}
-        \item $N_{in}(t)$: agentes que todavía no cruzaron la puerta.
+    \begin{column}{0.60\textwidth}
+      \begin{itemize}\setlength{\itemsep}{0.8em}
+        \item $N_{in}(t)$: agentes que no cruzaron la puerta.
         \item $t_{ev}$: instante en que se retira el último agente.\\[0.2em]
           $t_{90}$: instante en que se retiró el 90\,\%.
-        \item Caudal: $Q = \dfrac{0.6\,N}{t_{80} - t_{20}}$
-        \item Tiempo de ejecución del lazo de simulación.
-        \item Promedio y desvío estándar sobre 10 realizaciones.
+        \item $\langle t_{ev}\rangle$ y $\langle t_{90}\rangle$ sobre 10 realizaciones
+        \item Caudal: $Q = \dfrac{0.6\,N}{t_b - t_a}$\\[0.3em]
+          $\langle Q\rangle$ sobre 10 realizaciones
       \end{itemize}
     \end{column}
-    \begin{column}{0.40\textwidth}
+    \begin{column}{0.38\textwidth}
       \centering
-      % Curva de población esquemática: cruces 20 % y 80 % para el caudal, y t_ev.
-      \begin{tikzpicture}[x=0.040cm, y=0.040cm, >=Stealth, font=\small]
+      % Curva de población esquemática: t_a y t_b del caudal (cruces 20 % y 80 %), y t_ev.
+      \begin{tikzpicture}[x=0.037cm, y=0.037cm, >=Stealth, font=\small]
         \draw[->] (0,0) -- (106,0) node[below] {$t$};
         \draw[->] (0,0) -- (0,114) node[above] {$N_{in}$};
         \draw[thick] (0,100) -- (6,100) -- (88,0);
-        \draw[dashed, black!55] (0,80) -- (22.4,80) -- (22.4,0) node[below, black] {$t_{20}$};
-        \draw[dashed, black!55] (0,20) -- (71.6,20) -- (71.6,0) node[below, black] {$t_{80}$};
+        \draw[dashed, black!55] (0,80) -- (22.4,80) -- (22.4,0) node[below, black] {$t_a$};
+        \draw[dashed, black!55] (0,20) -- (71.6,20) -- (71.6,0) node[below, black] {$t_b$};
         \node[left] at (0,100) {$N$};
         \node[left] at (0,80) {$0.8\,N$};
         \node[left] at (0,20) {$0.2\,N$};
         \draw[ts, thick] (93,-3) -- (93,3) node[above] {$t_{ev}$};
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Observables: esquemas y tiempo de ejecución}
+  \begin{columns}[c]
+    \begin{column}{0.56\textwidth}
+      \begin{itemize}\setlength{\itemsep}{1.0em}
+        \item $N_{ev}(t)$: agentes en eventos.\\[0.2em]
+          $N_{pt}(t)$: agentes en paso temporal.
+        \item Fracción de agentes en cada esquema: \ $\dfrac{N_{ev}(t)}{N}$ \ y \ $\dfrac{N_{pt}(t)}{N}$
+        \item Tiempo de ejecución, sobre 10 realizaciones
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \centering
+      \begin{tikzpicture}[scale=0.88, >=Stealth]
+        \atasco
+        \node[ev] at (0.2,3.85) {$N_{ev} = 6$};
+        \node[ts] at (1.75,0.45) {$N_{pt} = 7$};
       \end{tikzpicture}
     \end{column}
   \end{columns}
@@ -629,32 +646,55 @@
 % Por estudio: animación -> evolución temporal -> input vs observable.
 % ==========================================================================
 
-% --- Los tres esquemas (puntos a y b) --------------------------------------
+% --- Radios intermedios de eventos (estudio propio) ------------------------------------------
 
-% TODO: generar y subir. Propuesta del grupo: eventos con n_r = 0 y paso temporal; misma tasa de
-%   cuadros por segundo simulado en las dos (devolución TP4, D19). Eventos: un cuadro cada k
-%   eventos (sin interpolar, devolución TP3).
-\begin{frame}{Esquemas: animaciones de eventos y de paso temporal}
-  \animdos{anim_eventos_nr0.png}{Eventos, $n_r = 0$}{enlace pendiente}
-          {anim_paso_temporal.png}{Paso temporal}{enlace pendiente}
+% Animaciones (generadas el 2026-11-12, seed 1, N = 500; detalle en
+% tp5-pedestrian-dynamics/AGENTS.md §9). Valores extremos de n_r, antes de analizarlo (pedido
+% 2026-11-12). Zoom de 18 m frente a la puerta, t entre 4 y 60 s, 600 cuadros (20 s de video) cada
+% una: un cuadro cada 233 eventos (n_r = 0) y cada 794 (n_r = 8), sin interpolar (devolución TP3);
+% en promedio 0.094 s simulados por cuadro en las dos (devolución TP4, D19). Colores por estado:
+% azul libre, negro recuperando, rojo en contacto. Fotogramas: t = 30 s.
+% Dicho en vivo: a los 60 s salieron 15 agentes con n_r = 0 y 116 con n_r = 8.
+% TODO: subir y poner los enlaces.
+\begin{frame}{Radios intermedios: animaciones con $n_r = 0$ y $n_r = 8$}
+  \animdos{anim_eventos_nr0.png}{$n_r = 0$}{enlace pendiente}
+          {anim_eventos_nr8.png}{$n_r = 8$}{enlace pendiente}
 \end{frame}
 
-% Pedido 2026-11-10: después de las animaciones de eventos, el tiempo de ejecución según n_r; sin
-% texto al costado (la leyenda de la figura ya nombra la recta de trazos; lo demás se dice en vivo).
+% Las tres de n_r van juntas, después de las animaciones de eventos (pedido 2026-11-12).
 % Dicho en vivo (N = 500): 9.5-9.7 s con n_r de 1 a 8, o sea que no depende de n_r; con n_r = 0,
 % 6.8 ± 0.2 s, pero solo evacuaron 7 de las 10 realizaciones (las otras 3 se cortaron con 2 agentes
 % trabados y no entran en el promedio). Paso temporal: 0.88 ± 0.03 s.
-% Las otras dos diapositivas de n_r (t_90 y caudal) siguen más abajo, después de la comparación de
-% esquemas: decidir si se traen acá para que el estudio de n_r quede junto.
 \begin{frame}{Radios intermedios: tiempo de ejecución vs $n_r$}
   \figura{campaign/eventos_ejecucion_vs_niveles.png}
 \end{frame}
 
-% TODO: decidir los dos R_h (propuesta: 0.5 m con L = 50 m, y uno con L = 300 m, donde el híbrido
-%   gana). Agentes coloreados por esquema: azul eventos, rojo paso temporal.
-\begin{frame}{Esquemas: animaciones del híbrido}
-  \animdos{anim_hibrido_1.png}{Híbrido, $R_h$ a definir}{enlace pendiente}
-          {anim_hibrido_2.png}{Híbrido, $R_h$ a definir}{enlace pendiente}
+% t_90 y no t_ev: con n_r = 0 no evacuaron 3 de las 10 realizaciones (quedan 2 agentes trabados
+% frente a la puerta: resultado válido según la cátedra).
+% Dicho en vivo (N = 500): 1510 ± 50 s con n_r = 0, 280 ± 3 s con 1, 227-229 s de 4 a 8, contra
+% 146.0 ± 1.4 s de paso temporal.
+\begin{frame}{Radios intermedios: $t_{90}$ vs $n_r$}
+  \figura{campaign/eventos_t90_vs_niveles.png}
+\end{frame}
+
+% Dicho en vivo (N = 500): 0.30, 1.64, 1.89, 1.98 y 2.00-2.02 1/s, contra 3.29 de paso temporal.
+\begin{frame}{Radios intermedios: caudal vs $n_r$}
+  \figura{campaign/eventos_caudal_vs_niveles.png}
+\end{frame}
+
+% --- Los tres esquemas (puntos a, b y c) -----------------------------------------------------
+
+% Paso temporal: el mismo zoom y los mismos colores por estado que las dos de eventos (un cuadro
+% cada 3 pasos, 0.1 s), para comparar el atasco. Híbrido (R_h = 0.5 m): habitación completa y
+% agentes coloreados por esquema, azul eventos y rojo paso temporal (un cuadro cada 12 eventos del
+% sistema). OJO al mostrarlas: el rojo no significa lo mismo en las dos. t entre 1 y 60 s, unos 600
+% cuadros (20 s de video) cada una. Fotogramas: t = 30 s y t = 15 s.
+% Dicho en vivo: a los 60 s salieron 177 agentes con paso temporal y 178 con el híbrido.
+% Sin usar: output/animaciones/hibrido_L300.mp4 (híbrido con L = 300 m, evacuación completa).
+% TODO: subir y poner los enlaces.
+\begin{frame}{Esquemas: animaciones de paso temporal y del híbrido}
+  \animdos{anim_paso_temporal.png}{Paso temporal}{enlace pendiente}
+          {anim_hibrido_L50.png}{Híbrido}{enlace pendiente}
 \end{frame}
 
 % Punto a: fracción de los N agentes en cada esquema vs t. Una corrida (seed 1), N = 500, L = 50 m.
@@ -669,13 +709,13 @@
 % 2026-11-10), para ver el comportamiento; los promedios van en las diapositivas siguientes.
 % Híbrido con R_h = 0.5 m (cae sobre paso temporal). N = 500. Dicho en vivo, tiempo de evacuación de
 % esa seed: 165.2 s (paso temporal), 253.3 s (eventos), 164.9 s (híbrido).
-\begin{frame}{Esquemas: agentes en la habitación vs tiempo}
+\begin{frame}{Esquemas: agentes en la habitación $N_{in}$ vs tiempo}
   \figura{campaign/poblacion_N500.png}
 \end{frame}
 
-% Dicho en vivo (N = 500): paso temporal 166.1 ± 1.4 s, eventos (n_r = 8) 255.9 ± 1.8 s, híbrido
-% (R_h = 0.5 m) 165.2 ± 1.0 s.
-\begin{frame}{Esquemas: tiempo de evacuación}
+% Barras (pedido 2026-11-12). Dicho en vivo (N = 500): paso temporal 166.1 ± 1.4 s, eventos
+% (n_r = 8) 255.9 ± 1.8 s, híbrido (R_h = 0.5 m) 165.2 ± 1.0 s.
+\begin{frame}{Esquemas: tiempo de evacuación $t_{ev}$}
   \figura{campaign/evacuacion_esquemas.png}
 \end{frame}
 
@@ -684,44 +724,42 @@
   \figura{campaign/ejecucion_esquemas.png}
 \end{frame}
 
-% --- Radios intermedios de eventos (estudio propio) -------------------------
-
-% t_90 y no t_ev: con n_r = 0 no evacuaron 3 de las 10 realizaciones (quedan 2 agentes trabados
-% frente a la puerta: resultado válido según la cátedra).
-% Dicho en vivo (N = 500): 1510 ± 50 s con n_r = 0, 280 ± 3 s con 1, 227-229 s de 4 a 8, contra
-% 146.0 ± 1.4 s de paso temporal.
-\begin{frame}{Radios intermedios: tiempo de salida del 90\,\% vs $n_r$}
-  \figura{campaign/eventos_t90_vs_niveles.png}
-\end{frame}
-
-% Dicho en vivo (N = 500): 0.30, 1.64, 1.89, 1.98 y 2.00-2.02 1/s, contra 3.29 de paso temporal.
-\begin{frame}{Radios intermedios: caudal vs $n_r$}
-  \figura{campaign/eventos_caudal_vs_niveles.png}
-\end{frame}
-
 % --- Radio del área del híbrido (punto c) -----------------------------------
 
 % Dicho en vivo (N = 500): con R_h = 0.1 m, 255.9 ± 1.8 s (las mismas corridas que eventos puro);
 % desde 0.2 m, 165.0-166.2 s. La transición es brusca: el primer par que pasa a paso temporal
 % arrastra a todo el atasco.
-\begin{frame}{Radio del área: tiempo de evacuación vs $R_h$}
-  \figuranota{campaign/hibrido_evacuacion_vs_rh_N500.png}{%
-    Punteado: $2\,\rmin$ y $2\,\rmax$.}
+% Valores característicos de R_h (antes en Implementación): por debajo de 2 r_min = 0.2 m nadie
+% puede entrar al área de otro (los cuerpos lo impiden) y la corrida es idéntica a eventos puro;
+% entre 2 r_min y 2 r_max + 2 v Δt = 0.6 m los choques aislados se resuelven por eventos y el atasco
+% por paso temporal; desde 0.6 m el pasaje llega siempre antes que el contacto y todos los choques
+% son por paso temporal; con R_h mayor que la habitación es paso temporal puro.
+\begin{frame}{Radio del área: tiempo de evacuación $t_{ev}$ vs $R_h$}
+  \figura{campaign/hibrido_evacuacion_vs_rh_N500.png}
+\end{frame}
+
+% Caudal vs R_h (pedido 2026-11-12), con las mismas corridas. Dicho en vivo (N = 500): con
+% R_h = 0.1 m, 2.00 ± 0.02 1/s (eventos: 2.00 ± 0.02); desde 0.2 m, 3.29-3.31 1/s, contra
+% 3.29 ± 0.04 1/s de paso temporal. Ningún R_h da un caudal distinto del de paso temporal: el
+% atasco lo resuelve siempre el paso temporal.
+\begin{frame}{Radio del área: caudal vs $R_h$}
+  \figura{campaign/hibrido_caudal_vs_rh_N500.png}
 \end{frame}
 
 % Dicho en vivo (N = 500, L = 50 m): 9.72 ± 0.20 s con R_h = 0.1 m (eventos: 9.7 ± 0.2 s);
 % 0.95-1.03 s desde 0.2 m, contra 0.88 ± 0.03 s de paso temporal.
 \begin{frame}{Radio del área: tiempo de ejecución vs $R_h$}
-  \figuranota{campaign/hibrido_ejecucion_vs_rh_N500.png}{%
-    Punteado: $2\,\rmin$ y $2\,\rmax$.}
+  \figura{campaign/hibrido_ejecucion_vs_rh_N500.png}
 \end{frame}
 
-% Estudio propio: N = 500 en habitaciones más grandes. Dicho en vivo: con L = 300 m el híbrido
+% Estudio propio: N = 500 en habitaciones más grandes. La leyenda solo tiene L; que las rectas de
+% trazos son paso temporal va al costado (pedido 2026-11-12). Cada recta lleva su banda de ± un
+% desvío, que casi no se ve: 0.02-0.03 s. Dicho en vivo: con L = 300 m el híbrido
 % tarda 0.45 ± 0.03 s contra 0.69 ± 0.02 s de paso temporal y le gana hasta R_h ≈ 4 m; con
 % L = 150 m, 0.71 contra 0.76 s y le gana hasta ≈ 1 m. Con R_h = 0.1 m (eventos puro): 9.7, 6.7 y
 % 3.0 s, porque con L grande los agentes llegan más espaciados y el atasco es más chico.
-\begin{frame}{Radio del área: tiempo de ejecución vs $R_h$ según $L$}
-  \figura{campaign/hibrido_ejecucion_vs_rh_por_L_N500.png}
+\begin{frame}{Híbrido: tiempo de ejecución vs $R_h$ según $L$}
+  \figuranota{campaign/hibrido_ejecucion_vs_rh_por_L_N500.png}{Trazos: paso temporal}
 \end{frame}
 
 % --- Número de agentes (punto d) ---------------------------------------------
@@ -734,8 +772,18 @@
   \figura{campaign/ejecucion_vs_N_L50.png}
 \end{frame}
 
-% Densidad inicial 0.2 agentes/m² (la del sistema base): L = 22.4 a 70.7 m.
-\begin{frame}{Número de agentes: tiempo de ejecución a densidad constante}
+% Densidad inicial 0.2 agentes/m² (la del sistema base): L = 22.4 a 70.7 m, en el eje de arriba.
+% Dicho en vivo: da casi lo mismo que con L fijo; la diferencia está en N chico (eventos, N = 100:
+% 0.30 s contra 0.21 s) y desaparece al crecer N (N = 1000: 3.71, 50.3 y 3.60 s contra 3.80, 51.5
+% y 4.0 s). Análisis (calculado sobre la campaña, sin figura propia: decirlo como interpretación o
+% agregar la figura): la evacuación la limita la puerta y no la llegada. El agente más lejano
+% llega en 1.118 L / (1.5 m/s) = 0.745 L s/m (17 a 53 s en este barrido) y la puerta tarda N/Q en
+% vaciar la habitación (N = 1000: 311 s con L = 50 m y 313 s con L = 70.7 m, paso temporal). La
+% densidad del atasco la fija r_min, no la densidad inicial, así que el atasco es el mismo.
+% Fracción de pasos-agente del híbrido en paso temporal: N = 1000, 0.91 (L = 50 m) y 0.85
+% (70.7 m); N = 100, 0.33 (L = 50 m) y 0.69 (22.4 m). El híbrido le gana a paso temporal recién
+% con L = 300 m (N = 500: llegada hasta 224 s, fracción 0.12).
+\begin{frame}{Número de agentes: tiempo de ejecución con $N/L^2 = 0.2\uni{m^{-2}}$}
   \figura{campaign/ejecucion_vs_N_densidad_constante.png}
 \end{frame}
 
@@ -744,19 +792,21 @@
 % Solo lo que está en las figuras de Resultados. Cuantificar.
 % ==========================================================================
 
-% Boceto: redactar con el grupo. Respaldo: tp5-pedestrian-dynamics/AGENTS.md §6.5 y §6.6.
+% Redacción del grupo (2026-11-12), tal cual, sin números en la diapositiva. Números para decir en
+% vivo (N = 500 salvo donde se aclara; respaldo: tp5-pedestrian-dynamics/AGENTS.md §6.5, §6.6, §9):
+%   1. Eventos: evacuación 256 ± 2 s contra 166.1 ± 1.4 s de paso temporal, caudal 2.00 contra
+%      3.29 1/s y 11 veces más tiempo de ejecución; desde n_r = 4, t_90 no cambia.
+%   2. Híbrido contra paso temporal: 8 % más con L = 50 m, 7 % menos con 150 m, 34 % menos con
+%      300 m (R_h = 0.5 m).
+%   3. Densidad constante: N = 1000, 3.60 ± 0.11 s (híbrido) y 3.71 ± 0.05 s (paso temporal); con
+%      N = 100 el híbrido tarda 37 % más.
+%   Si preguntan por el mejor R_h: evacuación y caudal son los de paso temporal para todo
+%   R_h >= 0.2 m, así que R_h solo cambia el costo; el mínimo es una meseta entre 0.2 y 1 m.
 \begin{frame}{Conclusiones}
-  \begin{itemize}\setlength{\itemsep}{0.8em}
-    \item Con $N = 500$, eventos evacúa en $256 \pm 2\uni{s}$ contra $166.1 \pm 1.4\uni{s}$ de
-      paso temporal, y tarda 11 veces más en ejecutarse.
-    \item En eventos, pasar de $n_r = 0$ a $1$ baja $\langle t_{90}\rangle$ de $1510$ a
-      $280\uni{s}$; desde $n_r = 4$ no cambia, y no alcanza a paso temporal.
-    \item El híbrido reproduce a eventos con $R_h < 2\,\rmin$ y a paso temporal desde
-      $R_h = 2\,\rmin$: la transición es brusca.
-    \item Con $L = 50\uni{m}$ el híbrido tarda 8\,\% más que paso temporal; con $L = 300\uni{m}$,
-      35\,\% menos.
-    \item El tiempo de ejecución crece como $N^{2.4}$ en eventos y como $N^{2}$ en paso temporal
-      y en el híbrido para $N \ge 500$.
+  \begin{itemize}\setlength{\itemsep}{1.2em}
+    \item Eventos no es un buen esquema para este tipo de simulaciones.
+    \item A mismo número de agentes, el esquema híbrido mejora sus resultados con mayor espacio.
+    \item A densidad constante, híbrido y paso temporal tienen tiempos de ejecución similares.
   \end{itemize}
 \end{frame}
 
@@ -765,6 +815,39 @@
   \vfill
   {\Huge Muchas gracias}
   \vfill
+\end{frame}
+
+% Diapositiva extra, al final, como en el TP4. Agentes y modelos: copiados del TP4, VERIFICAR.
+% Usos y decisiones corregidas: lista del grupo (2026-11-12).
+\begin{frame}{Uso de agentes de IA}
+  \small
+  \begin{columns}[T]
+    \begin{column}{0.43\textwidth}
+      \begin{itemize}\setlength{\itemsep}{0.5em}
+        \item Agentes: Claude Code y Oh My Pi.
+        \item Modelos: Claude Opus 5.5 y Claude Sonnet 5.5.
+        \item Uso:
+          \begin{itemize}\setlength{\itemsep}{0.2em}
+            \item código del motor de simulación;
+            \item scripts de ejecución, análisis y gráficos;
+            \item código de LaTeX de la presentación;
+            \item discusión de conceptos y alternativas.
+          \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.55\textwidth}
+      \textbf{Decisiones de la IA que corregimos}
+      \begin{itemize}\setlength{\itemsep}{0.5em}
+        \item Considerar el radio como un radio físico, en vez de un espacio personal con radio
+          físico $\rmin$.
+        \item Realizar el escape por paso temporal en eventos, en vez de considerarlo un evento.
+        \item No permitir parametrizar la cantidad de radios intermedios de eventos.
+        \item En el híbrido, realizar la recuperación por eventos, en vez de seguir en paso
+          temporal y retomar eventos con $\rmax$.
+        \item Interpolar tiempos al generar las animaciones.
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \end{document}

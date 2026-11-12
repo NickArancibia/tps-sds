@@ -648,9 +648,9 @@ Datos relevantes:
   próximos eventos en un heap (`O(log N)` por cambio), celdas como eventos de cruce para buscar
   compañeros de choque; costo total `O(N log N)`.
 
-## 9. Presentación (boceto del 2026-11-10)
+## 9. Presentación (boceto del 2026-11-10, Implementación rehecha el 2026-11-12)
 
-`../presentaciones/tp5/tp5.tex` (compilar con `latexmk -pdf tp5.tex`; 34 páginas). Mismo formato que
+`../presentaciones/tp5/tp5.tex` (compilar con `latexmk -pdf tp5.tex`; 37 páginas). Mismo formato que
 TP3 y TP4: poco texto, una figura por diapositiva de Resultados, lo demás se dice en vivo (los
 números para decir están en los comentarios del `.tex`, arriba de cada diapositiva).
 
@@ -661,23 +661,100 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   (agente en escape, en cada radio intermedio y libre, para `n_r` = 0 y 2), no un gráfico (pedido
   del grupo, 2026-11-10). Todos los esquemas son TikZ dentro del `.tex`.
 - Estructura: Introducción (sistema + 2 de modelo, con el contacto contra paredes) →
-  Implementación (8: paso temporal; eventos: estados, instante del contacto, recuperación; híbrido:
-  criterio, sincronización, motor, valores de `R_h`) → Simulaciones (sistema, observables) →
-  Resultados (esquemas; radios intermedios; radio del área; número de agentes) → Conclusiones.
+  Implementación (7: paso temporal; eventos: motor, estados, recuperación; híbrido: criterio,
+  sincronización, motor) → Simulaciones (sistema; observables: evacuación; observables: esquemas y
+  tiempo de ejecución) →
+  Resultados (radios intermedios; esquemas; radio del área; número de agentes) → Conclusiones.
+- Implementación, pedidos del grupo (2026-11-12, dos rondas): los esquemas tenían demasiadas letras
+  y no se podían explicar usándolos de soporte. Los tres motores van como diagrama de flujo con el
+  mismo formato; el de eventos reemplazó a "instante del contacto" y no lleva la ecuación de `t_c`
+  (se dice en vivo). Su recuadro "Próximo evento vigente" es la invalidación por contadores del TP3:
+  el evento viejo se descarta al sacarlo de la cola, no antes. La recuperación se dibuja sobre un
+  eje de tiempo con los instantes debajo (contacto, `Δt`, `2Δt`, `9Δt`) y sin duraciones en los
+  rótulos: dura `8Δt` para todo `n_r` y `n_r` es cuántos radios recorre. El criterio de pasaje
+  es un diagrama de dos estados dibujados con una sola condición por flecha (`|x_i − x_j| ≤ R_h`);
+  las paredes a `R_h/2` y `max(R_h, 2 r_max)` se dicen en vivo. La de sincronización son tres
+  dibujos de un mismo paso (paso, evento de entrada al área, paso siguiente) sobre un eje de tiempo;
+  la distancia en el pasaje (`≥ 2 r_max − r_min > 2 r_min`) se sacó y se dice si preguntan. Se sacó
+  "valores de `R_h` y contactos": los valores característicos de `R_h` se dicen sobre la figura de
+  tiempo de evacuación vs `R_h`. **Riesgo declarado al grupo**: el enunciado pide "describir
+  matemáticamente" el criterio, la convivencia y la colisión por eventos, y en Implementación quedó
+  una sola condición (la del criterio de pasaje) además de la fórmula de los radios.
 - El cuerpo impenetrable (agregado propio) no tiene diapositiva (se sacó por pedido del grupo):
   queda como recuadro en el diagrama de paso temporal y hay que declararlo en vivo ahí. La de
   estados de eventos lleva solo el diagrama; la lista de eventos se dice en vivo.
 - Todas las figuras son del sistema base, N = 500 (pedido del grupo, 2026-11-10). La campaña también
   midió N = 200 (alternativa opcional de la cátedra): da las mismas conclusiones y
-  `plot_campaign.py` ya no lo grafica. Con una sola serie por figura, las de esquemas no llevan
-  leyenda y las de `n_r` nombran en la leyenda a eventos y a la recta de paso temporal, sin texto
-  al costado.
-- En Resultados, después de las animaciones de eventos y paso temporal va "Radios intermedios:
-  tiempo de ejecución vs `n_r`" (pedido del grupo); las otras dos de `n_r` (t₉₀ y caudal) quedaron
-  después de la comparación de esquemas: decidir si se juntan.
+  `plot_campaign.py` ya no lo grafica.
+- Resultados, pedidos del grupo (2026-11-12): sin texto al costado de las figuras. `N`, `L`, `R_h` y
+  `n_r` de cada figura son los valores base, que están en la diapositiva "Sistema" de Simulaciones
+  (`R_h` = 0.5 m, `n_r` = 8, `N` = 500, `L` = 50 m; el híbrido de la campaña también usa `n_r` = 8).
+  Única excepción: "Trazos: paso temporal" en la de `R_h` según `L`. Los ejes llevan solo la
+  notación de Observables (`t`, `N_in`, `N_ev/N`, `N_pt/N`, `⟨t_ev⟩`, `⟨t_90⟩`, `⟨Q⟩`, `R_h`, `n_r`,
+  `N`, `L`), salvo "Tiempo de ejecución (s)", que no tiene símbolo; **riesgo declarado al grupo**:
+  la guía de la cátedra prefiere los ejes en palabras (`../AGENTS.md` §3). Las comparaciones entre
+  esquemas son barras con su desvío, en escala lineal. Las figuras vs `R_h` no llevan las rectas
+  punteadas en `2 r_min` y `2 r_max`. La de `R_h` según `L` tiene una sola leyenda (`L`) y la banda
+  de ± un desvío en cada recta de paso temporal. La de densidad constante lleva la densidad en el
+  título y arriba un segundo eje con `L`. Las tres de `n_r` van juntas después de las animaciones de
+  eventos y paso temporal. El estudio de `R_h` tiene también "caudal vs `R_h`"
+  (`hibrido_caudal_vs_rh_N500.png`), entre la de evacuación y la de ejecución.
+- Observables en dos diapositivas, como en el TP3 y el TP4: realizaciones en cada observable, sin el
+  renglón de las barras de error (desvío estándar entre realizaciones: se dice en vivo); `N_ev(t)` y
+  `N_pt(t)` definen la fracción de agentes por esquema, con el esquema de la introducción; el caudal
+  usa `t_a` y `t_b` (cruces del 20 % y del 80 %), no `t_20` y `t_80`, para no confundirlos con
+  `t_90`, que se mide sobre los retiros.
+- Densidad constante contra `L` fijo (análisis del 2026-11-12, sobre `output/campaign`, sin figura
+  propia): dan casi lo mismo porque la evacuación la limita la puerta y no la llegada. El agente más
+  lejano llega en `0.745 L` s/m (17 a 53 s con `L` de 22 a 71 m) y la evacuación tarda `N/Q`
+  (N = 1000, paso temporal: 311 s con L = 50 m y 313 s con 70.7 m). Fracción de pasos-agente del
+  híbrido en paso temporal: N = 1000, 0.91 (L = 50 m) y 0.85 (70.7 m); N = 700, 0.86 y 0.83;
+  N = 200, 0.57 y 0.74; N = 100, 0.33 (L = 50 m) y 0.69 (22.4 m). Las variantes difieren en N chico
+  (eventos, N = 100: 0.21 s con L = 50 m y 0.30 s con 22.4 m) y coinciden al crecer N. Con N = 500 y
+  L = 300 m (llegada hasta 224 s) la fracción baja a 0.12 y el híbrido le gana a paso temporal.
+- Mejor `R_h` (análisis del 2026-11-12 sobre `output/campaign`, N = 500): para todo `R_h` ≥ 0.2 m
+  la evacuación y el caudal son los de paso temporal en los tres `L`, así que `R_h` solo cambia el
+  costo y no hay compromiso con el caudal. Tiempo de ejecución contra paso temporal: L = 50 m, +8 %
+  con 0.5 m (mínimo) y +10 % a +17 % con el resto; L = 150 m, −5 % a −8 % con 0.2–1 m y +1 % a
+  +23 % desde 1.5 m; L = 300 m, −31 % a −35 % con 0.2–1 m, −13 % con 3 m y +38 % con 10 m. Con
+  N = 200 y L = 50 m, +19 % (0.75 m) a +30 %. El mínimo es una meseta entre 0.2 y 1 m; 0.5 m está
+  dentro del error del mejor en todos los casos.
+- Exploratorio, fuera de la campaña (2026-11-12, 5 seeds, `--t-max 1000`, con la máquina en uso y
+  sin guardar las corridas): N = 1000 con `R_h` = 0.2, 0.5, 1 y 2 m. L = 50 m: 3.83, 3.95, 4.01 y
+  3.90 s contra 3.72 ± 0.05 s de paso temporal; L = 70.71 m: 3.62, 3.52, 3.62 y 3.90 s contra
+  3.63 ± 0.04 s. Ningún `R_h` mejora a 0.5 m fuera del error; hubo corridas con atascos (sin evacuar
+  o con evacuación hasta 100 s más larga) en casi todas las configuraciones.
+- Conclusiones: redacción del grupo (2026-11-12), tal cual y sin números en la diapositiva (pedido
+  explícito; una versión cuantificada se descartó): "Eventos no es un buen esquema para este tipo
+  de simulaciones"; "A mismo número de agentes, el esquema híbrido mejora sus resultados con mayor
+  espacio"; "A densidad constante, híbrido y paso temporal tienen tiempos de ejecución similares".
+  Los números que respaldan cada una están en el comentario del `.tex`, para decir en vivo.
 - Devolución del TP4 aplicada: el avance en el tiempo va en Implementación y no en Modelo; el Modelo
   incluye el contacto con paredes; flechas desde el centro; sin leyendas de un solo elemento.
-- Pendiente (`grep -n TODO tp5.tex`): las cuatro animaciones (propuesta del grupo: eventos con
-  `n_r` = 0, paso temporal y dos del híbrido), con la misma tasa de cuadros en las que se comparan;
-  justificar la ventana del caudal; ensayar los 13 minutos y recortar Implementación si no entra;
-  redactar las conclusiones con el grupo.
+- Animaciones (2026-11-12; seed 1, N = 500; corridas y videos en `output/animaciones/`, fotogramas
+  en `../presentaciones/tp5/figuras/`). Unos 600 cuadros a 30 cuadros/s (20 s de video) cada una,
+  estados guardados desde t = 1 s (los primeros 0.3 s son miles de eventos de recuperación desde
+  `r_min` sin movimiento). Sin interpolar: en eventos y en el híbrido cada cuadro es un estado
+  guardado cada `--save-every` eventos, así que el tiempo simulado por cuadro no es uniforme.
+
+  | Video | Corrida | Vista | Simulado | Por cuadro (promedio) |
+  | :--- | :--- | :--- | :--- | ---: |
+  | `paso_temporal.mp4` | `tsdmd --save-every 3 --save-t1 60 --t-max 60` | `--zoom 25 8 9` | 1–60 s | 0.100 s |
+  | `eventos_nr0.mp4` | `edmd --levels 0 --save-every 233 --save-t1 60 --t-max 60` | `--zoom 25 8 9` | 3.8–60 s | 0.094 s |
+  | `eventos_nr8.mp4` | `edmd --levels 8 --save-every 794 --save-t1 60 --t-max 60` | `--zoom 25 8 9` | 3.7–60 s | 0.094 s |
+  | `hibrido_L50.mp4` | `hybrid --rh 0.5 --save-every 12 --save-t1 60 --t-max 60` | habitación | 1–60 s | 0.098 s |
+  | `hibrido_L300.mp4` (sin usar) | `hybrid --rh 0.5 --L 300 --save-every 19` | habitación | 3–230 s | 0.375 s |
+
+  Todas con `--N 500 --seed 1 --save-t0 1` y `animate_evacuation.py <corrida> [vista] --fps 30`.
+  A los 60 s quedan sin retirarse 485 agentes con eventos y `n_r` = 0, 384 con `n_r` = 8, 323 con
+  paso temporal y 322 con el híbrido. En la presentación (pedido del grupo, 2026-11-12): las dos de
+  eventos (`n_r` = 0 y 8) antes del estudio de `n_r`, y paso temporal junto al híbrido de L = 50 m
+  antes de la comparación de esquemas. Paso temporal usa el mismo zoom y los mismos colores por
+  estado que las de eventos; el híbrido va coloreado por esquema, así que el rojo no significa lo
+  mismo en las dos de esa diapositiva. Fotogramas: t = 30 s (eventos y paso temporal) y 15 s
+  (híbrido).
+- Diapositiva "Uso de agentes de IA" al final, como en el TP4: agentes y modelos copiados del TP4
+  (verificar), usos (motor, scripts, LaTeX, discusión de conceptos y alternativas) y las decisiones
+  de la IA que el grupo corrigió (lista del grupo, 2026-11-12).
+- Pendiente (`grep -n TODO tp5.tex`): subir las cuatro animaciones y poner los enlaces; justificar
+  la ventana del caudal; ensayar los 13 minutos y recortar Implementación si no entra.

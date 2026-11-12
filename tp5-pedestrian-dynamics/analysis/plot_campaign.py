@@ -36,7 +36,6 @@ import numpy as np
 from common import TP_ROOT, decade_ticks, format_pm, save_figure, use_style, value_ticks
 
 import matplotlib.pyplot as plt  # noqa: E402  (después de common: backend Agg)
-from matplotlib.lines import Line2D  # noqa: E402
 
 CAMPAIGN = TP_ROOT / "output" / "campaign"
 GROUP = "campaign"
@@ -56,10 +55,11 @@ SCHEMES = (
     (f"hybrid_rh{RH_BEST:g}", "híbrido", "^", "black"),
 )
 SCALARS = {
-    # clave: (rótulo del eje, nombre de archivo)
-    "evac": ("Tiempo de evacuación (s)", "evacuacion"),
-    "t90": ("Tiempo de salida del 90 % (s)", "t90"),
-    "q": ("Caudal (1/s)", "caudal"),
+    # clave: (rótulo del eje, nombre de archivo). Ejes con la notación de la diapositiva de Observables
+    # y no en palabras (pedido del grupo, 2026-11-12); el tiempo de ejecución no tiene símbolo.
+    "evac": (r"$\langle t_{ev} \rangle$ (s)", "evacuacion"),
+    "t90": (r"$\langle t_{90} \rangle$ (s)", "t90"),
+    "q": (r"$\langle Q \rangle$ (1/s)", "caudal"),
     "loop": ("Tiempo de ejecución (s)", "ejecucion"),
 }
 
@@ -137,13 +137,11 @@ def log_limits(ax, values) -> None:
 
 
 def rh_axis(ax, values=RH) -> None:
-    """Eje R_h; rectas punteadas en 2 r_min (por debajo, eventos puro) y en 2 r_max."""
+    """Eje R_h, logarítmico y rotulado en los valores medidos."""
     ax.set_xscale("log")
     ax.set_xlim(values[0] / 1.15, values[-1] * 1.15)
     value_ticks(ax.xaxis, values)
-    for mark in (2 * R_MIN, 2 * R_MAX):
-        ax.axvline(mark, color="gray", ls=":", lw=0.9, zorder=0)
-    ax.set_xlabel("Radio del área (m)")
+    ax.set_xlabel("$R_h$ (m)")
 
 
 # ------------------------------------------------------------------------------- esquemas (b, c)
@@ -163,8 +161,8 @@ def population(n: int, seed: int = 1) -> None:
         ax.step(t, inside, where="post", color=color, lw=3.0 if thick else 1.0,
                 alpha=0.4 if thick else 1.0, zorder=1 if thick else 2, label=label)
         print(f"    {label}: evacuación {run.scalar('evac'):.1f} s, último cruce de puerta {run.door[-1]:.1f} s")
-    ax.set_xlabel("Tiempo (s)")
-    ax.set_ylabel("Agentes en la habitación")
+    ax.set_xlabel("$t$ (s)")
+    ax.set_ylabel("$N_{in}$")
     ax.set_xlim(left=0)
     ax.set_ylim(0, n * 1.02)
     legend = ax.legend(loc="upper right")
@@ -174,26 +172,25 @@ def population(n: int, seed: int = 1) -> None:
 
 
 def schemes(key: str, n: int) -> None:
-    """Escalar de cada esquema puro y del híbrido: un punto por esquema, con su color; sin leyenda."""
+    """Escalar de cada esquema puro y del híbrido: una barra por esquema, con su color y su desvío; sin
+    leyenda. Escala lineal desde 0 (una barra no tiene sentido sobre un eje logarítmico)."""
     ylabel, name = SCALARS[key]
     print(f"\n{ylabel} por esquema, N = {n}, L = 50 m (híbrido con R_h = {RH_BEST:g} m)")
     fig, ax = plt.subplots()
-    plotted = []
-    for k, (config, label, marker, color) in enumerate(SCHEMES):
+    tops = []
+    for k, (config, label, _, color) in enumerate(SCHEMES):
         mean, std = row(label, n, 50, config, key)
         if np.isfinite(mean):
-            ax.errorbar([k], [mean], yerr=[std], fmt=marker, color=color, capsize=6, elinewidth=1.3, ms=6)
-            plotted += [mean - std, mean + std]
-    if not plotted:
+            ax.bar(k, mean, width=0.55, color=color, alpha=0.65)
+            ax.errorbar(k, mean, yerr=std, fmt="none", ecolor="black", capsize=6, elinewidth=1.3)
+            tops.append(mean + std)
+    if not tops:
         plt.close(fig)
         return
     ax.set_xticks(range(len(SCHEMES)), [label for _, label, _, _ in SCHEMES])
     ax.set_xlim(-0.5, len(SCHEMES) - 0.5)
     ax.set_ylabel(ylabel)
-    if key == "loop":
-        log_limits(ax, plotted)
-    else:
-        ax.set_ylim(0, 1.1 * max(plotted))
+    ax.set_ylim(0, 1.1 * max(tops))
     save_figure(fig, GROUP, f"{name}_esquemas.png")
 
 
@@ -238,7 +235,7 @@ def scheme_population(n: int, length: int, rh: float, seed: int = 1) -> None:
     fig, ax = plt.subplots()
     ax.plot(t, ed / n, color="tab:blue", lw=1.0, label="eventos")
     ax.plot(t, ts / n, color="tab:red", lw=1.0, label="paso temporal")
-    ax.set_xlabel("Tiempo (s)")
+    ax.set_xlabel("$t$ (s)")
     ax.set_ylabel("Fracción de agentes")
     ax.set_xlim(left=0)
     ax.set_ylim(0, 1.03)
@@ -273,8 +270,8 @@ def scheme_fraction(n: int, seed: int = 1) -> None:
     if not drawn:
         plt.close(fig)
         return
-    ax.set_xlabel("Tiempo (s)")
-    ax.set_ylabel("Fracción de agentes en paso temporal")
+    ax.set_xlabel("$t$ (s)")
+    ax.set_ylabel("$N_{pt}/(N_{ev} + N_{pt})$")
     ax.set_xlim(left=0)
     ax.set_ylim(0, 1.03)
     ax.legend(title="$R_h$ (m)", loc="center")
@@ -282,9 +279,10 @@ def scheme_fraction(n: int, seed: int = 1) -> None:
 
 
 def room_size(n: int, zoom: bool = False) -> None:
-    """Tiempo de ejecución del híbrido vs R_h para varios L; la recta de trazos del mismo color es el
-    paso temporal en esa habitación (no depende de R_h). Con todos los R_h, en escala logarítmica: el
-    punto con R_h < 2 r_min es eventos puro. `zoom`: escala lineal y solo R_h ≥ 2 r_min."""
+    """Tiempo de ejecución del híbrido vs R_h para varios L; la recta de trazos del mismo color, con su
+    banda de ± un desvío, es el paso temporal en esa habitación (no depende de R_h). La leyenda solo
+    distingue L: qué es la recta de trazos va al costado de la figura. Con todos los R_h, en escala
+    logarítmica: el punto con R_h < 2 r_min es eventos puro. `zoom`: escala lineal y solo R_h ≥ 2 r_min."""
     values = RH_STEPPED if zoom else RH
     print(f"\nTiempo de ejecución (s) del híbrido vs R_h para varios L, N = {n}" + (" (R_h ≥ 2 r_min)" if zoom else ""))
     lengths = (50, 150, 300)
@@ -302,27 +300,22 @@ def room_size(n: int, zoom: bool = False) -> None:
         error = ratio * np.hypot(std / mean, ref_std / ref)  # propagación de los dos desvíos
         for rh, value, err in zip(values, ratio, error):
             print(f"      R_h = {rh:g} m: híbrido / paso temporal = {format_pm(value, err)}")
+        ax.axhspan(ref - ref_std, ref + ref_std, color=color, alpha=0.18, lw=0, zorder=0)
         ax.axhline(ref, color=color, ls="--", zorder=1)
         drawn.append(ax.errorbar(values, mean, yerr=std, fmt=marker + "-", color=color, capsize=4,
                                  elinewidth=1.3, zorder=2, label=str(length)))
-        plotted += list(mean - std) + list(mean + std) + [ref]
+        plotted += list(mean - std) + list(mean + std) + [ref - ref_std, ref + ref_std]
     if not drawn:
         plt.close(fig)
         return
     rh_axis(ax, values)
     ax.set_ylabel("Tiempo de ejecución (s)")
-    styles = [Line2D([], [], color="gray", marker="o", ls="-", label="híbrido"),
-              Line2D([], [], color="gray", ls="--", label="paso temporal")]
     if zoom:
         ax.set_ylim(bottom=0)
-        by_length = ax.legend(handles=drawn, title="$L$ (m)", loc="lower left", ncol=len(drawn), columnspacing=1.0)
-        ax.add_artist(by_length)
-        ax.legend(handles=styles, loc="lower right")
-    else:  # los puntos de eventos puro quedan arriba a la izquierda: leyendas arriba a la derecha
+        ax.legend(handles=drawn, title="$L$ (m)", loc="lower left", ncol=len(drawn), columnspacing=1.0)
+    else:  # los puntos de eventos puro quedan arriba a la izquierda: leyenda arriba a la derecha
         log_limits(ax, plotted)
-        by_length = ax.legend(handles=drawn, title="$L$ (m)", loc="upper right", ncol=len(drawn), columnspacing=1.0)
-        ax.add_artist(by_length)
-        ax.legend(handles=styles, loc="upper right", bbox_to_anchor=(1.0, 0.78))
+        ax.legend(handles=drawn, title="$L$ (m)", loc="upper right", ncol=len(drawn), columnspacing=1.0)
     save_figure(fig, GROUP, f"hibrido_ejecucion_vs_rh_por_L_N{n}{'_zoom' if zoom else ''}.png")
 
 
@@ -346,7 +339,7 @@ def edmd_levels(key: str, n: int) -> None:
     ax.errorbar(LEVELS, mean, yerr=std, fmt="s-", color="tab:blue", capsize=4, elinewidth=1.3, label="eventos",
                 zorder=3)
     ax.set_xticks(LEVELS)
-    ax.set_xlabel("Radios intermedios de la recuperación")
+    ax.set_xlabel("$n_r$")
     ax.set_ylabel(ylabel)
     if key in ("t90", "evac", "loop"):
         log_limits(ax, plotted)
@@ -359,7 +352,8 @@ def edmd_levels(key: str, n: int) -> None:
 # ------------------------------------------------------------------------- escalamiento con N (d)
 
 def scaling(constant_density: bool) -> None:
-    """Tiempo de ejecución vs N en log-log; por stdout, el exponente local entre N consecutivos."""
+    """Tiempo de ejecución vs N en log-log; por stdout, el exponente local entre N consecutivos. A
+    densidad constante, el eje de arriba da el lado L de la habitación que corresponde a cada N."""
     variant = "densidad inicial constante, L = 50 m √(N/500)" if constant_density else "L = 50 m"
     print(f"\nTiempo de ejecución (s) vs N, {variant} (híbrido con R_h = {RH_BEST:g} m)")
     fig, ax = plt.subplots()
@@ -389,7 +383,14 @@ def scaling(constant_density: bool) -> None:
     ax.set_xlim(SCALING_N[0] / 1.2, SCALING_N[-1] * 1.2)
     value_ticks(ax.xaxis, SCALING_N)
     log_limits(ax, plotted)
-    ax.set_xlabel("Número de agentes")
+    ax.set_xlabel("$N$")
+    if constant_density:
+        top = ax.twiny()
+        top.set_xscale("log")
+        top.set_xlim(ax.get_xlim())
+        value_ticks(top.xaxis, SCALING_N)
+        top.set_xticklabels([f"{50 * math.sqrt(n / 500):.0f}" for n in SCALING_N])
+        top.set_xlabel("$L$ (m)")
     ax.set_ylabel("Tiempo de ejecución (s)")
     ax.legend(loc="best")
     save_figure(fig, GROUP, f"ejecucion_vs_N_{'densidad_constante' if constant_density else 'L50'}.png")
