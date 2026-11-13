@@ -216,8 +216,10 @@ Parámetros: `r_min = 0.10 m`, `r_max = 0.25 m` y `v_dmax = 1.5 m/s` (enunciado)
 
 ### Abiertas
 
-- Punto (d) medido (sección 6.6). Falta decidir cómo se informan los atascos de N = 1000 (3 de 40
-  corridas de TSDMD e híbrido no evacuaron; se excluyen del promedio del tiempo de ejecución).
+- Punto (d) medido (sección 6.6). Los atascos se informan con el símbolo vacío (sección 9,
+  2026-11-13): 3 de 40 corridas de TSDMD e híbrido con N = 1000 no evacuaron y se excluyen del
+  promedio del tiempo de ejecución. Los atascos temporales del híbrido (N = 1000, L = 50 m, seeds
+  5 y 6) evacuaron, así que el punto va lleno: se dicen en vivo.
 - Con qué sistema se muestra el barrido de `R_h` del punto (c): con N = 500 y L = 50 m el híbrido no
   le gana a TSDMD para ningún `R_h` (sección 6.4).
 - El tiempo de ejecución se mide con una JVM por corrida (incluye el calentamiento del JIT); no hay
@@ -592,6 +594,80 @@ realizaciones que evacuaron. Tablas completas por stdout de `analysis/plot_campa
   y N = 200, seed 7 (quedan 2).
 
 
+### 6.7 N menores que 100 y caudal vs N (2026-11-13)
+
+`SCALING_N` suma N = 10, 25, 50 y 75 (`run_campaign.py --studies scaling`, 10 seeds, tres esquemas,
+L = 50 m y densidad constante: 240 corridas, todas evacuaron). Es otra sesión de medición que la de
+6.6: las corridas de N = 100 y 500 (L = 50 m, seeds 1–5) repetidas ese día dieron la misma
+evacuación y tardaron entre 0 % y 14 % más (promedio ~10 %), sin diferencia entre esquemas.
+
+| N (L = 50 m) | Ejecución TSDMD (s) | Ejecución EDMD (s) | Ejecución híbrido (s) | Caudal TSDMD (1/s) | Caudal EDMD (1/s) | Caudal híbrido (1/s) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.026 ± 0.003 | 0.0234 ± 0.0019 | 0.042 ± 0.003 | 0.39 ± 0.11 | 0.40 ± 0.11 | 0.39 ± 0.11 |
+| 25 | 0.035 ± 0.003 | 0.030 ± 0.003 | 0.047 ± 0.004 | 0.97 ± 0.14 | 0.98 ± 0.14 | 0.97 ± 0.14 |
+| 50 | 0.048 ± 0.006 | 0.052 ± 0.008 | 0.059 ± 0.003 | 1.88 ± 0.15 | 1.72 ± 0.12 | 1.87 ± 0.20 |
+| 75 | 0.063 ± 0.008 | 0.101 ± 0.010 | 0.078 ± 0.006 | 2.32 ± 0.09 | 1.83 ± 0.05 | 2.29 ± 0.09 |
+| 100 | 0.079 ± 0.006 | 0.21 ± 0.02 | 0.101 ± 0.006 | 2.49 ± 0.06 | 1.88 ± 0.08 | 2.47 ± 0.06 |
+
+- La hipótesis del grupo (con menos densidad el híbrido rinde mejor, como con L = 150 y 300 m) no
+  se ve al bajar N: el híbrido es el más lento hasta N = 50 (1.6 veces TSDMD con N = 10, 1.2 con
+  N = 50), aunque solo el 4 % de sus pasos-agente son de paso temporal con N = 10 (7 % con 25, 15 %
+  con 50, 25 % con 75). EDMD es el más rápido hasta N = 25 y empata con TSDMD en N = 50.
+- **Límite de la medición**: por debajo de ~0.05 s las tres curvas se aplanan (exponente local
+  0.1–0.3 entre N = 10 y 25). Cada corrida es una JVM nueva, así que ahí se mide sobre todo el costo
+  fijo de arranque (JIT), no el costo por agente. Para comparar esquemas con N chico haría falta un
+  modo de medición con la JVM ya caliente (no existe; ver "Abiertas"). Verificado en 6.8.
+- Densidad constante con N chico (L = 7.07 a 19.36 m): N = 10, 0.0207 ± 0.0015 s (TSDMD),
+  0.025 ± 0.003 s (EDMD) y 0.038 ± 0.003 s (híbrido); N = 75, 0.060, 0.18 y 0.088 s.
+- Caudal vs N (`caudal_vs_N_L50.png`): hasta N = 25 los tres esquemas coinciden (no hay atasco: el
+  caudal lo fija la llegada). EDMD se separa desde N = 50 y satura en 2.0 1/s desde N = 200; TSDMD
+  sigue subiendo: 2.89 (200), 3.10 (300), 3.29 (500), 3.37 (700) y 3.39 ± 0.03 1/s (1000, 9 de 10).
+  El híbrido cae sobre TSDMD hasta N = 700. **Valor alejado**: híbrido con N = 1000, 3.1 ± 0.6 1/s,
+  por los atascos temporales de las seeds 5 y 6 (2.22 y 1.55 1/s; mediana 3.36). No es una
+  diferencia entre esquemas: las otras 8 dan 3.37 ± 0.04 1/s. En esas dos la puerta quedó sin
+  cruces 95 s (desde t = 116.7 s, con ~620 agentes adentro) y 211 s (desde t = 217.4 s, ~270
+  agentes), con todos los agentes en paso temporal (a lo sumo 2 en eventos). TSDMD también se
+  atascó (seed 5, quedan 927), pero sin destrabarse: no tiene caudal y queda fuera del promedio
+  (9 realizaciones). Por eso los atascos bajan el promedio del híbrido y no el de TSDMD.
+- Caudal vs `R_h` según `L` (`hibrido_caudal_vs_rh_por_L_N500.png`, N = 500; en la presentación
+  después de "tiempo de ejecución vs `R_h` según `L`", pedido del 2026-11-13, con la misma nota
+  "Trazos: paso temporal"): con `R_h` = 0.1 m (EDMD puro) 2.00, 2.01 y 1.99 1/s para L = 50, 150 y 300 m; desde
+  0.2 m el híbrido da el caudal de TSDMD en cada habitación (cociente entre 0.997 y 1.008 con
+  L = 50 y 150 m): 3.29 ± 0.04, 3.17 ± 0.03 y 2.68 ± 0.04 1/s. El caudal baja con L en TSDMD y en el
+  híbrido, y no en EDMD.
+
+### 6.8 Tiempo de ejecución con la JVM caliente (2026-11-13, exploratorio)
+
+Pregunta del grupo: por qué el híbrido no le gana a TSDMD al bajar N con L = 50 m, si le gana al
+agrandar la habitación. Respuesta: en la campaña sí pierde, pero por el arranque de la JVM. Prueba
+con un programa descartable (no quedó en el repo) que llama a `EvacuationRun.run` muchas veces en
+una misma JVM (seeds 1–10 en ronda, `loopTimeMs` de cada corrida, L = 50 m, híbrido con
+`R_h` = 0.5 m): "caliente" es el promedio de las últimas corridas (100 con N = 10; 10 con el resto,
+después de 30 de calentamiento, o de 10 con N ≥ 200); "fría" es la campaña (una JVM por corrida).
+
+| N | TSDMD fría (ms) | TSDMD caliente (ms) | Híbrido fría (ms) | Híbrido caliente (ms) | Híbrido/TSDMD fría | Híbrido/TSDMD caliente |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 26 | 4.8 ± 0.9 | 42 | 3.0 ± 1.2 | 1.59 | 0.62 |
+| 25 | 35 | 6.2 ± 0.3 | 47 | 3.3 ± 0.4 | 1.35 | 0.52 |
+| 50 | 48 | 8.5 ± 0.6 | 59 | 5.7 ± 0.6 | 1.24 | 0.66 |
+| 100 | 79 | 26.0 ± 1.5 | 101 | 21 ± 2 | 1.28 | 0.82 |
+| 200 | 201 | 106 ± 4 | 242 | 99 ± 5 | 1.21 | 0.94 |
+| 500 | 878 | 785 ± 16 | 946 | 750 ± 19 | 1.08 | 0.96 |
+
+- Con la JVM caliente el híbrido es más rápido que TSDMD en todo el rango, y más cuanto menor es N
+  (o sea, cuanto menor es la fracción de pasos-agente en paso temporal: 4 % con N = 10, 80 % con
+  N = 500): es lo que el grupo esperaba. EDMD caliente: 2.1, 3.0, 15 y 123 ms con N = 10, 25, 50 y
+  100.
+- El arranque (fría − caliente) le cuesta más al híbrido: ~39 ms contra ~21 ms con N = 10, y
+  ~200 ms contra ~90 ms con N = 500. Con N = 10 es el 93 % del tiempo medido del híbrido y el 82 %
+  del de TSDMD. Causa probable, sin verificar: el híbrido ejecuta el código de los dos motores, así
+  que hay más para compilar.
+- Consecuencia para lo ya presentado: el "+8 % del híbrido con N = 500 y L = 50 m" de 6.6 es costo de
+  arranque (caliente: 0.96 ± 0.03, dentro del error). Con L = 150 y 300 m el híbrido gana aun con el
+  arranque en contra, así que esa conclusión no cambia de signo; la ganancia real sería mayor.
+- No reemplaza a la campaña: es otra sesión y otro método. Para usarlo en la presentación habría
+  que volver a medir todos los tiempos de ejecución con la JVM caliente (decisión del grupo).
+
 ## 7. Escenario de dos agentes (`scenarios/dos_agentes.txt`, seed 1)
 
 Agentes en `(22.5, 2.5)` y `(27.5, 2.5)` m, convergiendo a la puerta. Valores de `dynamic.txt`
@@ -650,7 +726,7 @@ Datos relevantes:
 
 ## 9. Presentación (boceto del 2026-11-10, Implementación rehecha el 2026-11-12)
 
-`../presentaciones/tp5/tp5.tex` (compilar con `latexmk -pdf tp5.tex`; 37 páginas). Mismo formato que
+`../presentaciones/tp5/tp5.tex` (compilar con `latexmk -pdf tp5.tex`; 36 páginas). Mismo formato que
 TP3 y TP4: poco texto, una figura por diapositiva de Resultados, lo demás se dice en vivo (los
 números para decir están en los comentarios del `.tex`, arriba de cada diapositiva).
 
@@ -664,7 +740,8 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   Implementación (7: paso temporal; eventos: motor, estados, recuperación; híbrido: criterio,
   sincronización, motor) → Simulaciones (sistema; observables: evacuación; observables: esquemas y
   tiempo de ejecución) →
-  Resultados (radios intermedios; esquemas; radio del área; número de agentes) → Conclusiones.
+  Resultados (animación de paso temporal; radios intermedios; esquemas; radio del área; número de
+  agentes) → Conclusiones.
 - Implementación, pedidos del grupo (2026-11-12, dos rondas): los esquemas tenían demasiadas letras
   y no se podían explicar usándolos de soporte. Los tres motores van como diagrama de flujo con el
   mismo formato; el de eventos reemplazó a "instante del contacto" y no lleva la ecuación de `t_c`
@@ -693,17 +770,41 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   notación de Observables (`t`, `N_in`, `N_ev/N`, `N_pt/N`, `⟨t_ev⟩`, `⟨t_90⟩`, `⟨Q⟩`, `R_h`, `n_r`,
   `N`, `L`), salvo "Tiempo de ejecución (s)", que no tiene símbolo; **riesgo declarado al grupo**:
   la guía de la cátedra prefiere los ejes en palabras (`../AGENTS.md` §3). Las comparaciones entre
-  esquemas son barras con su desvío, en escala lineal. Las figuras vs `R_h` no llevan las rectas
-  punteadas en `2 r_min` y `2 r_max`. La de `R_h` según `L` tiene una sola leyenda (`L`) y la banda
-  de ± un desvío en cada recta de paso temporal. La de densidad constante lleva la densidad en el
-  título y arriba un segundo eje con `L`. Las tres de `n_r` van juntas después de las animaciones de
-  eventos y paso temporal. El estudio de `R_h` tiene también "caudal vs `R_h`"
-  (`hibrido_caudal_vs_rh_N500.png`), entre la de evacuación y la de ejecución.
+  esquemas son puntos con su desvío, uno por esquema y sin unir (pedido del 2026-11-13: las barras
+  no gustaron); el tiempo de ejecución, en escala logarítmica como en el resto. Las figuras vs
+  `R_h` no llevan las rectas punteadas en `2 r_min` y `2 r_max`. La de `R_h` según `L` tiene dos
+  leyendas con los mismos símbolos, `L` y la densidad inicial `N/L²` (0.2, 0.022 y 0.0056 1/m²;
+  pedido del 2026-11-13), y la banda de ± un desvío en cada recta de paso temporal. La de densidad
+  constante lleva la densidad en el título y arriba un segundo eje con `L`. Las tres de `n_r`
+  (ejecución, `t_90` y caudal) van en una sola diapositiva (`eventos_vs_niveles.png`, tres paneles
+  con el eje `n_r` y la leyenda en común; pedido del 2026-11-13, para no gastar tiempo). **Riesgo
+  declarado al grupo**: la devolución del TP4 (D26) observó paneles lado a lado con escalas
+  distintas; acá son tres magnitudes distintas y cada una se lee contra su recta de paso temporal.
+  Las tres de `R_h` con L = 50 m (evacuación, caudal y ejecución) van igual, en una sola
+  diapositiva (`hibrido_vs_rh_N500.png`; pedido del 2026-11-13): el eje `R_h` de los paneles rotula
+  0.1, 0.2, 0.5, 1, 2, 5 y 10 m porque los once valores no entran, y la leyenda común tiene paso
+  temporal, eventos e híbrido. Mismo riesgo declarado que la de `n_r`.
+- Número de agentes (2026-11-13): N desde 10 (sección 6.7; el eje rotula 10, 25, 50, 100, 200, 500 y
+  1000 porque los diez valores se pisan). Después de "tiempo de ejecución con L = 50 m" va "caudal
+  con L = 50 m" (`caudal_vs_N_L50.png`). El pedido era que reemplazara a la de densidad constante;
+  esa se dejó a continuación porque es la variante (a) del punto d del enunciado y respalda la
+  tercera conclusión. **Pendiente de confirmación del grupo.**
+- Símbolo vacío (pedido del grupo, 2026-11-13): en las figuras de input vs observable, el punto de
+  una configuración en la que alguna de las 10 realizaciones no evacuó (cortada en `t-max`) va con
+  fondo blanco y borde del color de la curva, dibujado encima de todas las curvas
+  (`plot_campaign.py`: `stuck` y `hollow`). El criterio es de la configuración y no del escalar: con
+  `n_r` = 0 el punto va vacío también en `t_90` y caudal, que tienen dato en las 10. Puntos vacíos
+  en la presentación: `n_r` = 0 (3 de 10; ejecución, `t_90` y caudal vs `n_r`), paso temporal con
+  N = 1000 y L = 50 m (1 de 10) e híbrido con N = 1000 y L = 70.71 m (2 de 10). El significado va
+  en la leyenda, como una entrada más con el símbolo vacío: "alguna realización no evacuó" (pedido
+  del grupo, 2026-11-13; reemplazó a la nota al costado). **Riesgo declarado al grupo**: la guía
+  pide leyendas sin aclaraciones (`../AGENTS.md` §3). Las configuraciones de `output/campaign`
+  tienen 10 seeds distintas; las demás evacuaron las 10.
 - Observables en dos diapositivas, como en el TP3 y el TP4: realizaciones en cada observable, sin el
   renglón de las barras de error (desvío estándar entre realizaciones: se dice en vivo); `N_ev(t)` y
   `N_pt(t)` definen la fracción de agentes por esquema, con el esquema de la introducción; el caudal
-  usa `t_a` y `t_b` (cruces del 20 % y del 80 %), no `t_20` y `t_80`, para no confundirlos con
-  `t_90`, que se mide sobre los retiros.
+  usa `t_20` y `t_80` (cruces del 20 % y del 80 %; pedido del 2026-11-13, antes `t_a` y `t_b`). Al
+  decirlo: se miden sobre los cruces de la puerta, y `t_90` sobre los retiros.
 - Densidad constante contra `L` fijo (análisis del 2026-11-12, sobre `output/campaign`, sin figura
   propia): dan casi lo mismo porque la evacuación la limita la puerta y no la llegada. El agente más
   lejano llega en `0.745 L` s/m (17 a 53 s con `L` de 22 a 71 m) y la evacuación tarda `N/Q`
@@ -728,6 +829,12 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   explícito; una versión cuantificada se descartó): "Eventos no es un buen esquema para este tipo
   de simulaciones"; "A mismo número de agentes, el esquema híbrido mejora sus resultados con mayor
   espacio"; "A densidad constante, híbrido y paso temporal tienen tiempos de ejecución similares".
+  Cuarta, agregada el 2026-11-13 (esta sí con números, pedido del grupo): "Con densidad
+  0.0056 m⁻², el híbrido con `R_h` entre 0.2 y 3 m es más eficiente que paso temporal y conserva
+  su caudal". Respaldo (N = 500, L = 300 m, sección 6.6 y 6.7): 0.45–0.60 s contra 0.69 ± 0.02 s
+  (35 % menos hasta 1 m, 13 % menos con 3 m; con 5 m ya tarda más) y caudal 2.68–2.70 contra
+  2.68 ± 0.04 1/s. El grupo pidió "conservando el realismo"; en la diapositiva dice "caudal"
+  porque lo mostrado es que coincide con paso temporal, no con datos experimentales.
   Los números que respaldan cada una están en el comentario del `.tex`, para decir en vivo.
 - Devolución del TP4 aplicada: el avance en el tiempo va en Implementación y no en Modelo; el Modelo
   incluye el contacto con paredes; flechas desde el centro; sin leyendas de un solo elemento.
@@ -747,12 +854,12 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
 
   Todas con `--N 500 --seed 1 --save-t0 1` y `animate_evacuation.py <corrida> [vista] --fps 30`.
   A los 60 s quedan sin retirarse 485 agentes con eventos y `n_r` = 0, 384 con `n_r` = 8, 323 con
-  paso temporal y 322 con el híbrido. En la presentación (pedido del grupo, 2026-11-12): las dos de
-  eventos (`n_r` = 0 y 8) antes del estudio de `n_r`, y paso temporal junto al híbrido de L = 50 m
-  antes de la comparación de esquemas. Paso temporal usa el mismo zoom y los mismos colores por
-  estado que las de eventos; el híbrido va coloreado por esquema, así que el rojo no significa lo
-  mismo en las dos de esa diapositiva. Fotogramas: t = 30 s (eventos y paso temporal) y 15 s
-  (híbrido).
+  paso temporal y 322 con el híbrido. En la presentación (pedido del grupo, 2026-11-13): paso
+  temporal sola al comienzo de Resultados, porque las figuras siguientes la usan de referencia
+  (recta de trazos); después las dos de eventos (`n_r` = 0 y 8), antes del estudio de `n_r`; y el
+  híbrido de L = 50 m sola, antes de la comparación de esquemas. Paso temporal usa el mismo zoom y
+  los mismos colores por estado que las de eventos; el híbrido va coloreado por esquema, así que su
+  rojo no significa lo mismo. Fotogramas: t = 30 s (eventos y paso temporal) y 15 s (híbrido).
 - Diapositiva "Uso de agentes de IA" al final, como en el TP4: agentes y modelos copiados del TP4
   (verificar), usos (motor, scripts, LaTeX, discusión de conceptos y alternativas) y las decisiones
   de la IA que el grupo corrigió (lista del grupo, 2026-11-12).

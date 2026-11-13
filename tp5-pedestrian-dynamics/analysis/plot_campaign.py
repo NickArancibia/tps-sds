@@ -15,7 +15,10 @@ Agentes en cada esquema (híbrido, punto a): una sola corrida, schemes.csv (agen
 temporal y en eventos en cada paso) dividido por N: fracción de los N agentes iniciales.
 Por configuración: promedio entre realizaciones ± desvío estándar entre realizaciones (ddof = 1; un
 escalar por realización). Las realizaciones sin dato (no evacuaron) se excluyen del promedio y se
-informan por stdout, igual que los valores alejados de la mediana (posibles atascos).
+informan por stdout, igual que los valores alejados de la mediana (posibles atascos). En las figuras
+de input vs observable, el punto de una configuración en la que alguna realización no evacuó (se
+cortó en t-max) va con el símbolo vacío (fondo blanco, borde del color de la curva), también cuando
+el escalar tiene dato en todas (t_90 y caudal); el significado va en una entrada de la leyenda.
 
 Figuras en analysis/figures/campaign/, todas con el sistema base N = 500 (la campaña también tiene
 N = 200, la alternativa opcional de la cátedra: da las mismas conclusiones y no se grafica); por
@@ -36,6 +39,8 @@ import numpy as np
 from common import TP_ROOT, decade_ticks, format_pm, save_figure, use_style, value_ticks
 
 import matplotlib.pyplot as plt  # noqa: E402  (después de common: backend Agg)
+from matplotlib.colors import to_hex  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
 
 CAMPAIGN = TP_ROOT / "output" / "campaign"
 GROUP = "campaign"
@@ -43,7 +48,10 @@ RH = (0.1, 0.2, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10)
 R_MIN, R_MAX = 0.10, 0.25
 RH_STEPPED = tuple(rh for rh in RH if rh >= 2 * R_MIN)  # con R_h menor nadie pasa a paso temporal
 LEVELS = tuple(range(9))
-SCALING_N = (100, 200, 300, 500, 700, 1000)
+SCALING_N = (10, 25, 50, 75, 100, 200, 300, 500, 700, 1000)
+N_TICKS = (10, 25, 50, 100, 200, 500, 1000)  # rótulos del eje N: los 10 valores se pisan
+RH_PANEL_TICKS = (0.1, 0.2, 0.5, 1, 2, 5, 10)  # rótulos del eje R_h en los paneles angostos
+HOLLOW_LABEL = "alguna realización no evacuó"
 RH_BEST = 0.5  # híbrido de la comparación entre esquemas
 N_BASE = 500  # sistema base del enunciado
 
@@ -120,11 +128,42 @@ def stats(n: int, length: int, config: str, key: str) -> tuple[float, float, int
     return ok.mean(), ok.std(ddof=1) if ok.size > 1 else 0.0, ok.size, len(runs)
 
 
+def stuck(n: int, length: float, config: str) -> int:
+    """Realizaciones que no evacuaron (cortadas en t-max)."""
+    return sum(not run.meta["evacuated"] for run in load(n, length, config))
+
+
 def row(label: str, n: int, length: int, config: str, key: str) -> tuple[float, float]:
     mean, std, ok, total = stats(n, length, config, key)
     missing = "" if ok == total else f" ({total - ok} de {total} sin dato)"
-    print(f"    {label:>22s}: {format_pm(mean, std)}{missing}  [{ok} realizaciones]")
+    jammed = stuck(n, length, config)
+    jammed = f" ({jammed} de {total} no evacuaron: símbolo vacío)" if jammed else ""
+    print(f"    {label:>22s}: {format_pm(mean, std)}{missing}{jammed}  [{ok} realizaciones]")
     return mean, std
+
+
+def hollow(ax, x, y, incomplete, marker: str, color, used: list) -> None:
+    """Símbolo vacío sobre los puntos `incomplete` (alguna realización no evacuó). Va encima de todas
+    las curvas: si otro punto cae en el mismo lugar, el vacío es el que tiene que verse. Anota en
+    `used` el símbolo dibujado, para la entrada de la leyenda."""
+    x, y, incomplete = np.asarray(x, float), np.asarray(y, float), np.asarray(incomplete, bool)
+    if incomplete.any():
+        ax.plot(x[incomplete], y[incomplete], marker, mfc="white", mec=color, mew=1.2, zorder=10)
+        used.append((marker, to_hex(color)))
+
+
+def hollow_handle(used: list) -> list[Line2D]:
+    """Entrada de leyenda del símbolo vacío (pedido del grupo, 2026-11-13); ninguna si no se dibujó.
+    Con el símbolo de la curva si todos los vacíos son de una sola; si no, un círculo gris."""
+    if not used:
+        return []
+    marker, color = used[0] if len(set(used)) == 1 else ("o", "0.3")
+    return [Line2D([], [], ls="none", marker=marker, mfc="white", mec=color, mew=1.2, label=HOLLOW_LABEL)]
+
+
+def legend(ax, used: list, **kwargs):
+    """Leyenda de las curvas del eje más, si hay símbolos vacíos, su entrada."""
+    return ax.legend(handles=[*ax.get_legend_handles_labels()[0], *hollow_handle(used)], **kwargs)
 
 
 def log_limits(ax, values) -> None:
@@ -136,11 +175,11 @@ def log_limits(ax, values) -> None:
     decade_ticks(ax.yaxis, lo, hi)
 
 
-def rh_axis(ax, values=RH) -> None:
-    """Eje R_h, logarítmico y rotulado en los valores medidos."""
+def rh_axis(ax, values=RH, ticks=None) -> None:
+    """Eje R_h, logarítmico y rotulado en los valores medidos (o en `ticks`, si todos no entran)."""
     ax.set_xscale("log")
     ax.set_xlim(values[0] / 1.15, values[-1] * 1.15)
-    value_ticks(ax.xaxis, values)
+    value_ticks(ax.xaxis, ticks or values)
     ax.set_xlabel("$R_h$ (m)")
 
 
@@ -172,56 +211,78 @@ def population(n: int, seed: int = 1) -> None:
 
 
 def schemes(key: str, n: int) -> None:
-    """Escalar de cada esquema puro y del híbrido: una barra por esquema, con su color y su desvío; sin
-    leyenda. Escala lineal desde 0 (una barra no tiene sentido sobre un eje logarítmico)."""
+    """Escalar de cada esquema puro y del híbrido: un punto por esquema, con su símbolo, su color y
+    su desvío (pedido del grupo, 2026-11-13; antes eran barras). Sin unir y sin leyenda: el eje nombra
+    cada esquema. Tiempo de ejecución en escala logarítmica, como en el resto de las figuras."""
     ylabel, name = SCALARS[key]
     print(f"\n{ylabel} por esquema, N = {n}, L = 50 m (híbrido con R_h = {RH_BEST:g} m)")
     fig, ax = plt.subplots()
-    tops = []
-    for k, (config, label, _, color) in enumerate(SCHEMES):
+    plotted, used = [], []
+    for k, (config, label, marker, color) in enumerate(SCHEMES):
         mean, std = row(label, n, 50, config, key)
         if np.isfinite(mean):
-            ax.bar(k, mean, width=0.55, color=color, alpha=0.65)
-            ax.errorbar(k, mean, yerr=std, fmt="none", ecolor="black", capsize=6, elinewidth=1.3)
-            tops.append(mean + std)
-    if not tops:
+            ax.errorbar(k, mean, yerr=std, fmt=marker, color=color, capsize=6, elinewidth=1.3, markersize=7)
+            hollow(ax, [k], [mean], [stuck(n, 50, config)], marker, color, used)
+            plotted += [mean - std, mean + std]
+    if not plotted:
         plt.close(fig)
         return
     ax.set_xticks(range(len(SCHEMES)), [label for _, label, _, _ in SCHEMES])
     ax.set_xlim(-0.5, len(SCHEMES) - 0.5)
     ax.set_ylabel(ylabel)
-    ax.set_ylim(0, 1.1 * max(tops))
+    if key == "loop":
+        log_limits(ax, plotted)
+    else:
+        ax.margins(y=0.15)
+    if used:
+        ax.legend(handles=hollow_handle(used), loc="best")
     save_figure(fig, GROUP, f"{name}_esquemas.png")
 
 
 # ------------------------------------------------------------------------- híbrido: R_h (a, c)
 
-def hybrid_vs_rh(n: int, key: str, zoom: bool = False) -> None:
-    """Escalar del híbrido vs R_h con los esquemas puros de referencia. `zoom`: escala lineal, solo
-    R_h ≥ 2 r_min (por debajo es eventos puro) y solo la referencia de paso temporal."""
-    ylabel, name = SCALARS[key]
-    values = RH_STEPPED if zoom else RH
-    print(f"\n{ylabel} del híbrido vs R_h, N = {n}, L = 50 m" + (" (R_h ≥ 2 r_min)" if zoom else ""))
-    data = [row(f"R_h = {rh:g} m", n, 50, f"hybrid_rh{rh:g}", key) for rh in values]
-    mean, std = np.array(data).T
-    if not np.isfinite(mean).any():
-        return
-    fig, ax = plt.subplots()
-    plotted = list(mean - std) + list(mean + std)
-    for config, label, _, color in SCHEMES[:1] if zoom else SCHEMES[:2]:
-        ref, ref_std = row(label, n, 50, config, key)
-        if np.isfinite(ref):
-            ax.axhspan(ref - ref_std, ref + ref_std, color=color, alpha=0.18, lw=0, zorder=0)
-            ax.axhline(ref, color=color, ls="--", label=label, zorder=1)
-            plotted += [ref - ref_std, ref + ref_std]
-    ax.errorbar(values, mean, yerr=std, fmt="^-", color="black", capsize=4, elinewidth=1.3, label="híbrido",
-                zorder=3)
-    rh_axis(ax, values)
-    ax.set_ylabel(ylabel)
-    if key == "loop" and not zoom:
-        log_limits(ax, plotted)
-    ax.legend(loc="best")
-    save_figure(fig, GROUP, f"hibrido_{name}_vs_rh_N{n}{'_zoom' if zoom else ''}.png")
+def hybrid_vs_rh(n: int) -> None:
+    """Escalares del híbrido vs R_h con los esquemas puros de referencia (rectas de trazos): una
+    figura por escalar y `hibrido_vs_rh_N<n>.png` con el tiempo de evacuación, el caudal y el tiempo
+    de ejecución lado a lado (pedido del grupo, 2026-11-13: una sola diapositiva, como la de n_r).
+    Los tres paneles comparten el eje R_h (rotulado en RH_PANEL_TICKS: los 11 valores no entran) y la
+    leyenda, arriba. `zoom` (solo tiempo de ejecución, sin panel): escala lineal, R_h ≥ 2 r_min (por
+    debajo es eventos puro) y solo la referencia de paso temporal."""
+    order = ("evac", "q", "loop")
+    summary, panels = plt.subplot_mosaic([["legend"] * 3, list(order)], figsize=(8.0, 3.3),
+                                         height_ratios=[0.1, 1])
+    shared = []
+    for key, zoom in [(key, False) for key in order] + [("loop", True)]:
+        ylabel, name = SCALARS[key]
+        values = RH_STEPPED if zoom else RH
+        print(f"\n{ylabel} del híbrido vs R_h, N = {n}, L = 50 m" + (" (R_h ≥ 2 r_min)" if zoom else ""))
+        data = [row(f"R_h = {rh:g} m", n, 50, f"hybrid_rh{rh:g}", key) for rh in values]
+        mean, std = np.array(data).T
+        refs = [(label, color, *row(label, n, 50, config, key))
+                for config, label, _, color in (SCHEMES[:1] if zoom else SCHEMES[:2])]
+        fig, single = plt.subplots()
+        for ax in [single] + ([] if zoom else [panels[key]]):
+            used = []
+            plotted = list(mean - std) + list(mean + std)
+            for label, color, ref, ref_std in refs:
+                ax.axhspan(ref - ref_std, ref + ref_std, color=color, alpha=0.18, lw=0, zorder=0)
+                ax.axhline(ref, color=color, ls="--", label=label, zorder=1)
+                plotted += [ref - ref_std, ref + ref_std]
+            ax.errorbar(values, mean, yerr=std, fmt="^-", color="black", capsize=4, elinewidth=1.3,
+                        label="híbrido", zorder=3)
+            hollow(ax, values, mean, [stuck(n, 50, f"hybrid_rh{rh:g}") for rh in values], "^", "black", used)
+            rh_axis(ax, values, None if ax is single else RH_PANEL_TICKS)
+            ax.set_ylabel(ylabel)
+            if key == "loop" and not zoom:
+                log_limits(ax, plotted)
+            if ax is not single:
+                shared = used
+        legend(single, used, loc="best")
+        save_figure(fig, GROUP, f"hibrido_{name}_vs_rh_N{n}{'_zoom' if zoom else ''}.png")
+    panels["legend"].axis("off")
+    panels["legend"].legend(handles=[*panels["loop"].get_legend_handles_labels()[0], *hollow_handle(shared)],
+                            loc="center", ncol=4)
+    save_figure(summary, GROUP, f"hibrido_vs_rh_N{n}.png")
 
 
 def scheme_population(n: int, length: int, rh: float, seed: int = 1) -> None:
@@ -278,21 +339,23 @@ def scheme_fraction(n: int, seed: int = 1) -> None:
     save_figure(fig, GROUP, f"fraccion_paso_temporal_N{n}.png")
 
 
-def room_size(n: int, zoom: bool = False) -> None:
-    """Tiempo de ejecución del híbrido vs R_h para varios L; la recta de trazos del mismo color, con su
-    banda de ± un desvío, es el paso temporal en esa habitación (no depende de R_h). La leyenda solo
-    distingue L: qué es la recta de trazos va al costado de la figura. Con todos los R_h, en escala
-    logarítmica: el punto con R_h < 2 r_min es eventos puro. `zoom`: escala lineal y solo R_h ≥ 2 r_min."""
+def room_size(n: int, key: str, zoom: bool = False) -> None:
+    """Escalar del híbrido vs R_h para varios L; la recta de trazos del mismo color, con su banda de
+    ± un desvío, es el paso temporal en esa habitación (no depende de R_h). Dos leyendas con los
+    mismos símbolos: L y la densidad inicial N/L² que le corresponde (pedido del grupo, 2026-11-13);
+    qué es la recta de trazos va al costado de la figura. Con todos los R_h el punto con
+    R_h < 2 r_min es eventos puro, y el tiempo de ejecución va en escala logarítmica. `zoom`: escala
+    lineal y solo R_h ≥ 2 r_min."""
+    ylabel, name = SCALARS[key]
     values = RH_STEPPED if zoom else RH
-    print(f"\nTiempo de ejecución (s) del híbrido vs R_h para varios L, N = {n}" + (" (R_h ≥ 2 r_min)" if zoom else ""))
+    print(f"\n{ylabel} del híbrido vs R_h para varios L, N = {n}" + (" (R_h ≥ 2 r_min)" if zoom else ""))
     lengths = (50, 150, 300)
     fig, ax = plt.subplots()
-    drawn = []
-    plotted = []
+    drawn, densities, plotted, used = [], [], [], []
     for length, color, marker in zip(lengths, plt.cm.viridis(np.linspace(0, 0.8, len(lengths))), "os^"):
-        print(f"  L = {length} m")
-        ref, ref_std = row("paso temporal", n, length, "tsdmd", "loop")
-        data = [row(f"R_h = {rh:g} m", n, length, f"hybrid_rh{rh:g}", "loop") for rh in values]
+        print(f"  L = {length} m, N/L² = {n / length**2:.2g} 1/m²")
+        ref, ref_std = row("paso temporal", n, length, "tsdmd", key)
+        data = [row(f"R_h = {rh:g} m", n, length, f"hybrid_rh{rh:g}", key) for rh in values]
         mean, std = np.array(data).T
         if not (np.isfinite(ref) and np.isfinite(mean).any()):
             continue
@@ -304,96 +367,125 @@ def room_size(n: int, zoom: bool = False) -> None:
         ax.axhline(ref, color=color, ls="--", zorder=1)
         drawn.append(ax.errorbar(values, mean, yerr=std, fmt=marker + "-", color=color, capsize=4,
                                  elinewidth=1.3, zorder=2, label=str(length)))
+        densities.append(Line2D([], [], ls="none", marker=marker, color=color, label=f"{n / length**2:.2g}"))
+        hollow(ax, values, mean, [stuck(n, length, f"hybrid_rh{rh:g}") for rh in values], marker, color, used)
         plotted += list(mean - std) + list(mean + std) + [ref - ref_std, ref + ref_std]
     if not drawn:
         plt.close(fig)
         return
     rh_axis(ax, values)
-    ax.set_ylabel("Tiempo de ejecución (s)")
-    if zoom:
+    ax.set_ylabel(ylabel)
+    if key == "loop" and not zoom:
+        log_limits(ax, plotted)  # eventos puro queda arriba a la izquierda: leyendas arriba a la derecha
+        corner = "upper right"
+    else:
         ax.set_ylim(bottom=0)
-        ax.legend(handles=drawn, title="$L$ (m)", loc="lower left", ncol=len(drawn), columnspacing=1.0)
-    else:  # los puntos de eventos puro quedan arriba a la izquierda: leyenda arriba a la derecha
-        log_limits(ax, plotted)
-        ax.legend(handles=drawn, title="$L$ (m)", loc="upper right", ncol=len(drawn), columnspacing=1.0)
-    save_figure(fig, GROUP, f"hibrido_ejecucion_vs_rh_por_L_N{n}{'_zoom' if zoom else ''}.png")
+        corner = "lower left" if key == "loop" else "lower right"
+    # Las dos leyendas apiladas en la misma esquina, la de L arriba y la de densidad debajo.
+    by_length = dict(handles=drawn, title="$L$ (m)")
+    by_density = dict(handles=densities + hollow_handle(used), title="$N/L^2$ (m$^{-2}$)")
+    upper = corner.startswith("upper")
+    first = ax.legend(**(by_length if upper else by_density), loc=corner, ncol=len(drawn), columnspacing=1.0)
+    ax.add_artist(first)
+    fig.canvas.draw()
+    box = first.get_window_extent().transformed(ax.transAxes.inverted())
+    ax.legend(**(by_density if upper else by_length), loc=corner, ncol=len(drawn), columnspacing=1.0,
+              bbox_to_anchor=(float(corner.endswith("right")), box.y0 if upper else box.y1))
+    save_figure(fig, GROUP, f"hibrido_{name}_vs_rh_por_L_N{n}{'_zoom' if zoom else ''}.png")
 
 
 # ------------------------------------------------------------------------------ EDMD: niveles
 
-def edmd_levels(key: str, n: int) -> None:
-    """Escalar de eventos vs radios intermedios, con paso temporal de referencia (recta de trazos)."""
-    ylabel, name = SCALARS[key]
-    print(f"\n{ylabel} de eventos vs radios intermedios, N = {n}, L = 50 m")
-    data = [row(f"{k} niveles", n, 50, f"edmd_lv{k}", key) for k in LEVELS]
-    mean, std = np.array(data).T
-    if not np.isfinite(mean).any():
-        return
-    fig, ax = plt.subplots()
-    plotted = list(mean - std) + list(mean + std)
-    ref, ref_std = row("paso temporal", n, 50, "tsdmd", key)
-    if np.isfinite(ref):
-        ax.axhspan(ref - ref_std, ref + ref_std, color="tab:red", alpha=0.18, lw=0, zorder=0)
-        ax.axhline(ref, color="tab:red", ls="--", label="paso temporal", zorder=1)
-        plotted += [ref - ref_std, ref + ref_std]
-    ax.errorbar(LEVELS, mean, yerr=std, fmt="s-", color="tab:blue", capsize=4, elinewidth=1.3, label="eventos",
-                zorder=3)
-    ax.set_xticks(LEVELS)
-    ax.set_xlabel("$n_r$")
-    ax.set_ylabel(ylabel)
-    if key in ("t90", "evac", "loop"):
-        log_limits(ax, plotted)
-    else:
-        ax.set_ylim(bottom=0)
-    ax.legend(loc="best")
-    save_figure(fig, GROUP, f"eventos_{name}_vs_niveles.png")
+def edmd_levels(n: int) -> None:
+    """Escalares de eventos vs radios intermedios, con paso temporal de referencia (recta de trazos):
+    una figura por escalar y `eventos_vs_niveles.png` con el tiempo de ejecución, t_90 y el caudal
+    lado a lado (pedido del grupo, 2026-11-13: una sola diapositiva). Los tres paneles comparten el
+    eje n_r y la leyenda, arriba; cada uno tiene su magnitud en el eje vertical."""
+    summary, panels = plt.subplot_mosaic([["legend"] * 3, ["loop", "t90", "q"]], figsize=(8.0, 3.3),
+                                         height_ratios=[0.1, 1])
+    for key in ("t90", "evac", "q", "loop"):
+        ylabel, name = SCALARS[key]
+        print(f"\n{ylabel} de eventos vs radios intermedios, N = {n}, L = 50 m")
+        data = [row(f"{k} niveles", n, 50, f"edmd_lv{k}", key) for k in LEVELS]
+        mean, std = np.array(data).T
+        ref, ref_std = row("paso temporal", n, 50, "tsdmd", key)
+        fig, single = plt.subplots()
+        for ax in [single] + ([panels[key]] if key in panels else []):
+            used = []
+            ax.axhspan(ref - ref_std, ref + ref_std, color="tab:red", alpha=0.18, lw=0, zorder=0)
+            ax.axhline(ref, color="tab:red", ls="--", label="paso temporal", zorder=1)
+            ax.errorbar(LEVELS, mean, yerr=std, fmt="s-", color="tab:blue", capsize=4, elinewidth=1.3,
+                        label="eventos", zorder=3)
+            hollow(ax, LEVELS, mean, [stuck(n, 50, f"edmd_lv{k}") for k in LEVELS], "s", "tab:blue", used)
+            ax.set_xticks(LEVELS)
+            ax.set_xlabel("$n_r$")
+            ax.set_ylabel(ylabel)
+            if key == "q":
+                ax.set_ylim(bottom=0)
+            else:
+                log_limits(ax, list(mean - std) + list(mean + std) + [ref - ref_std, ref + ref_std])
+        legend(single, used, loc="best")
+        save_figure(fig, GROUP, f"eventos_{name}_vs_niveles.png")
+    # La leyenda común sale del último panel dibujado (las mismas curvas y el mismo símbolo vacío en los tres).
+    panels["legend"].axis("off")
+    panels["legend"].legend(handles=[*panels["loop"].get_legend_handles_labels()[0], *hollow_handle(used)],
+                            loc="center", ncol=3)
+    save_figure(summary, GROUP, "eventos_vs_niveles.png")
 
 
 # ------------------------------------------------------------------------- escalamiento con N (d)
 
-def scaling(constant_density: bool) -> None:
-    """Tiempo de ejecución vs N en log-log; por stdout, el exponente local entre N consecutivos. A
+def scaling(key: str, constant_density: bool) -> None:
+    """Escalar vs N para los tres esquemas, con N en escala logarítmica. Tiempo de ejecución en
+    log-log y, por stdout, el exponente local entre N consecutivos; el caudal, en escala lineal. A
     densidad constante, el eje de arriba da el lado L de la habitación que corresponde a cada N."""
+    ylabel, name = SCALARS[key]
     variant = "densidad inicial constante, L = 50 m √(N/500)" if constant_density else "L = 50 m"
-    print(f"\nTiempo de ejecución (s) vs N, {variant} (híbrido con R_h = {RH_BEST:g} m)")
+    print(f"\n{ylabel} vs N, {variant} (híbrido con R_h = {RH_BEST:g} m)")
     fig, ax = plt.subplots()
-    plotted = []
+    plotted, used = [], []
     for config, label, marker, color in SCHEMES:
         print(f"  {label}")
-        ns, means, stds = [], [], []
+        ns, means, stds, jammed = [], [], [], []
         for n in SCALING_N:
             length = round(50 * math.sqrt(n / 500), 2) if constant_density else 50
-            mean, std = row(f"N = {n}, L = {length:g} m", n, length, config, "loop")
+            mean, std = row(f"N = {n}, L = {length:g} m", n, length, config, key)
             if np.isfinite(mean):
                 ns.append(n)
                 means.append(mean)
                 stds.append(std)
+                jammed.append(stuck(n, length, config))
         if len(ns) < 2:
             continue
         ns, means, stds = np.array(ns), np.array(means), np.array(stds)
-        slopes = np.diff(np.log(means)) / np.diff(np.log(ns))
-        print("    exponente local α (t ∝ N^α) entre N consecutivos: "
-              + ", ".join(f"{a}–{b}: {s:.2f}" for a, b, s in zip(ns[:-1], ns[1:], slopes)))
+        if key == "loop":
+            slopes = np.diff(np.log(means)) / np.diff(np.log(ns))
+            print("    exponente local α (t ∝ N^α) entre N consecutivos: "
+                  + ", ".join(f"{a}–{b}: {s:.2f}" for a, b, s in zip(ns[:-1], ns[1:], slopes)))
         ax.errorbar(ns, means, yerr=stds, fmt=marker + "-", color=color, capsize=4, elinewidth=1.3, label=label)
+        hollow(ax, ns, means, jammed, marker, color, used)
         plotted += list(means - stds) + list(means + stds)
     if not plotted:
         plt.close(fig)
         return
     ax.set_xscale("log")
     ax.set_xlim(SCALING_N[0] / 1.2, SCALING_N[-1] * 1.2)
-    value_ticks(ax.xaxis, SCALING_N)
-    log_limits(ax, plotted)
+    value_ticks(ax.xaxis, N_TICKS)
+    if key == "loop":
+        log_limits(ax, plotted)
+    else:
+        ax.set_ylim(bottom=0)
     ax.set_xlabel("$N$")
     if constant_density:
         top = ax.twiny()
         top.set_xscale("log")
         top.set_xlim(ax.get_xlim())
-        value_ticks(top.xaxis, SCALING_N)
-        top.set_xticklabels([f"{50 * math.sqrt(n / 500):.0f}" for n in SCALING_N])
+        value_ticks(top.xaxis, N_TICKS)
+        top.set_xticklabels([f"{50 * math.sqrt(n / 500):.0f}" for n in N_TICKS])
         top.set_xlabel("$L$ (m)")
-    ax.set_ylabel("Tiempo de ejecución (s)")
-    ax.legend(loc="best")
-    save_figure(fig, GROUP, f"ejecucion_vs_N_{'densidad_constante' if constant_density else 'L50'}.png")
+    ax.set_ylabel(ylabel)
+    legend(ax, used, loc="best")
+    save_figure(fig, GROUP, f"{name}_vs_N_{'densidad_constante' if constant_density else 'L50'}.png")
 
 
 def main() -> None:
@@ -402,19 +494,17 @@ def main() -> None:
     population(n)
     for key in ("evac", "q", "loop"):
         schemes(key, n)
-    hybrid_vs_rh(n, "loop")
-    hybrid_vs_rh(n, "loop", zoom=True)
-    hybrid_vs_rh(n, "evac")
-    hybrid_vs_rh(n, "q")
+    hybrid_vs_rh(n)
     scheme_fraction(n)
     for length in (50, 300):
         scheme_population(n, length, RH_BEST)
-    room_size(n)
-    room_size(n, zoom=True)
-    for key in ("t90", "evac", "q", "loop"):
-        edmd_levels(key, n)
+    room_size(n, "loop")
+    room_size(n, "loop", zoom=True)
+    room_size(n, "q")
+    edmd_levels(n)
     for constant_density in (False, True):
-        scaling(constant_density)
+        scaling("loop", constant_density)
+    scaling("q", constant_density=False)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,9 @@
 % Figuras de analysis/figures/campaign sin usar: caudal_esquemas,
 %   fraccion_paso_temporal_N500, hibrido_ejecucion_vs_rh_N500_zoom,
 %   hibrido_ejecucion_vs_rh_por_L_N500_zoom, hibrido_agentes_por_esquema_N500_L300_rh0.5,
-%   eventos_evacuacion_vs_niveles (con n_r = 0 no todas evacuan: se usa t_90).
+%   eventos_evacuacion_vs_niveles (con n_r = 0 no todas evacuan: se usa t_90),
+%   eventos_{ejecucion,t90,caudal}_vs_niveles (van juntas en eventos_vs_niveles),
+%   hibrido_{evacuacion,caudal,ejecucion}_vs_rh_N500 (van juntas en hibrido_vs_rh_N500).
 
 \documentclass[aspectratio=169]{beamer}
 \makeatletter\def\input@path{{../}}\makeatother
@@ -73,6 +75,12 @@
       #5\par\vspace{0.1em}{\small #6}\par
     \end{column}
   \end{columns}%
+}
+% Una animación: fotograma grande y enlace debajo.
+%   \animuna{<fotograma>}{<enlace>}
+\newcommand{\animuna}[2]{%
+  \centering\fotograma{0.70\textheight}{#1}\par\vspace{0.3em}
+  {\small #2}\par
 }
 % Resultados: diapositiva = titulo + una figura al maximo tamaño (../AGENTS.md §5.6).
 \newcommand{\figura}[1]{%
@@ -585,8 +593,9 @@
 % Observables, en dos diapositivas como en el TP3 y el TP4 (pedido 2026-11-12). La curva de
 % población cuenta cruces de la puerta ("dentro de la habitación"); el tiempo de evacuación es el
 % último retiro (decisión del grupo, 2026-11-10): la curva llega a 0 unos 0.9 s antes. Caudal:
-% ventana provisoria entre el 20 % y el 80 % de los cruces (t_a y t_b; no t_20 y t_80, para no
-% confundirlos con t_90, que se mide sobre los retiros).
+% ventana provisoria entre el 20 % y el 80 % de los cruces, t_20 y t_80 (pedido 2026-11-13; antes
+% t_a y t_b). OJO al decirlo: t_20 y t_80 se miden sobre los cruces de la puerta y t_90 sobre los
+% retiros.
 % Dicho en vivo: las barras de error son el desvío estándar entre las 10 realizaciones; N_in(t) y
 % la fracción por esquema se muestran para una realización.
 % TODO: justificar la ventana del caudal sobre la curva de población (o sacar el caudal).
@@ -598,19 +607,19 @@
         \item $t_{ev}$: instante en que se retira el último agente.\\[0.2em]
           $t_{90}$: instante en que se retiró el 90\,\%.
         \item $\langle t_{ev}\rangle$ y $\langle t_{90}\rangle$ sobre 10 realizaciones
-        \item Caudal: $Q = \dfrac{0.6\,N}{t_b - t_a}$\\[0.3em]
+        \item Caudal: $Q = \dfrac{0.6\,N}{t_{80} - t_{20}}$\\[0.3em]
           $\langle Q\rangle$ sobre 10 realizaciones
       \end{itemize}
     \end{column}
     \begin{column}{0.38\textwidth}
       \centering
-      % Curva de población esquemática: t_a y t_b del caudal (cruces 20 % y 80 %), y t_ev.
+      % Curva de población esquemática: t_20 y t_80 del caudal (cruces 20 % y 80 %), y t_ev.
       \begin{tikzpicture}[x=0.037cm, y=0.037cm, >=Stealth, font=\small]
         \draw[->] (0,0) -- (106,0) node[below] {$t$};
         \draw[->] (0,0) -- (0,114) node[above] {$N_{in}$};
         \draw[thick] (0,100) -- (6,100) -- (88,0);
-        \draw[dashed, black!55] (0,80) -- (22.4,80) -- (22.4,0) node[below, black] {$t_a$};
-        \draw[dashed, black!55] (0,20) -- (71.6,20) -- (71.6,0) node[below, black] {$t_b$};
+        \draw[dashed, black!55] (0,80) -- (22.4,80) -- (22.4,0) node[below, black] {$t_{20}$};
+        \draw[dashed, black!55] (0,20) -- (71.6,20) -- (71.6,0) node[below, black] {$t_{80}$};
         \node[left] at (0,100) {$N$};
         \node[left] at (0,80) {$0.8\,N$};
         \node[left] at (0,20) {$0.2\,N$};
@@ -646,6 +655,18 @@
 % Por estudio: animación -> evolución temporal -> input vs observable.
 % ==========================================================================
 
+% --- Paso temporal: la referencia ---------------------------------------------------------------
+
+% Va primero (pedido 2026-11-13): las figuras que siguen comparan contra paso temporal con una recta
+% de trazos, así que hay que verlo antes. El mismo zoom frente a la puerta y los mismos colores por
+% estado que las dos de eventos (azul libre, negro recuperando, rojo en contacto); un cuadro cada 3
+% pasos (0.1 s), t entre 1 y 60 s, unos 600 cuadros (20 s de video). Fotograma: t = 30 s.
+% Dicho en vivo: a los 60 s salieron 177 agentes.
+% TODO: subir y poner el enlace.
+\begin{frame}{Paso temporal: animación}
+  \animuna{anim_paso_temporal.png}{enlace pendiente}
+\end{frame}
+
 % --- Radios intermedios de eventos (estudio propio) ------------------------------------------
 
 % Animaciones (generadas el 2026-11-12, seed 1, N = 500; detalle en
@@ -661,40 +682,35 @@
           {anim_eventos_nr8.png}{$n_r = 8$}{enlace pendiente}
 \end{frame}
 
-% Las tres de n_r van juntas, después de las animaciones de eventos (pedido 2026-11-12).
-% Dicho en vivo (N = 500): 9.5-9.7 s con n_r de 1 a 8, o sea que no depende de n_r; con n_r = 0,
-% 6.8 ± 0.2 s, pero solo evacuaron 7 de las 10 realizaciones (las otras 3 se cortaron con 2 agentes
-% trabados y no entran en el promedio). Paso temporal: 0.88 ± 0.03 s.
-\begin{frame}{Radios intermedios: tiempo de ejecución vs $n_r$}
-  \figura{campaign/eventos_ejecucion_vs_niveles.png}
-\end{frame}
-
-% t_90 y no t_ev: con n_r = 0 no evacuaron 3 de las 10 realizaciones (quedan 2 agentes trabados
-% frente a la puerta: resultado válido según la cátedra).
-% Dicho en vivo (N = 500): 1510 ± 50 s con n_r = 0, 280 ± 3 s con 1, 227-229 s de 4 a 8, contra
-% 146.0 ± 1.4 s de paso temporal.
-\begin{frame}{Radios intermedios: $t_{90}$ vs $n_r$}
-  \figura{campaign/eventos_t90_vs_niveles.png}
-\end{frame}
-
-% Dicho en vivo (N = 500): 0.30, 1.64, 1.89, 1.98 y 2.00-2.02 1/s, contra 3.29 de paso temporal.
-\begin{frame}{Radios intermedios: caudal vs $n_r$}
-  \figura{campaign/eventos_caudal_vs_niveles.png}
+% Las tres figuras de n_r en una sola diapositiva (pedido 2026-11-13; antes una por diapositiva):
+% tres paneles con el mismo eje n_r y una leyenda común. Cada panel tiene su magnitud y su escala
+% (ejecución y t_90 logarítmicas, caudal lineal): se lee cada uno contra su recta de trazos, no se
+% comparan alturas entre paneles. t_90 y no t_ev: con n_r = 0 no evacuaron 3 de las 10
+% realizaciones (seeds 3, 6 y 7; quedan 2 agentes trabados frente a la puerta: resultado válido
+% según la cátedra); ese punto va con el símbolo vacío en los tres paneles, aunque t_90 y el
+% caudal tienen dato en las 10, y la leyenda dice qué significa (pedido 2026-11-13).
+% Dicho en vivo (N = 500), tres cosas:
+%   1. sin radios intermedios es pésimo: t_90 = 1510 ± 50 s y caudal 0.30 1/s;
+%   2. converge rápido: t_90 = 280 ± 3 s con n_r = 1 y 227-229 s de 4 a 8; caudal 1.64, 1.89, 1.98
+%      y 2.00-2.02 1/s; la ejecución no depende de n_r (9.5-9.7 s de 1 a 8; 6.8 ± 0.2 s con 0, sobre
+%      las 7 que evacuaron);
+%   3. nunca alcanza a paso temporal: 146.0 ± 1.4 s, 3.29 1/s y 0.88 ± 0.03 s.
+\begin{frame}{Radios intermedios: tiempo de ejecución, $t_{90}$ y caudal vs $n_r$}
+  \figura{campaign/eventos_vs_niveles.png}
 \end{frame}
 
 % --- Los tres esquemas (puntos a, b y c) -----------------------------------------------------
 
-% Paso temporal: el mismo zoom y los mismos colores por estado que las dos de eventos (un cuadro
-% cada 3 pasos, 0.1 s), para comparar el atasco. Híbrido (R_h = 0.5 m): habitación completa y
-% agentes coloreados por esquema, azul eventos y rojo paso temporal (un cuadro cada 12 eventos del
-% sistema). OJO al mostrarlas: el rojo no significa lo mismo en las dos. t entre 1 y 60 s, unos 600
-% cuadros (20 s de video) cada una. Fotogramas: t = 30 s y t = 15 s.
-% Dicho en vivo: a los 60 s salieron 177 agentes con paso temporal y 178 con el híbrido.
+% Híbrido (R_h = 0.5 m): habitación completa y agentes coloreados por esquema, azul eventos y rojo
+% paso temporal (un cuadro cada 12 eventos del sistema). OJO al mostrarla: acá el rojo es el
+% esquema, no el contacto como en las de paso temporal y eventos. t entre 1 y 60 s, unos 600 cuadros
+% (20 s de video). Fotograma: t = 15 s. La de paso temporal pasó al comienzo de Resultados (pedido
+% 2026-11-13).
+% Dicho en vivo: a los 60 s salieron 178 agentes (177 con paso temporal).
 % Sin usar: output/animaciones/hibrido_L300.mp4 (híbrido con L = 300 m, evacuación completa).
-% TODO: subir y poner los enlaces.
-\begin{frame}{Esquemas: animaciones de paso temporal y del híbrido}
-  \animdos{anim_paso_temporal.png}{Paso temporal}{enlace pendiente}
-          {anim_hibrido_L50.png}{Híbrido}{enlace pendiente}
+% TODO: subir y poner el enlace.
+\begin{frame}{Híbrido: animación con $R_h = 0.5\uni{m}$}
+  \animuna{anim_hibrido_L50.png}{enlace pendiente}
 \end{frame}
 
 % Punto a: fracción de los N agentes en cada esquema vs t. Una corrida (seed 1), N = 500, L = 50 m.
@@ -713,46 +729,45 @@
   \figura{campaign/poblacion_N500.png}
 \end{frame}
 
-% Barras (pedido 2026-11-12). Dicho en vivo (N = 500): paso temporal 166.1 ± 1.4 s, eventos
-% (n_r = 8) 255.9 ± 1.8 s, híbrido (R_h = 0.5 m) 165.2 ± 1.0 s.
+% Puntos con su desvío (pedido 2026-11-13; antes barras). Dicho en vivo (N = 500): paso temporal
+% 166.1 ± 1.4 s, eventos (n_r = 8) 255.9 ± 1.8 s, híbrido (R_h = 0.5 m) 165.2 ± 1.0 s.
 \begin{frame}{Esquemas: tiempo de evacuación $t_{ev}$}
   \figura{campaign/evacuacion_esquemas.png}
 \end{frame}
 
-% Punto c (primera parte). Dicho en vivo (N = 500): 0.88 ± 0.03 s, 9.7 ± 0.2 s y 0.95 ± 0.03 s.
+% Punto c (primera parte), en escala logarítmica como el resto de las de tiempo de ejecución.
+% Dicho en vivo (N = 500): 0.88 ± 0.03 s, 9.7 ± 0.2 s y 0.95 ± 0.03 s.
 \begin{frame}{Esquemas: tiempo de ejecución}
   \figura{campaign/ejecucion_esquemas.png}
 \end{frame}
 
 % --- Radio del área del híbrido (punto c) -----------------------------------
 
-% Dicho en vivo (N = 500): con R_h = 0.1 m, 255.9 ± 1.8 s (las mismas corridas que eventos puro);
-% desde 0.2 m, 165.0-166.2 s. La transición es brusca: el primer par que pasa a paso temporal
-% arrastra a todo el atasco.
+% Las tres figuras de R_h en una sola diapositiva (pedido 2026-11-13; antes una por diapositiva),
+% igual que la de n_r: tres paneles con el mismo eje R_h y una leyenda común. Cada panel tiene su
+% magnitud y su escala (evacuación y caudal lineales, ejecución logarítmica): se lee cada uno contra
+% sus rectas de trazos, no se comparan alturas entre paneles. El eje rotula 7 de los 11 valores de
+% R_h (los 11 no entran); están todos los puntos.
+% Dicho en vivo (N = 500, L = 50 m), las tres con las mismas corridas:
+%   - evacuación: con R_h = 0.1 m, 255.9 ± 1.8 s (las mismas corridas que eventos puro); desde
+%     0.2 m, 165.0-166.2 s. La transición es brusca: el primer par que pasa a paso temporal
+%     arrastra a todo el atasco;
+%   - caudal: con 0.1 m, 2.00 ± 0.02 1/s (eventos: 2.00 ± 0.02); desde 0.2 m, 3.29-3.31 1/s, contra
+%     3.29 ± 0.04 1/s de paso temporal. Ningún R_h da un caudal distinto del de paso temporal: el
+%     atasco lo resuelve siempre el paso temporal;
+%   - ejecución: 9.72 ± 0.20 s con 0.1 m (eventos: 9.7 ± 0.2 s); 0.95-1.03 s desde 0.2 m, contra
+%     0.88 ± 0.03 s de paso temporal.
 % Valores característicos de R_h (antes en Implementación): por debajo de 2 r_min = 0.2 m nadie
 % puede entrar al área de otro (los cuerpos lo impiden) y la corrida es idéntica a eventos puro;
 % entre 2 r_min y 2 r_max + 2 v Δt = 0.6 m los choques aislados se resuelven por eventos y el atasco
 % por paso temporal; desde 0.6 m el pasaje llega siempre antes que el contacto y todos los choques
 % son por paso temporal; con R_h mayor que la habitación es paso temporal puro.
-\begin{frame}{Radio del área: tiempo de evacuación $t_{ev}$ vs $R_h$}
-  \figura{campaign/hibrido_evacuacion_vs_rh_N500.png}
+\begin{frame}{Radio del área: $t_{ev}$, caudal y tiempo de ejecución vs $R_h$}
+  \figura{campaign/hibrido_vs_rh_N500.png}
 \end{frame}
 
-% Caudal vs R_h (pedido 2026-11-12), con las mismas corridas. Dicho en vivo (N = 500): con
-% R_h = 0.1 m, 2.00 ± 0.02 1/s (eventos: 2.00 ± 0.02); desde 0.2 m, 3.29-3.31 1/s, contra
-% 3.29 ± 0.04 1/s de paso temporal. Ningún R_h da un caudal distinto del de paso temporal: el
-% atasco lo resuelve siempre el paso temporal.
-\begin{frame}{Radio del área: caudal vs $R_h$}
-  \figura{campaign/hibrido_caudal_vs_rh_N500.png}
-\end{frame}
-
-% Dicho en vivo (N = 500, L = 50 m): 9.72 ± 0.20 s con R_h = 0.1 m (eventos: 9.7 ± 0.2 s);
-% 0.95-1.03 s desde 0.2 m, contra 0.88 ± 0.03 s de paso temporal.
-\begin{frame}{Radio del área: tiempo de ejecución vs $R_h$}
-  \figura{campaign/hibrido_ejecucion_vs_rh_N500.png}
-\end{frame}
-
-% Estudio propio: N = 500 en habitaciones más grandes. La leyenda solo tiene L; que las rectas de
+% Estudio propio: N = 500 en habitaciones más grandes. Dos leyendas con los mismos símbolos: L y la
+% densidad inicial N/L² de cada una (pedido 2026-11-13: 0.2, 0.022 y 0.0056 1/m²); que las rectas de
 % trazos son paso temporal va al costado (pedido 2026-11-12). Cada recta lleva su banda de ± un
 % desvío, que casi no se ve: 0.02-0.03 s. Dicho en vivo: con L = 300 m el híbrido
 % tarda 0.45 ± 0.03 s contra 0.69 ± 0.02 s de paso temporal y le gana hasta R_h ≈ 4 m; con
@@ -762,17 +777,67 @@
   \figuranota{campaign/hibrido_ejecucion_vs_rh_por_L_N500.png}{Trazos: paso temporal}
 \end{frame}
 
+% Caudal del híbrido en las mismas habitaciones (pedido 2026-11-13), con las mismas corridas que la
+% anterior: cómo cambia el resultado físico con la densidad. Mismas dos leyendas (L y N/L²).
+% Dicho en vivo: con R_h = 0.1 m (eventos puro) el caudal es 2.0 1/s en las tres habitaciones
+% (2.00, 2.01 y 1.99); desde 0.2 m el híbrido da el de paso temporal en cada una: 3.29 ± 0.04 1/s
+% (L = 50 m), 3.17 ± 0.03 (150 m) y 2.68 ± 0.04 (300 m). O sea: en las habitaciones donde el
+% híbrido gana tiempo de ejecución (diapositiva anterior), el caudal no cambia respecto de paso
+% temporal. El caudal baja con L porque los agentes llegan más espaciados (con L = 300 m el más
+% lejano llega a los 224 s): lo limita la llegada y no la puerta.
+\begin{frame}{Híbrido: caudal vs $R_h$ según $L$}
+  \figuranota{campaign/hibrido_caudal_vs_rh_por_L_N500.png}{Trazos: paso temporal}
+\end{frame}
+
 % --- Número de agentes (punto d) ---------------------------------------------
 
-% Dicho en vivo: exponente local (t ∝ N^α entre N consecutivos): eventos 2.2-2.6; paso temporal de
+% N desde 10 (pedido 2026-11-13; N = 10, 25, 50 y 75 medidos el 2026-11-13, en otra sesión que el
+% resto: las mismas corridas de N = 100 y 500 repetidas ese día tardaron ~10 % más, en los tres
+% esquemas por igual). El eje rotula 7 de los 10 valores de N (los 10 se pisan).
+% Dicho en vivo: con N = 10, 0.026 ± 0.003 s (paso temporal), 0.0234 ± 0.0019 s (eventos) y
+% 0.042 ± 0.003 s (híbrido). El híbrido NO mejora al bajar N: es el más lento hasta N = 50 (1.6
+% veces paso temporal con N = 10, 1.2 con N = 50), aunque con N = 10 solo el 4 % de los
+% pasos-agente son de paso temporal. Eventos es el más rápido hasta N = 25 y empata con paso
+% temporal en N = 50. OJO: por debajo de ~0.05 s las curvas se aplanan (exponente local 0.1-0.3
+% entre N = 10 y 25): cada corrida es una JVM nueva y ahí se mide sobre todo el costo fijo de
+% arranque, no el costo por agente; no afirmar más que eso. Si preguntan por qué el híbrido no
+% gana con N chico como con L grande: medido aparte con la JVM ya caliente (exploratorio, sin
+% figura; tp5-pedestrian-dynamics/AGENTS.md §6.8), el híbrido tarda 0.52-0.66 veces lo que paso
+% temporal con N = 10 a 50, 0.82 con N = 100 y 0.96 con N = 500; el arranque le cuesta ~39 ms contra
+% ~21 ms de paso temporal con N = 10, y eso es lo que se ve en esta figura.
+% Exponente local (t ∝ N^α entre N consecutivos) desde N = 100: eventos 2.2-2.6; paso temporal de
 % 1.3 a 2.2; híbrido de 1.3 a 2.3. N = 1000: 3.80 ± 0.07 s, 51.5 ± 0.4 s y 4.0 ± 0.6 s.
-% TODO: avisar los atascos de N = 1000 (paso temporal, seed 5, no evacuó; híbrido, seeds 5 y 6,
-%   403 y 518 s contra ~312 s).
+% Símbolo vacío en N = 1000, paso temporal: la seed 5 no evacuó (quedan 927) y el promedio es
+%   sobre 9. Decir en vivo también el híbrido de N = 1000 (símbolo lleno: evacuaron las 10): las
+%   seeds 5 y 6 tardaron 403 y 518 s contra ~312 s (atascos temporales), por eso la barra de 0.6 s.
 \begin{frame}{Número de agentes: tiempo de ejecución con $L = 50\uni{m}$}
   \figura{campaign/ejecucion_vs_N_L50.png}
 \end{frame}
 
-% Densidad inicial 0.2 agentes/m² (la del sistema base): L = 22.4 a 70.7 m, en el eje de arriba.
+% Caudal vs N con las mismas corridas que la anterior (pedido 2026-11-13): cómo cambia el resultado
+% físico de cada esquema con N. Escala lineal en el caudal.
+% Dicho en vivo: hasta N = 25 los tres coinciden (0.39 ± 0.11 y 0.97 ± 0.14 1/s): no hay atasco y
+% el caudal lo fija la llegada de los agentes. Eventos se separa desde N = 50 (1.72 ± 0.12 contra
+% 1.88 ± 0.15 1/s) y satura en 2.0 1/s desde N = 200; paso temporal sigue subiendo hasta
+% 3.39 ± 0.03 1/s con N = 1000 (3.29 ± 0.04 con 500). El híbrido cae sobre paso temporal en todo
+% el rango hasta N = 700.
+% VALOR ALEJADO, avisar: híbrido con N = 1000, 3.1 ± 0.6 1/s. No es una diferencia entre esquemas:
+%   8 de las 10 realizaciones dan 3.37 ± 0.04 1/s (paso temporal: 3.39 ± 0.03). Las seeds 5 y 6
+%   tuvieron un atasco temporal (la puerta sin cruces durante 95 s y 211 s, con todos los agentes
+%   en paso temporal) y dan 2.22 y 1.55 1/s; como evacuaron, entran en el promedio. Paso temporal
+%   también se atascó (seed 5), pero no se destrabó en 3000 s: no tiene caudal y queda afuera del
+%   promedio (símbolo vacío, 9 realizaciones). Los atascos bajan el promedio del híbrido y no el de
+%   paso temporal solo por eso.
+\begin{frame}{Número de agentes: caudal con $L = 50\uni{m}$}
+  \figura{campaign/caudal_vs_N_L50.png}
+\end{frame}
+
+% Se mantiene (2026-11-13): el pedido era reemplazarla por la de caudal vs N, pero es la variante
+% (a) del punto d del enunciado y la que respalda la tercera conclusión. PENDIENTE del grupo:
+% confirmar si se saca.
+% Densidad inicial 0.2 agentes/m² (la del sistema base): L = 7.1 a 70.7 m, en el eje de arriba.
+% N desde 10, igual que la anterior (N < 100 medidos el 2026-11-13): con N = 10, 0.0207 ± 0.0015 s
+% (paso temporal), 0.025 ± 0.003 s (eventos) y 0.038 ± 0.003 s (híbrido).
 % Dicho en vivo: da casi lo mismo que con L fijo; la diferencia está en N chico (eventos, N = 100:
 % 0.30 s contra 0.21 s) y desaparece al crecer N (N = 1000: 3.71, 50.3 y 3.60 s contra 3.80, 51.5
 % y 4.0 s). Análisis (calculado sobre la campaña, sin figura propia: decirlo como interpretación o
@@ -783,6 +848,8 @@
 % Fracción de pasos-agente del híbrido en paso temporal: N = 1000, 0.91 (L = 50 m) y 0.85
 % (70.7 m); N = 100, 0.33 (L = 50 m) y 0.69 (22.4 m). El híbrido le gana a paso temporal recién
 % con L = 300 m (N = 500: llegada hasta 224 s, fracción 0.12).
+% Símbolo vacío en N = 1000, híbrido: las seeds 8 y 9 no evacuaron (quedan 605 y 538) y el
+% promedio es sobre 8.
 \begin{frame}{Número de agentes: tiempo de ejecución con $N/L^2 = 0.2\uni{m^{-2}}$}
   \figura{campaign/ejecucion_vs_N_densidad_constante.png}
 \end{frame}
@@ -800,6 +867,12 @@
 %      300 m (R_h = 0.5 m).
 %   3. Densidad constante: N = 1000, 3.60 ± 0.11 s (híbrido) y 3.71 ± 0.05 s (paso temporal); con
 %      N = 100 el híbrido tarda 37 % más.
+%   4. (agregada el 2026-11-13) N = 500 en L = 300 m (0.0056 1/m²), diapositivas "tiempo de
+%      ejecución vs R_h según L" y "caudal vs R_h según L": con R_h de 0.2 a 3 m el híbrido tarda
+%      0.45-0.60 s contra 0.69 ± 0.02 s de paso temporal (35 % menos hasta 1 m, 13 % menos con 3 m)
+%      y el caudal es 2.68-2.70 1/s contra 2.68 ± 0.04 1/s. Con 5 m ya tarda más (0.76 s). "Realismo"
+%      acá es el caudal igual al de paso temporal, la referencia del enunciado; no se comparó contra
+%      datos experimentales.
 %   Si preguntan por el mejor R_h: evacuación y caudal son los de paso temporal para todo
 %   R_h >= 0.2 m, así que R_h solo cambia el costo; el mínimo es una meseta entre 0.2 y 1 m.
 \begin{frame}{Conclusiones}
@@ -807,6 +880,8 @@
     \item Eventos no es un buen esquema para este tipo de simulaciones.
     \item A mismo número de agentes, el esquema híbrido mejora sus resultados con mayor espacio.
     \item A densidad constante, híbrido y paso temporal tienen tiempos de ejecución similares.
+    \item Con densidad $0.0056\uni{m^{-2}}$, el híbrido con $R_h$ entre 0.2 y $3\uni{m}$ es más
+      eficiente que paso temporal y conserva su caudal.
   \end{itemize}
 \end{frame}
 
@@ -840,7 +915,6 @@
       \begin{itemize}\setlength{\itemsep}{0.5em}
         \item Considerar el radio como un radio físico, en vez de un espacio personal con radio
           físico $\rmin$.
-        \item Realizar el escape por paso temporal en eventos, en vez de considerarlo un evento.
         \item No permitir parametrizar la cantidad de radios intermedios de eventos.
         \item En el híbrido, realizar la recuperación por eventos, en vez de seguir en paso
           temporal y retomar eventos con $\rmax$.

@@ -46,7 +46,8 @@ OUT = ROOT / "output" / "campaign"
 # 0.1 m < 2 r_min: nadie pasa a TSDMD (EDMD puro; cualquier R_h < 0.2 m da la misma corrida)
 RH = (0.1, 0.2, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10)
 LEVELS = range(0, 9)
-SCALING_N = (100, 200, 300, 500, 700, 1000)
+# N < 100 agregados el 2026-11-13 (otra sesión de medición que el resto de la campaña)
+SCALING_N = (10, 25, 50, 75, 100, 200, 300, 500, 700, 1000)
 
 
 def constant_density_length(n: int) -> float:
