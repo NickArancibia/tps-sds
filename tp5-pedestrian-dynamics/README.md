@@ -61,7 +61,7 @@ híbrido; formato en `AGENTS.md`, sección 5).
 # corre antes 2 s de la misma configuración con otras seeds: --warmup-s). Retoma donde quedó; --fresh
 # re-mide
 python3 scripts/run_campaign.py                       # → output/campaign/N<N>_L<L>/<config>/seed<k>/
-python3 scripts/run_campaign.py --studies base,levels # solo algunos (base, n200, levels, room, scaling)
+python3 scripts/run_campaign.py --studies base,levels # solo algunos (base, n200, levels, room, scaling, grid)
 
 # Figuras (analysis/figures/campaign/) y, por stdout, la tabla de cada una
 python3 analysis/plot_campaign.py

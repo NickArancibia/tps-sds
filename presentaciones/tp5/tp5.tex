@@ -581,8 +581,8 @@
       \begin{itemize}\setlength{\itemsep}{1pt}
         \item $R_h$ entre $0.1$ y $10\uni{m}$ (base: 0.5)
         \item $n_r$ entre 0 y 8 (base: 8)
-        \item $N$ entre 100 y 1000 (base: 500)
-        \item $L$ entre 22 y $300\uni{m}$ (base: 50)
+        \item $N$ entre 10 y 1000 (base: 500)
+        \item $L$ entre 7 y $424\uni{m}$ (base: 50)
       \end{itemize}
     \end{column}
   \end{columns}
@@ -852,6 +852,27 @@
 % promedio es sobre 8.
 \begin{frame}{Número de agentes: tiempo de ejecución con $N/L^2 = 0.2\uni{m^{-2}}$}
   \figura{campaign/ejecucion_vs_N_densidad_constante.png}
+\end{frame}
+
+% Mapa del cociente de tiempos de ejecución híbrido / paso temporal (agregado el 2026-11-15; datos
+% en tp5-pedestrian-dynamics/AGENTS.md §6.10). Cada celda es una configuración medida (10
+% realizaciones de cada esquema, R_h = 0.5 m), sin interpolar: N en el eje horizontal y densidad
+% inicial N/L² en el vertical (0.2 1/m² es la del sistema base; 0.022 y 0.0056 son las de N = 500
+% con L = 150 y 300 m). Negro gana el híbrido, blanco tardan lo mismo, rojo gana paso temporal;
+% rayadas ("empate") las celdas donde la diferencia es menor que el error del cociente.
+% Dicho en vivo:
+%   - fila de arriba (0.2 1/m², la de la diapositiva anterior): el híbrido no aporta; tarda más
+%     con N ≤ 200 (1.8 ± 0.6 con N = 10, 1.05 ± 0.05 con 200), empata con 500 y gana 5 % con 1000;
+%   - fila de abajo (0.0056 1/m²): gana claramente, entre 29 % y 63 % menos para N de 25 a 1000;
+%     el mejor caso es N = 200 (0.37 ± 0.05), y con N = 1000 queda en 0.63 ± 0.03;
+%   - fila del medio (0.022 1/m²): empata con N = 10 y 25 y gana entre 16 % y 37 % desde N = 50;
+%   - la ventaja no crece con N: a densidad fija, más agentes es más atasco (fracción de
+%     pasos-agente en paso temporal de 0.05 a 0.21 con 0.0056 1/m²); con N = 10 no hay ventaja en
+%     ninguna densidad.
+% No evacuaron y quedan fuera del promedio: paso temporal con N = 1000 y 0.022 1/m² (1 de 10) e
+% híbrido con N = 1000 y 0.2 1/m² (2 de 10).
+\begin{frame}{Número de agentes y densidad: híbrido contra paso temporal}
+  \figura{campaign/cociente_hibrido_vs_N_densidad.png}
 \end{frame}
 
 % ==========================================================================

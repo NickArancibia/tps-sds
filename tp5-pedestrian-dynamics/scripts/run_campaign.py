@@ -17,6 +17,9 @@ Estudios (--studies, separados por coma; default todos):
     room    N = 500, L = 150 y 300 m: tsdmd e híbrido con R_h en RH
     scaling punto (d): tsdmd, edmd (8 niveles) e híbrido (R_h = 0.5 m) con N en SCALING_N, a
             L = 50 m y a densidad inicial constante (la del sistema base: L = 50 m √(N/500))
+    grid    tsdmd e híbrido (R_h = 0.5 m) en el plano (N, densidad inicial): N en GRID_N y las
+            densidades de N = 500 con L = 300, 150 y 50 m (0.0056, 0.022 y 0.2 1/m²), o sea
+            L = L_500 √(N/500). La fila de 0.2 1/m² y N = 500 ya están en scaling, room y base
 
 El tiempo de ejecución sale de estas mismas corridas (loopTimeMs), así que corren en serie y con las
 configuraciones intercaladas dentro de cada seed (la deriva de la máquina afecta a todas por igual);
@@ -51,11 +54,14 @@ RH = (0.1, 0.2, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10)
 LEVELS = range(0, 9)
 # N < 100 agregados el 2026-11-13 (otra sesión de medición que el resto de la campaña)
 SCALING_N = (10, 25, 50, 75, 100, 200, 300, 500, 700, 1000)
+GRID_N = (10, 25, 50, 100, 200, 500, 1000)
+GRID_L500 = (300, 150, 50)  # lado (m) con N = 500 de cada densidad de la grilla
 
 
-def constant_density_length(n: int) -> float:
-    """Lado (m, 2 decimales) con la densidad inicial del sistema base, N = 500 en L = 50 m."""
-    return round(50 * math.sqrt(n / 500), 2)
+def constant_density_length(n: int, l500: float = 50) -> float:
+    """Lado (m, 2 decimales) con la densidad inicial de N = 500 en un lado `l500` (default: el
+    sistema base, L = 50 m)."""
+    return round(l500 * math.sqrt(n / 500), 2)
 
 
 def schemes_and_rh() -> list[tuple[str, tuple[str, ...]]]:
@@ -80,6 +86,10 @@ def study(name: str) -> list[tuple[int, float, str, tuple[str, ...]]]:
         schemes = [("tsdmd", ()), ("edmd_lv8", ("--levels", "8")), ("hybrid_rh0.5", ("--rh", "0.5"))]
         return [(n, length, c, o) for n in SCALING_N for length in (50, constant_density_length(n))
                 for c, o in schemes]
+    if name == "grid":
+        schemes = [("tsdmd", ()), ("hybrid_rh0.5", ("--rh", "0.5"))]
+        return [(n, constant_density_length(n, l500), c, o) for n in GRID_N for l500 in GRID_L500
+                for c, o in schemes]
     raise SystemExit(f"estudio desconocido: {name}")
 
 
@@ -99,7 +109,7 @@ def launch(n: int, length: float, config: str, options: tuple[str, ...], seed: i
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument("--studies", default="base,n200,levels,room,scaling")
+    parser.add_argument("--studies", default="base,n200,levels,room,scaling,grid")
     parser.add_argument("--seeds", type=int, default=10, help="realizaciones: seeds 1..SEEDS (default 10)")
     parser.add_argument("--t-max", type=float, default=3000, help="corte si no evacúan todos (s)")
     parser.add_argument("--warmup-s", type=float, default=2,

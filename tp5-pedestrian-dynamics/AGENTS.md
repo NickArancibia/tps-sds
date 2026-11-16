@@ -742,6 +742,77 @@ Escalamiento con N (ms; híbrido con `R_h` = 0.5 m):
   0.0056 m⁻², `R_h` de 0.2 a 3 m más eficiente y mismo caudal: vale (0.44–0.79 veces; con 5 m
   empatan).
 
+### 6.10 Híbrido / paso temporal en el plano (N, densidad inicial) (2026-11-15, 22:19–22:31)
+
+Pedido: un mapa del cociente de tiempos de ejecución `⟨t_híbrido⟩ / ⟨t_TSDMD⟩` (híbrido con
+`R_h` = 0.5 m) en función del número de agentes y de la densidad inicial `ρ = N/L²`. Hipótesis del
+grupo: con densidad alta el híbrido no aporta; con N grande y densidad baja es claramente más
+rápido que TSDMD.
+
+- Estudio `grid` de `run_campaign.py`: N ∈ {10, 25, 50, 100, 200, 500, 1000} y las densidades de
+  N = 500 con L = 300, 150 y 50 m (0.0056, 0.022 y 0.2 1/m²), o sea `L = L_500 √(N/500)`; solo
+  `tsdmd` e `hybrid_rh0.5`, 10 seeds, `--warmup-s 2`. La fila de 0.2 1/m² y las celdas de N = 500 ya
+  estaban en `output/campaign` (sesión de 6.9); las otras 12 celdas (240 corridas) se midieron en
+  esta sesión, sin `--fresh`, con el mismo jar, la notebook enchufada y carga entre 0.6 y 2.5.
+- **Sesiones**: las 12 celdas nuevas son de otra sesión que 6.9. Los tiempos absolutos no se
+  comparan entre sesiones; el cociente sí, porque en cada celda los dos esquemas se midieron en la
+  misma sesión y con las configuraciones intercaladas dentro de cada seed.
+- Dos corridas del híbrido dieron un tiempo alejado y se volvieron a medir en la misma sesión:
+  N = 10, L = 42.43 m, seed 1 (1.94 → 1.53 ms; mediana 1.38 ms) y N = 100, L = 67.08 m, seed 10
+  (20.6 → 18.2 ms; mediana 17.9 ms). Mismo `events.csv` en las dos.
+- No evacuaron (fuera del promedio): TSDMD con N = 1000 y L = 212.13 m, seed 2 (quedan 539), y las
+  dos ya conocidas del híbrido con N = 1000 y L = 70.71 m (seeds 8 y 9).
+- Figura `analysis/figures/campaign/cociente_hibrido_vs_N_densidad.png` (`ratio_map` en
+  `plot_campaign.py`): una celda por configuración, sin interpolar; color en escala logarítmica
+  centrada en 1 (negro gana el híbrido, blanco empate, rojo gana TSDMD; la escala va de 0.37 a 2.7
+  para cubrir los datos, con marcas en 0.5, 1 y 2); rayadas las celdas con `|cociente − 1| < error`.
+  Error del cociente: propagación de los desvíos entre realizaciones de los dos esquemas. En la
+  presentación desde el 2026-11-15 (pedido del grupo), como última diapositiva de Resultados
+  ("Número de agentes y densidad: híbrido contra paso temporal", después de la de densidad
+  constante). Por esta figura, la diapositiva "Sistema" de Simulaciones dice ahora `N` entre 10 y
+  1000 y `L` entre 7 y 424 m (antes 100–1000 y 22–300 m, que ya habían quedado viejos con 6.7).
+
+Media ± desvío entre realizaciones; "fracción" = pasos-agente del híbrido en paso temporal sobre el
+total (de `schemes.csv`, promedio de las realizaciones que evacuaron):
+
+| ρ (1/m²) | N | L (m) | TSDMD (s) | Híbrido (s) | Híbrido / TSDMD | Fracción |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.0056 | 10 | 42.43 | 0.00150 ± 0.00017 | 0.00142 ± 0.00016 | 0.95 ± 0.15 (empate) | 0.05 |
+| 0.0056 | 25 | 67.08 | 0.0055 ± 0.0007 | 0.0039 ± 0.0009 | 0.71 ± 0.18 | 0.04 |
+| 0.0056 | 50 | 94.87 | 0.016 ± 0.003 | 0.0085 ± 0.0014 | 0.53 ± 0.13 | 0.04 |
+| 0.0056 | 100 | 134.16 | 0.044 ± 0.005 | 0.019 ± 0.004 | 0.44 ± 0.10 | 0.04 |
+| 0.0056 | 200 | 189.74 | 0.122 ± 0.009 | 0.045 ± 0.006 | 0.37 ± 0.05 | 0.05 |
+| 0.0056 | 500 | 300 | 0.560 ± 0.015 | 0.251 ± 0.013 | 0.45 ± 0.03 | 0.12 |
+| 0.0056 | 1000 | 424.26 | 2.31 ± 0.05 | 1.46 ± 0.05 | 0.63 ± 0.03 | 0.21 |
+| 0.022 | 10 | 21.21 | 0.00097 ± 0.00017 | 0.0011 ± 0.0003 | 1.2 ± 0.3 (empate) | 0.14 |
+| 0.022 | 25 | 33.54 | 0.00291 ± 0.00020 | 0.0029 ± 0.0005 | 0.99 ± 0.18 (empate) | 0.12 |
+| 0.022 | 50 | 47.43 | 0.0088 ± 0.0008 | 0.0074 ± 0.0012 | 0.84 ± 0.16 | 0.16 |
+| 0.022 | 100 | 67.08 | 0.028 ± 0.002 | 0.0176 ± 0.0006 | 0.63 ± 0.05 | 0.21 |
+| 0.022 | 200 | 94.87 | 0.103 ± 0.004 | 0.071 ± 0.004 | 0.69 ± 0.04 | 0.30 |
+| 0.022 | 500 | 150 | 0.619 ± 0.010 | 0.515 ± 0.015 | 0.83 ± 0.03 | 0.42 |
+| 0.022 | 1000 | 212.13 | 2.91 ± 0.08 (9 de 10) | 2.39 ± 0.07 | 0.82 ± 0.03 | 0.52 |
+| 0.2 | 10 | 7.07 | 0.00056 ± 0.00008 | 0.0010 ± 0.0003 | 1.8 ± 0.6 | 0.48 |
+| 0.2 | 25 | 11.18 | 0.00208 ± 0.00014 | 0.0030 ± 0.0003 | 1.43 ± 0.18 | 0.56 |
+| 0.2 | 50 | 15.81 | 0.0078 ± 0.0007 | 0.0091 ± 0.0005 | 1.17 ± 0.12 | 0.64 |
+| 0.2 | 100 | 22.36 | 0.0269 ± 0.0011 | 0.0317 ± 0.0018 | 1.18 ± 0.08 | 0.69 |
+| 0.2 | 200 | 31.62 | 0.115 ± 0.005 | 0.120 ± 0.002 | 1.05 ± 0.05 | 0.74 |
+| 0.2 | 500 | 50 | 0.78 ± 0.02 | 0.762 ± 0.017 | 0.98 ± 0.04 (empate) | 0.80 |
+| 0.2 | 1000 | 70.71 | 3.56 ± 0.08 | 3.39 ± 0.13 (8 de 10) | 0.95 ± 0.04 | 0.85 |
+
+- **Densidad alta (0.2 1/m²): confirma que el híbrido no aporta.** Tarda más que TSDMD con N ≤ 200
+  (de 5 % con N = 200 a 80 % con N = 10), empata con N = 500 y con N = 1000 tarda 5 % menos.
+- **Densidad baja (0.0056 1/m²): confirma que el híbrido es claramente más rápido**, entre 29 % y
+  63 % menos para N de 25 a 1000. Con N = 10 empata.
+- **Lo que no sale como en la hipótesis: la ventaja no crece con N.** A densidad 0.0056 1/m² el
+  mejor cociente es con N = 200 (0.37 ± 0.05) y empeora al seguir subiendo N (0.45 con 500 y 0.63
+  con 1000). A densidad 0.022 1/m² pasa lo mismo: el mejor es N = 100 (0.63 ± 0.05) y con N = 500 y
+  1000 queda en 0.82–0.83. A densidad fija, al crecer N crece la fracción de pasos-agente en paso
+  temporal (de 0.05 a 0.21 con 0.0056 1/m²; de 0.21 a 0.52 con 0.022 1/m²).
+- Con N = 10 no hay ventaja en ninguna densidad (empate con 0.0056 y 0.022 1/m², 80 % más con 0.2),
+  aunque la fracción en paso temporal sea 0.05.
+- Celda con el error más grande: N = 10 y 0.2 1/m², 1.8 ± 0.6 (el híbrido mide 1.0 ± 0.3 ms); es de
+  la sesión de 6.9 y ninguna de sus corridas quedó marcada como valor alejado.
+
 ## 7. Escenario de dos agentes (`scenarios/dos_agentes.txt`, seed 1)
 
 Agentes en `(22.5, 2.5)` y `(27.5, 2.5)` m, convergiendo a la puerta. Valores de `dynamic.txt`
@@ -800,7 +871,7 @@ Datos relevantes:
 
 ## 9. Presentación (boceto del 2026-11-10, Implementación rehecha el 2026-11-12)
 
-`../presentaciones/tp5/tp5.tex` (compilar con `latexmk -pdf tp5.tex`; 36 páginas). Mismo formato que
+`../presentaciones/tp5/tp5.tex` (compilar con `latexmk -pdf tp5.tex`; 37 páginas). Mismo formato que
 TP3 y TP4: poco texto, una figura por diapositiva de Resultados, lo demás se dice en vivo (los
 números para decir están en los comentarios del `.tex`, arriba de cada diapositiva).
 

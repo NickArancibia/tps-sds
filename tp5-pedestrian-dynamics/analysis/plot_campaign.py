@@ -23,7 +23,9 @@ el escalar tiene dato en todas (t_90 y caudal); el significado va en una entrada
 
 Figuras en analysis/figures/campaign/, todas con el sistema base N = 500 (la campaña también tiene
 N = 200, la alternativa opcional de la cátedra: da las mismas conclusiones y no se grafica); por
-stdout, la tabla de cada figura (lo que va al costado).
+stdout, la tabla de cada figura (lo que va al costado). Excepción: el mapa del cociente de tiempos de
+ejecución híbrido / paso temporal en el plano (N, densidad inicial), con las corridas del estudio
+`grid` de la campaña.
 
 Uso: python3 analysis/plot_campaign.py
 """
@@ -40,8 +42,9 @@ import numpy as np
 from common import TP_ROOT, decade_ticks, format_pm, save_figure, use_style, value_ticks
 
 import matplotlib.pyplot as plt  # noqa: E402  (después de common: backend Agg)
-from matplotlib.colors import to_hex  # noqa: E402
+from matplotlib.colors import LinearSegmentedColormap, LogNorm, to_hex  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.patches import Patch, Rectangle  # noqa: E402
 
 CAMPAIGN = TP_ROOT / "output" / "campaign"
 GROUP = "campaign"
@@ -51,6 +54,8 @@ RH_STEPPED = tuple(rh for rh in RH if rh >= 2 * R_MIN)  # con R_h menor nadie pa
 LEVELS = tuple(range(9))
 SCALING_N = (10, 25, 50, 75, 100, 200, 300, 500, 700, 1000)
 N_TICKS = (10, 25, 50, 100, 200, 500, 1000)  # rótulos del eje N: los 10 valores se pisan
+GRID_N = (10, 25, 50, 100, 200, 500, 1000)  # estudio grid de la campaña
+GRID_L500 = (300, 150, 50)  # lado (m) con N = 500 de cada densidad de la grilla, de menor a mayor densidad
 RH_PANEL_TICKS = (0.1, 0.2, 0.5, 1, 2, 5, 10)  # rótulos del eje R_h en los paneles angostos
 HOLLOW_LABEL = "alguna realización no evacuó"
 RH_BEST = 0.5  # híbrido de la comparación entre esquemas
@@ -489,6 +494,68 @@ def scaling(key: str, constant_density: bool) -> None:
     save_figure(fig, GROUP, f"{name}_vs_N_{'densidad_constante' if constant_density else 'L50'}.png")
 
 
+# ---------------------------------------------------------- híbrido / paso temporal en (N, densidad)
+
+def ratio_map() -> None:
+    """Mapa del cociente de tiempos de ejecución ⟨t_híbrido⟩ / ⟨t_paso temporal⟩ en el plano (número
+    de agentes, densidad inicial N/L²): una celda por configuración medida, sin interpolar. Color en
+    escala logarítmica centrada en 1: negro gana el híbrido, blanco empate, rojo gana paso temporal
+    (los colores de los esquemas). Error del cociente: propagación de los desvíos entre realizaciones
+    de los dos esquemas; las celdas con |cociente − 1| < error van rayadas (empate). Las realizaciones
+    que no evacuaron no entran en el promedio (se informan por stdout)."""
+    hybrid = f"hybrid_rh{RH_BEST:g}"
+    print(f"\nTiempo de ejecución híbrido (R_h = {RH_BEST:g} m) / paso temporal en el plano (N, densidad inicial)")
+    print(f"    {'N':>5s} {'L (m)':>7s} {'N/L² (1/m²)':>12s} {'paso temporal (s)':>20s} {'híbrido (s)':>20s}  cociente")
+    ratio = np.full((len(GRID_L500), len(GRID_N)), np.nan)
+    error = np.full_like(ratio, np.nan)
+    for j, l500 in enumerate(GRID_L500):
+        for i, n in enumerate(GRID_N):
+            length = round(l500 * math.sqrt(n / 500), 2)
+            ts, ts_std, ts_ok, ts_total = stats(n, length, "tsdmd", "loop")
+            hy, hy_std, hy_ok, hy_total = stats(n, length, hybrid, "loop")
+            notes = [f"{total - ok} de {total} de {name} no evacuaron"
+                     for name, ok, total in (("paso temporal", ts_ok, ts_total), ("híbrido", hy_ok, hy_total))
+                     if 0 < ok < total]
+            if ts_ok == 0 or hy_ok == 0:
+                print(f"    {n:5d} {length:7g} {N_BASE / l500**2:12.2g}  sin corridas")
+                continue
+            ratio[j, i] = hy / ts
+            error[j, i] = ratio[j, i] * math.hypot(hy_std / hy, ts_std / ts)
+            tie = "  empate" if abs(ratio[j, i] - 1) < error[j, i] else ""
+            print(f"    {n:5d} {length:7g} {N_BASE / l500**2:12.2g} {format_pm(ts, ts_std):>20s} "
+                  f"{format_pm(hy, hy_std):>20s}  {format_pm(ratio[j, i], error[j, i])}{tie}"
+                  + "".join(f"  [{note}]" for note in notes))
+    if not np.isfinite(ratio).any():
+        return
+    relative = error / ratio
+    typical = np.nanmedian(relative)
+    for j, i in zip(*np.nonzero(relative > 3 * typical)):
+        print(f"    AVISO desvío alejado: N = {GRID_N[i]}, N/L² = {N_BASE / GRID_L500[j]**2:.2g} 1/m²: error "
+              f"relativo del cociente {relative[j, i]:.2f} (mediana de las celdas {typical:.2f})")
+
+    fig, ax = plt.subplots()
+    # Escala simétrica en log alrededor de 1, por lo menos de 0.5 a 2 y hasta cubrir todos los datos.
+    span = max(2.0, np.nanmax(ratio), 1 / np.nanmin(ratio))
+    cmap = LinearSegmentedColormap.from_list("hibrido_paso", ["black", "white", "tab:red"])
+    mesh = ax.pcolormesh(np.arange(len(GRID_N) + 1), np.arange(len(GRID_L500) + 1), np.ma.masked_invalid(ratio),
+                         cmap=cmap, norm=LogNorm(1 / span, span), edgecolors="0.6", linewidth=0.5)
+    ties = np.abs(ratio - 1) < error
+    for j, i in zip(*np.nonzero(ties)):
+        ax.add_patch(Rectangle((i, j), 1, 1, fill=False, hatch="///", edgecolor="0.45", linewidth=0))
+    ax.set_xticks(np.arange(len(GRID_N)) + 0.5, [str(n) for n in GRID_N])
+    ax.set_yticks(np.arange(len(GRID_L500)) + 0.5, [f"{N_BASE / l500**2:.2g}" for l500 in GRID_L500])
+    ax.tick_params(length=0)
+    ax.set_xlabel("Número de agentes")
+    ax.set_ylabel("Densidad inicial (m$^{-2}$)")
+    bar = fig.colorbar(mesh, ax=ax, label="Tiempo de ejecución\nhíbrido / paso temporal")
+    bar.set_ticks([0.5, 1, 2], labels=["0.5", "1", "2"])
+    bar.ax.minorticks_off()
+    if ties.any():
+        ax.legend(handles=[Patch(facecolor="white", edgecolor="0.45", hatch="///", label="empate")],
+                  loc="lower right", bbox_to_anchor=(1, 1), frameon=False)
+    save_figure(fig, GROUP, "cociente_hibrido_vs_N_densidad.png")
+
+
 def main() -> None:
     use_style()
     n = N_BASE
@@ -506,6 +573,7 @@ def main() -> None:
     for constant_density in (False, True):
         scaling("loop", constant_density)
     scaling("q", constant_density=False)
+    ratio_map()
 
 
 if __name__ == "__main__":
