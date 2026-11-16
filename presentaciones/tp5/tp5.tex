@@ -153,8 +153,8 @@
   \begin{columns}[c]
     \begin{column}{0.52\textwidth}
       \begin{itemize}\setlength{\itemsep}{0.8em}
-        \item Peatones que caminan hacia una salida angosta y forman un atasco.
-        \item Su movimiento se avanza por paso temporal, por eventos o con un esquema híbrido.
+        \item Agentes que caminan hacia una puerta intentando retirarse de la habitación.
+        \item Al salir chocan entre sí y forman un atasco.
       \end{itemize}
     \end{column}
     \begin{column}{0.46\textwidth}
@@ -511,11 +511,8 @@
       caja/.style={draw, rounded corners, align=center, inner sep=5pt, minimum height=1.35cm},
       cev/.style={caja, fill=blue!10}, cts/.style={caja, fill=red!10}]
     \node[caja] (ini)  at (0, 0)      {Estado inicial\\ {\footnotesize criterio de pasaje en $t = 0$}};
-    \node[cev]  (eve)  at (4.6, 0)    {Eventos hasta $t + \Delta t$\\
-                                       {\footnotesize los de eventos puro}\\
-                                       {\footnotesize y las entradas al área}};
-    \node[cts]  (mov)  at (10.3, 0)   {Mover los agentes\\ en paso temporal\\
-                                       {\footnotesize puerta y retiro}};
+    \node[cev]  (eve)  at (4.6, 0)    {Eventos hasta $t + \Delta t$};
+    \node[cts]  (mov)  at (10.3, 0)   {Mover los agentes\\ en paso temporal};
     \node[caja] (pas)  at (10.3, -2.3) {Pasajes entre esquemas\\ {\footnotesize criterio del área $R_h$}};
     \node[cts]  (cpm)  at (10.3, -4.6) {Paso del CPM\\ {\footnotesize contactos, radios y velocidades}\\
                                         {\footnotesize solo agentes en paso temporal}};
