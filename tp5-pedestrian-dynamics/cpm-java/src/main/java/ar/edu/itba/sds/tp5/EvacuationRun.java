@@ -66,6 +66,11 @@ public final class EvacuationRun {
               --save-t0 <s>        guardar solo estados con t >= save-t0 (default 0)
               --save-t1 <s>        guardar solo estados con t <= save-t1 (default sin límite)
               --t-max <s>          corte si no evacuaron todos (default 3000)
+              --warmup-s <s>       para medir el tiempo de ejecución: antes de la corrida, correr en
+                                   esta JVM la misma configuración con otras seeds (seed + 1,
+                                   seed + 2, ...) durante esos segundos y descartarlas (la última se
+                                   corta al cumplirse el tiempo); así loopTimeMs no incluye el
+                                   arranque de la JVM (default 0: sin calentamiento)
               --out <dir>          directorio de salida (default output/<esquema>/N<N>_seed<seed>)
             """;
 
@@ -78,12 +83,37 @@ public final class EvacuationRun {
             System.out.print(USAGE);
             return;
         }
+        // Calentamiento: corridas descartadas de la misma configuración (la corrida medida pisa sus archivos).
+        final double warmupS = cli.number("warmup-s", 0);
+        final long deadline = System.nanoTime() + (long) (warmupS * 1e9);
+        int warmupRuns = 0;
+        while (System.nanoTime() < deadline) {
+            simulate(scheme, cli, deadline, warmupS, warmupRuns++);
+        }
+        simulate(scheme, cli, Long.MAX_VALUE, warmupS, warmupRuns);
+    }
+
+    /** Corte de una corrida de calentamiento: mira el reloj cada 256 iteraciones; nunca en la corrida medida. */
+    private static boolean expired(final long iteration, final long deadline) {
+        return deadline != Long.MAX_VALUE && (iteration & 255) == 0 && System.nanoTime() > deadline;
+    }
+
+    /**
+     * Una corrida completa. Con {@code deadline} distinto de {@code Long.MAX_VALUE} es la corrida de
+     * calentamiento número {@code warmupRuns}: usa la seed {@code seed + 1 + warmupRuns} (repetir la
+     * misma trayectoria deja al JIT ajustado a esa corrida en particular), se corta en ese instante
+     * de {@code System.nanoTime()} y no se informa por stdout.
+     */
+    private static void simulate(final String scheme, final CliArgs cli, final long deadline, final double warmupS,
+                                 final int warmupRuns) throws IOException {
+        final boolean measured = deadline == Long.MAX_VALUE;
         final String initFile = cli.string("init", null);
         final Room room = new Room(cli.number("L", 50), cli.number("d", 0.8), cli.number("exit", 1));
         final double vd = cli.number("vd", 1.5);
         final CpmParams p = new CpmParams(cli.number("rmin", 0.10), cli.number("rmax", 0.25), vd,
                 cli.number("ve", vd), cli.number("beta", 0.9), cli.number("tau", 0.5));
-        final long seed = cli.longValue("seed", 1);
+        final long baseSeed = cli.longValue("seed", 1);
+        final long seed = measured ? baseSeed : baseSeed + 1 + warmupRuns;
         final Random random = new Random(seed);
         final Agents agents = initFile == null
                 ? Agents.random(cli.integer("N", 500), room, p, random)
@@ -93,7 +123,7 @@ public final class EvacuationRun {
         final double saveT0 = cli.number("save-t0", 0);
         final double saveT1 = cli.number("save-t1", Double.POSITIVE_INFINITY);
         final double tMax = cli.number("t-max", 3000);
-        final Path outDir = Path.of(cli.string("out", "output/" + scheme + "/N" + n + "_seed" + seed));
+        final Path outDir = Path.of(cli.string("out", "output/" + scheme + "/N" + n + "_seed" + baseSeed));
         if (saveEvery < 1) {
             throw new IllegalArgumentException("--save-every debe ser >= 1");
         }
@@ -120,7 +150,7 @@ public final class EvacuationRun {
                 final TimeDrivenCpm engine = new TimeDrivenCpm(agents, room, p, events);
                 final long maxSteps = (long) Math.ceil(tMax / dt);
                 long step = 0;
-                while (agents.activeCount() > 0 && step < maxSteps) {
+                while (agents.activeCount() > 0 && step < maxSteps && !expired(step, deadline)) {
                     step++;
                     final double t = step * dt;
                     engine.step(t);
@@ -148,7 +178,8 @@ public final class EvacuationRun {
                 try (BufferedWriter schemes = Files.newBufferedWriter(outDir.resolve("schemes.csv"))) {
                     schemes.write("t,tsdmd,edmd\n0.0," + engine.tsdmdCount() + "," + (n - engine.tsdmdCount()) + "\n");
                     long systemEvents = 0;
-                    while (agents.activeCount() > 0 && engine.steps() < maxSteps) {
+                    long iterations = 0;
+                    while (agents.activeCount() > 0 && engine.steps() < maxSteps && !expired(iterations++, deadline)) {
                         final boolean gridStep = engine.processNext();
                         final double t = engine.time();
                         if (gridStep) {
@@ -185,7 +216,8 @@ public final class EvacuationRun {
             } else {
                 final EventDrivenCpm engine = new EventDrivenCpm(agents, room, p, recovery, events);
                 long changes = 0;
-                while (agents.activeCount() > 0 && engine.processNext()) {
+                long iterations = 0;
+                while (agents.activeCount() > 0 && !expired(iterations++, deadline) && engine.processNext()) {
                     final double t = engine.time();
                     if (t > tMax) {
                         break;
@@ -241,17 +273,21 @@ public final class EvacuationRun {
                   "evacuated": %s,
                   "evacuationTime": %s,
                   "remaining": %d,
+                  "warmupS": %s,
+                  "warmupRuns": %d,
                 %s  "loopTimeMs": %s
                 }
                 """.formatted(scheme, n, seed, initFile == null ? "\"random\"" : "\"" + initFile + "\"", room.l(),
                 room.d(), room.exitDistance(), room.xe1(), room.xe2(), room.bandMin(), room.bandMax(), p.rMin(),
                 p.rMax(), p.vdMax(), p.ve(), p.beta(), p.tau(), dt, p.radiusIncrement(), saveEvery, saveT0,
                 Double.isInfinite(saveT1) ? "null" : saveT1, window.count, finalTime, evacuated,
-                evacuated ? finalTime : "null", agents.activeCount(), schemeJson, loopNs / 1e6);
-        Files.writeString(outDir.resolve("run.json"), json);
-        System.out.printf("%s: %s, t = %.2f s, %s, %d estados guardados, %.0f ms%n", outDir, summary, finalTime,
-                evacuated ? "evacuación completa" : agents.activeCount() + " agentes sin salir", window.count,
-                loopNs / 1e6);
+                evacuated ? finalTime : "null", agents.activeCount(), warmupS, warmupRuns, schemeJson, loopNs / 1e6);
+        if (measured) {  // un calentamiento no deja run.json: una corrida interrumpida no parece terminada
+            Files.writeString(outDir.resolve("run.json"), json);
+            System.out.printf("%s: %s, t = %.2f s, %s, %d estados guardados, %.0f ms%n", outDir, summary, finalTime,
+                    evacuated ? "evacuación completa" : agents.activeCount() + " agentes sin salir", window.count,
+                    loopNs / 1e6);
+        }
     }
 
     /** Ventana de guardado {@code [t0, t1]} y estados escritos. */

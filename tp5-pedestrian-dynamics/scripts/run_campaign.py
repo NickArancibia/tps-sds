@@ -18,10 +18,13 @@ Estudios (--studies, separados por coma; default todos):
     scaling punto (d): tsdmd, edmd (8 niveles) e híbrido (R_h = 0.5 m) con N en SCALING_N, a
             L = 50 m y a densidad inicial constante (la del sistema base: L = 50 m √(N/500))
 
-El tiempo de ejecución sale de estas mismas corridas, así que corren en serie y con las
+El tiempo de ejecución sale de estas mismas corridas (loopTimeMs), así que corren en serie y con las
 configuraciones intercaladas dentro de cada seed (la deriva de la máquina afecta a todas por igual);
-antes se hace una corrida de descarte de ~12 s. NO correr nada pesado en paralelo. Las corridas con run.json se
-saltean (para retomar); --fresh borra antes las de los estudios pedidos.
+antes se hace una corrida de descarte de ~12 s. Cada corrida se mide con la JVM caliente: el motor
+corre antes --warmup-s segundos de la misma configuración con otras seeds y los descarta (sin eso,
+loopTimeMs incluye el arranque de la JVM, que con el híbrido cuesta el doble que con paso temporal y
+con N chico es casi todo el tiempo medido). NO correr nada pesado en paralelo; notebook enchufada.
+Las corridas con run.json se saltean (para retomar); --fresh borra antes las de los estudios pedidos.
 
 Uso (desde tp5-pedestrian-dynamics/):
     python3 scripts/run_campaign.py
@@ -84,11 +87,12 @@ def run_dir(n: int, length: float, config: str, seed: int) -> Path:
     return OUT / f"N{n}_L{length:g}" / config / f"seed{seed}"
 
 
-def launch(n: int, length: float, config: str, options: tuple[str, ...], seed: int, out: Path, t_max: float) -> dict:
+def launch(n: int, length: float, config: str, options: tuple[str, ...], seed: int, out: Path, t_max: float,
+           warmup_s: float) -> dict:
     scheme = config.split("_")[0]
     subprocess.run(
         ["java", "-jar", str(JAR), scheme, "--N", str(n), "--L", f"{length:g}", "--seed", str(seed),
-         "--save-t0", "1e9", "--t-max", f"{t_max:g}", "--out", str(out), *options],
+         "--save-t0", "1e9", "--t-max", f"{t_max:g}", "--warmup-s", f"{warmup_s:g}", "--out", str(out), *options],
         check=True, capture_output=True)
     return json.loads((out / "run.json").read_text())
 
@@ -98,6 +102,8 @@ def main() -> None:
     parser.add_argument("--studies", default="base,n200,levels,room,scaling")
     parser.add_argument("--seeds", type=int, default=10, help="realizaciones: seeds 1..SEEDS (default 10)")
     parser.add_argument("--t-max", type=float, default=3000, help="corte si no evacúan todos (s)")
+    parser.add_argument("--warmup-s", type=float, default=2,
+                        help="calentamiento de la JVM antes de cada corrida medida (s; default 2; 0 = JVM fría)")
     parser.add_argument("--fresh", action="store_true", help="borrar las corridas de estos estudios y re-medir")
     args = parser.parse_args()
     if not JAR.is_file():
@@ -115,7 +121,7 @@ def main() -> None:
     # Descarte de ~12 s: después de un rato sin carga, las primeras corridas tardan hasta 2.7 veces más
     # (medido: paso temporal con N = 500, 2.4 s contra 0.9 s); una corrida corta no alcanza.
     warmup = OUT / "_descarte"
-    launch(500, 50, "edmd", (), 1, warmup, args.t_max)
+    launch(500, 50, "edmd", (), 1, warmup, args.t_max, 0)
     shutil.rmtree(warmup)
 
     start = time.time()
@@ -124,7 +130,7 @@ def main() -> None:
             out = run_dir(n, length, config, seed)
             if (out / "run.json").is_file():
                 continue
-            meta = launch(n, length, config, options, seed, out, args.t_max)
+            meta = launch(n, length, config, options, seed, out, args.t_max, args.warmup_s)
             evacuation = f"{meta['evacuationTime']:.1f} s" if meta["evacuated"] else f"quedan {meta['remaining']}"
             print(f"[{time.time() - start:6.0f} s] seed {seed:2d} N{n}_L{length:g}/{config}: evacuación {evacuation}, "
                   f"lazo {meta['loopTimeMs'] / 1e3:.2f} s", flush=True)

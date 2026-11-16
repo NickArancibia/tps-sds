@@ -7,8 +7,9 @@ Escalares de una realización:
   t_90                  instante en que se retiró el 90 % de los agentes (events.csv, "exit")
   caudal                Q = (n_80 − n_20) / (t_80 − t_20), con t_p el instante del cruce de puerta
                         número n_p = p N / 100 (events.csv, "door": primer cruce de cada agente)
-  tiempo de ejecución   loopTimeMs de run.json (lazo de simulación, sin guardar estados; sin dato si
-                        no evacuaron todos: la corrida se cortó en t-max)
+  tiempo de ejecución   loopTimeMs de run.json (lazo de simulación, sin guardar estados y con la JVM
+                        caliente: --warmup-s del motor; sin dato si no evacuaron todos: la corrida
+                        se cortó en t-max)
 Curva de población: N_in(t) = N − (cruces de puerta hasta t), de una sola corrida por esquema (misma
 seed), para ver el comportamiento; los promedios van en los escalares.
 Agentes en cada esquema (híbrido, punto a): una sola corrida, schemes.csv (agentes activos en paso

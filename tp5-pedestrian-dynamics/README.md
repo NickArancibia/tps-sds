@@ -55,9 +55,11 @@ híbrido; formato en `AGENTS.md`, sección 5).
 
 ```bash
 # Los tres esquemas (N = 500 y 200), barrido de R_h del híbrido (L = 50, 150 y 300 m), de los radios
-# intermedios de EDMD y escalamiento con N de 100 a 1000 (a L = 50 m y a densidad constante); 10 seeds
+# intermedios de EDMD y escalamiento con N de 10 a 1000 (a L = 50 m y a densidad constante); 10 seeds
 # por configuración, sin guardar estados. Corre en serie (mide el tiempo de ejecución): no correr nada
-# pesado en paralelo. Retoma donde quedó; --fresh re-mide
+# pesado en paralelo y con la notebook enchufada. Cada corrida se mide con la JVM caliente (el motor
+# corre antes 2 s de la misma configuración con otras seeds: --warmup-s). Retoma donde quedó; --fresh
+# re-mide
 python3 scripts/run_campaign.py                       # → output/campaign/N<N>_L<L>/<config>/seed<k>/
 python3 scripts/run_campaign.py --studies base,levels # solo algunos (base, n200, levels, room, scaling)
 

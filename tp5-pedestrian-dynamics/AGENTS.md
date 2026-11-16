@@ -220,13 +220,14 @@ Parámetros: `r_min = 0.10 m`, `r_max = 0.25 m` y `v_dmax = 1.5 m/s` (enunciado)
   2026-11-13): 3 de 40 corridas de TSDMD e híbrido con N = 1000 no evacuaron y se excluyen del
   promedio del tiempo de ejecución. Los atascos temporales del híbrido (N = 1000, L = 50 m, seeds
   5 y 6) evacuaron, así que el punto va lleno: se dicen en vivo.
-- Con qué sistema se muestra el barrido de `R_h` del punto (c): con N = 500 y L = 50 m el híbrido no
-  le gana a TSDMD para ningún `R_h` (sección 6.4).
-- El tiempo de ejecución se mide con una JVM por corrida (incluye el calentamiento del JIT); no hay
-  modo `--bench` como en el TP4.
-- Tiempos de ejecución: los vigentes son los de la sección 6.6 (campaña completa en una sola sesión).
-  Si se cambia el motor, volver a correr `python3 scripts/run_campaign.py --fresh` (~1 h) con la
-  notebook enchufada y sin otros programas pesados.
+- Con N = 500 y L = 50 m el híbrido no le gana a TSDMD para ningún `R_h`: con `R_h` = 0.5 m empatan
+  y con el resto tarda entre 3 % y 12 % más (sección 6.9). El barrido de `R_h` se muestra también
+  con L = 150 y 300 m, donde sí gana.
+- **Tiempos de ejecución vigentes: los de la sección 6.9** (campaña del 2026-11-15, cada corrida
+  medida con la JVM caliente). Los de 6.4, 6.6, 6.7 y 6.8 son de mediciones anteriores y no se usan.
+  Si se cambia el motor, volver a correr `python3 scripts/run_campaign.py --fresh` (~1 h 35 min) con
+  la notebook enchufada y sin otros programas pesados. `output/campaign_fria` es la campaña
+  anterior (una JVM por corrida): mismos resultados físicos, se puede borrar.
 
 ## 4. Diagnósticos previstos sobre TSDMD (para diseñar EDMD e híbrido)
 
@@ -541,7 +542,7 @@ Barrido (10 seeds, L = 50 m; media ± desvío entre realizaciones):
 - Los tiempos de ejecución de esa sesión (notebook a batería y con otros programas usando CPU,
   ~40 % más lentos) se descartaron; los vigentes están en 6.6.
 
-### 6.6 Campaña completa en una sola sesión (2026-11-10, 17:17–18:15)
+### 6.6 Campaña completa en una sola sesión (2026-11-10, 17:17–18:15; tiempos de ejecución reemplazados por 6.9)
 
 `python3 scripts/run_campaign.py --fresh`, notebook enchufada y sin otros programas pesados (carga
 0.9 al empezar); es lo que hay en `output/campaign` y en `analysis/figures/campaign/`. 10 seeds por
@@ -594,7 +595,7 @@ realizaciones que evacuaron. Tablas completas por stdout de `analysis/plot_campa
   y N = 200, seed 7 (quedan 2).
 
 
-### 6.7 N menores que 100 y caudal vs N (2026-11-13)
+### 6.7 N menores que 100 y caudal vs N (2026-11-13; tiempos de ejecución reemplazados por 6.9)
 
 `SCALING_N` suma N = 10, 25, 50 y 75 (`run_campaign.py --studies scaling`, 10 seeds, tres esquemas,
 L = 50 m y densidad constante: 240 corridas, todas evacuaron). Es otra sesión de medición que la de
@@ -636,7 +637,7 @@ evacuación y tardaron entre 0 % y 14 % más (promedio ~10 %), sin diferencia en
   L = 50 y 150 m): 3.29 ± 0.04, 3.17 ± 0.03 y 2.68 ± 0.04 1/s. El caudal baja con L en TSDMD y en el
   híbrido, y no en EDMD.
 
-### 6.8 Tiempo de ejecución con la JVM caliente (2026-11-13, exploratorio)
+### 6.8 Tiempo de ejecución con la JVM caliente (2026-11-13, exploratorio; reemplazado por 6.9)
 
 Pregunta del grupo: por qué el híbrido no le gana a TSDMD al bajar N con L = 50 m, si le gana al
 agrandar la habitación. Respuesta: en la campaña sí pierde, pero por el arranque de la JVM. Prueba
@@ -667,6 +668,79 @@ después de 30 de calentamiento, o de 10 con N ≥ 200); "fría" es la campaña 
   arranque en contra, así que esa conclusión no cambia de signo; la ganancia real sería mayor.
 - No reemplaza a la campaña: es otra sesión y otro método. Para usarlo en la presentación habría
   que volver a medir todos los tiempos de ejecución con la JVM caliente (decisión del grupo).
+
+### 6.9 Campaña con la JVM caliente (2026-11-15, 19:59–21:33): tiempos de ejecución vigentes
+
+Pedido del grupo después de 6.8. Motor: opción `--warmup-s` (`EvacuationRun`): antes de la corrida
+medida corre en la misma JVM la misma configuración con las seeds `seed + 1, seed + 2, ...`
+durante ese tiempo y las descarta (la última se corta al cumplirse; un calentamiento no escribe
+`run.json`); `run.json` guarda `warmupS` y `warmupRuns`. Campaña: `python3 scripts/run_campaign.py
+--fresh` con `--warmup-s 2` (default), las 117 configuraciones × 10 seeds en una sola sesión,
+notebook enchufada, carga entre 1 y 2.5 (la máquina estuvo en uso liviano). Entre 1 y 2678 corridas
+de calentamiento por corrida medida (mediana 4).
+
+- Resultados físicos idénticos a los de la campaña anterior en las 1170 corridas (`events.csv`,
+  `schemes.csv` y todo `run.json` salvo `loopTimeMs`): evacuación, `t_90`, caudal y atascos no
+  cambian, y solo se regeneraron las figuras de tiempo de ejecución.
+- Tres corridas de EDMD con N = 500 dieron un tiempo alejado (13.5, 10.4 y 10.1 s contra una mediana
+  de 9.2–9.3 s) y se volvieron a medir en la misma sesión: 8.7, 9.3 y 9.2 s (ruido de la máquina).
+- La sesión parcial del 13/11 (273 corridas, medidas con carga ~3) se descartó: 18 de esas
+  corridas repetidas el 15/11 tardaron en promedio 13 % menos (cocientes entre 0.68 y 1.39).
+
+Esquemas, N = 500 y L = 50 m (media ± desvío entre realizaciones): TSDMD 0.78 ± 0.02 s, EDMD
+9.4 ± 0.3 s, híbrido (`R_h` = 0.5 m) 0.762 ± 0.017 s. EDMD según `n_r`: 9.2–9.4 s de 1 a 8 y
+6.6 ± 0.3 s con 0 (7 de 10).
+
+Híbrido vs `R_h`, N = 500 (s; entre paréntesis, cociente con TSDMD de la misma habitación):
+
+| `R_h` (m) | L = 50 m | L = 150 m | L = 300 m |
+| ---: | ---: | ---: | ---: |
+| TSDMD | 0.78 ± 0.02 | 0.619 ± 0.010 | 0.560 ± 0.015 |
+| 0.1 (EDMD puro) | 9.5 ± 0.3 | 6.5 ± 0.2 | 2.84 ± 0.18 |
+| 0.2 | 0.83 ± 0.02 (1.07) | 0.52 ± 0.02 (0.84) | 0.255 ± 0.018 (0.45) |
+| 0.3 | 0.82 ± 0.04 (1.06) | 0.51 ± 0.02 (0.82) | 0.249 ± 0.010 (0.44) |
+| 0.5 | 0.762 ± 0.017 (0.98) | 0.515 ± 0.015 (0.83) | 0.251 ± 0.013 (0.45) |
+| 0.75 | 0.797 ± 0.016 (1.03) | 0.542 ± 0.016 (0.88) | 0.269 ± 0.016 (0.48) |
+| 1 | 0.82 ± 0.02 (1.06) | 0.565 ± 0.019 (0.91) | 0.29 ± 0.03 (0.52) |
+| 1.5 | 0.83 ± 0.03 (1.07) | 0.613 ± 0.019 (0.99) | 0.29 ± 0.02 (0.52) |
+| 2 | 0.832 ± 0.019 (1.07) | 0.615 ± 0.017 (0.99) | 0.351 ± 0.013 (0.63) |
+| 3 | 0.84 ± 0.03 (1.09) | 0.687 ± 0.013 (1.11) | 0.44 ± 0.03 (0.79) |
+| 5 | 0.85 ± 0.03 (1.10) | 0.738 ± 0.012 (1.19) | 0.56 ± 0.02 (1.00) |
+| 10 | 0.87 ± 0.04 (1.12) | 0.762 ± 0.009 (1.23) | 0.73 ± 0.03 (1.30) |
+
+Escalamiento con N (ms; híbrido con `R_h` = 0.5 m):
+
+| N | TSDMD, L = 50 m | EDMD, L = 50 m | Híbrido, L = 50 m | TSDMD, densidad cte. | EDMD, densidad cte. | Híbrido, densidad cte. |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 1.8 ± 0.2 | 0.93 ± 0.16 | 1.80 ± 0.16 | 0.56 ± 0.08 | 1.7 ± 0.6 | 1.0 ± 0.3 |
+| 25 | 4.3 ± 0.4 | 3.2 ± 0.9 | 3.5 ± 0.6 | 2.08 ± 0.14 | 9.9 ± 1.6 | 3.0 ± 0.3 |
+| 50 | 8.5 ± 0.5 | 15 ± 5 | 6.9 ± 1.0 | 7.8 ± 0.7 | 47 ± 5 | 9.1 ± 0.5 |
+| 75 | 17.0 ± 1.2 | 54 ± 6 | 12.2 ± 1.4 | 16.6 ± 0.9 | 110 ± 9 | 18.7 ± 0.6 |
+| 100 | 26.3 ± 2.0 | 129 ± 20 | 22.7 ± 1.8 | 26.9 ± 1.1 | 203 ± 8 | 31.7 ± 1.8 |
+| 200 | 107 ± 5 | 880 ± 50 | 104 ± 8 | 115 ± 5 | 1070 ± 20 | 120 ± 2 |
+| 300 | 255 ± 6 | 2630 ± 80 | 266 ± 15 | 265 ± 6 | 2800 ± 60 | 283 ± 15 |
+| 500 | 780 ± 20 | 9400 ± 300 | 762 ± 17 | 780 ± 20 | 9400 ± 300 | 762 ± 17 |
+| 700 | 1601 ± 18 | 21100 ± 300 | 1660 ± 40 | 1580 ± 30 | 21000 ± 300 | 1590 ± 50 |
+| 1000 | 3650 ± 80 (9 de 10) | 50000 ± 600 | 3800 ± 600 | 3560 ± 80 | 48700 ± 800 | 3390 ± 130 (8 de 10) |
+
+- L = 50 m: el híbrido empata con TSDMD con N = 10, tarda entre 14 % y 28 % menos con N de 25 a 100
+  y empata desde N = 200 (cociente 0.97–1.04). Es la hipótesis del grupo de 6.7, que la medición con
+  la JVM fría tapaba: menos agentes, menos fracción de pasos-agente en paso temporal (0.04 con
+  N = 10, 0.33 con 100, 0.80 con 500). EDMD es el más rápido con N = 10 y 25, y desde N = 50 el más
+  lento (5 veces TSDMD con N = 100, 12 veces con N = 500).
+- Densidad constante: al revés. Con N chico la habitación es chica (7 m con N = 10), los agentes
+  están en el atasco desde el comienzo y el híbrido tarda más que TSDMD: 80 % con N = 10, 44 % con
+  25, 13–18 % con 50 a 100. Desde N = 200 empatan (cociente 0.95–1.07).
+- Exponente local (t ∝ N^α) desde N = 100: L = 50 m, EDMD 2.4–2.8, TSDMD 2.0–2.3, híbrido 2.1–2.4;
+  densidad constante, EDMD 2.4, TSDMD 2.1–2.3, híbrido 1.9–2.2.
+- **Valor alejado** (igual que antes): híbrido con N = 1000 y L = 50 m, 3.8 ± 0.6 s por los atascos
+  temporales de las seeds 5 y 6 (5.0 y 4.8 s; mediana 3.57 s).
+- Conclusiones de la presentación, revisadas con estos tiempos: (1) EDMD peor: vale (12 veces más
+  lento con N = 500); matiz, con N ≤ 25 es el más rápido. (2) El híbrido mejora con más espacio:
+  vale y es más marcado (0.98, 0.83 y 0.45 veces TSDMD con L = 50, 150 y 300 m). (3) A densidad
+  constante tiempos similares: vale desde N = 200; con N ≤ 100 el híbrido tarda 13–80 % más. (4) Con
+  0.0056 m⁻², `R_h` de 0.2 a 3 m más eficiente y mismo caudal: vale (0.44–0.79 veces; con 5 m
+  empatan).
 
 ## 7. Escenario de dos agentes (`scenarios/dos_agentes.txt`, seed 1)
 
@@ -813,6 +887,11 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   N = 200, 0.57 y 0.74; N = 100, 0.33 (L = 50 m) y 0.69 (22.4 m). Las variantes difieren en N chico
   (eventos, N = 100: 0.21 s con L = 50 m y 0.30 s con 22.4 m) y coinciden al crecer N. Con N = 500 y
   L = 300 m (llegada hasta 224 s) la fracción baja a 0.12 y el híbrido le gana a paso temporal.
+- **Los tiempos de ejecución de los puntos de esta sección anteriores al 2026-11-15 ("Densidad
+  constante contra L fijo", "Mejor `R_h`", "Exploratorio") son de la campaña con la JVM fría**; los
+  vigentes y la revisión de las conclusiones están en 6.9. Lo que cambia: con N = 500 y L = 50 m el
+  híbrido ya no es 8 % más lento sino que empata; las ventajas con L = 150 y 300 m pasan de 7 % y
+  34 % a 17 % y 55 %; y el mínimo de `R_h` queda entre 0.2 y 0.5 m.
 - Mejor `R_h` (análisis del 2026-11-12 sobre `output/campaign`, N = 500): para todo `R_h` ≥ 0.2 m
   la evacuación y el caudal son los de paso temporal en los tres `L`, así que `R_h` solo cambia el
   costo y no hay compromiso con el caudal. Tiempo de ejecución contra paso temporal: L = 50 m, +8 %
@@ -831,8 +910,8 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   espacio"; "A densidad constante, híbrido y paso temporal tienen tiempos de ejecución similares".
   Cuarta, agregada el 2026-11-13 (esta sí con números, pedido del grupo): "Con densidad
   0.0056 m⁻², el híbrido con `R_h` entre 0.2 y 3 m es más eficiente que paso temporal y conserva
-  su caudal". Respaldo (N = 500, L = 300 m, sección 6.6 y 6.7): 0.45–0.60 s contra 0.69 ± 0.02 s
-  (35 % menos hasta 1 m, 13 % menos con 3 m; con 5 m ya tarda más) y caudal 2.68–2.70 contra
+  su caudal". Respaldo (N = 500, L = 300 m, sección 6.9): 0.25–0.44 s contra 0.560 ± 0.015 s
+  (55 % menos hasta 0.5 m, 21 % menos con 3 m; con 5 m empatan) y caudal 2.68–2.70 contra
   2.68 ± 0.04 1/s. El grupo pidió "conservando el realismo"; en la diapositiva dice "caudal"
   porque lo mostrado es que coincide con paso temporal, no con datos experimentales.
   Los números que respaldan cada una están en el comentario del `.tex`, para decir en vivo.
