@@ -211,7 +211,6 @@
       \end{tikzpicture}
     \end{column}
   \end{columns}
-  \fuente{Baglietto y Parisi, Phys. Rev. E 83, 056117 (2011).}
 \end{frame}
 
 % Contacto con otro agente y con una pared (devolución TP4, D6: faltaban las ecuaciones de choque
@@ -270,7 +269,8 @@
 % Solo el motor. Tres esquemas sobre las mismas reglas del CPM.
 % ==========================================================================
 
-% Paso temporal: las cuatro iteraciones del paper (sincrónicas) + cuerpo impenetrable + mover.
+% Paso temporal: las cuatro iteraciones del paper (sincrónicas) + mover. El recuadro "Cuerpo
+% impenetrable" se sacó del diagrama (pedido 2026-11-16).
 \begin{frame}{Paso temporal}
   \centering
   \begin{tikzpicture}[>=Stealth, font=\small, scale=0.95, every node/.append style={scale=0.95},
@@ -280,23 +280,25 @@
     \node[clave] (con)  at (4.4, 0)    {Contactos\\ {\footnotesize agentes vecinos y paredes}\\
                                         {\footnotesize $\sum_j \hat{\vect{e}}_{ij}$}};
     \node[caja]  (rad)  at (9.6, 0)    {Radios $r_i$\\ Velocidades $\vect{v}^{e}_i$ o $\vect{v}^{d}_i$};
-    \node[clave] (cue)  at (9.6, -2.2) {Cuerpo impenetrable\\ {\footnotesize corrige $\vect{v}_i$}};
-    \node[caja]  (mov)  at (9.6, -4.4) {$\vect{x}_i \leftarrow \vect{x}_i + \vect{v}_i\,\Delta t$};
-    \node[caja]  (fas)  at (4.4, -4.4) {Cruce de la puerta\\ Retiro};
-    \node[caja, minimum height=0.9cm] (fin) at (0, -4.4) {Fin};
+    \node[caja]  (mov)  at (9.6, -3.0) {$\vect{x}_i \leftarrow \vect{x}_i + \vect{v}_i\,\Delta t$};
+    \node[caja]  (fas)  at (4.4, -3.0) {Cruce de la puerta\\ Retiro};
+    \node[caja, minimum height=0.9cm] (fin) at (0, -3.0) {Fin};
     \draw[->] (ini) -- (con);
     \draw[->] (con) -- (rad);
-    \draw[->] (rad) -- (cue);
-    \draw[->] (cue) -- (mov);
+    \draw[->] (rad) -- (mov);
     \draw[->] (mov) -- (fas);
     \draw[->] (fas) -- node[right, font=\footnotesize] {$t \leftarrow t + \Delta t$} (con);
     \draw[->] (fas) -- node[above, font=\footnotesize] {sin agentes} (fin);
   \end{tikzpicture}
 \end{frame}
 
-% La diapositiva del cuerpo impenetrable (agregado propio: restricciones v_i·e_ij >= -(d_ij -
-% 2 r_min)/(2 Δt) y v_i·e_ip >= -(d_ip - r_min)/Δt) se sacó (pedido 2026-11-10). Declararlo en
-% vivo sobre el recuadro "Cuerpo impenetrable" del diagrama anterior: no es parte del CPM del paper.
+% El cuerpo impenetrable (agregado propio: restricciones v_i·e_ij >= -(d_ij - 2 r_min)/(2 Δt) y
+% v_i·e_ip >= -(d_ip - r_min)/Δt) ya no aparece en ninguna diapositiva: su diapositiva se sacó el
+% 2026-11-10 y su recuadro en este diagrama, el 2026-11-16. Hay que declararlo en vivo acá, entre
+% "Velocidades" y el movimiento: no es parte del CPM del paper. Texto sugerido: "El Δt del modelo
+% garantiza que dos agentes no se atraviesen, pero en el atasco el escape puede empujar a un agente
+% contra otro vecino. El modelo original lo deshace al paso siguiente; nosotros corregimos la
+% velocidad antes de mover para que los cuerpos nunca se pisen."
 
 % Eventos: lazo del motor, con el mismo formato que el de paso temporal (pedido 2026-11-12;
 % reemplaza a "Eventos: instante del contacto"; la ecuación del contacto se sacó de la diapositiva).
@@ -886,12 +888,13 @@
 %   1. Eventos: evacuación 256 ± 2 s contra 166.1 ± 1.4 s de paso temporal, caudal 2.00 contra
 %      3.29 1/s y 12 veces más tiempo de ejecución; desde n_r = 4, t_90 no cambia. Matiz si
 %      preguntan: con N = 10 y 25 (sin atasco) eventos es el más rápido y da el mismo caudal.
-%   2. Híbrido contra paso temporal (R_h = 0.5 m): empate con L = 50 m (2 % menos, dentro del
-%      desvío), 17 % menos con 150 m, 55 % menos con 300 m.
-%   3. Densidad constante: desde N = 200 el cociente híbrido/paso temporal está entre 0.95 y 1.07
-%      (N = 1000: 3.39 ± 0.13 s y 3.56 ± 0.08 s). Con N = 100 el híbrido tarda 18 % más y con N = 10,
-%      80 % más: "similares" vale desde N = 200.
-%   4. (agregada el 2026-11-13) N = 500 en L = 300 m (0.0056 1/m²), diapositivas "tiempo de
+%   2. (reemplaza a las dos anteriores, 2026-11-15) Respaldo: el mapa de la última diapositiva de
+%      Resultados y "tiempo de ejecución vs R_h según L". Con 0.0056 1/m² el híbrido tarda entre
+%      29 % y 63 % menos que paso temporal para N de 25 a 1000 (mejor caso N = 200, 0.37 ± 0.05;
+%      N = 1000, 0.63 ± 0.03) y empata con N = 10. Con 0.022 1/m² empata con N = 10 y 25 y tarda
+%      entre 16 % y 37 % menos desde N = 50. Con 0.2 1/m² (la del sistema base) no mejora: tarda
+%      más con N ≤ 200, empata con 500 y gana 5 % con 1000.
+%   3. (agregada el 2026-11-13) N = 500 en L = 300 m (0.0056 1/m²), diapositivas "tiempo de
 %      ejecución vs R_h según L" y "caudal vs R_h según L": con R_h de 0.2 a 3 m el híbrido tarda
 %      0.25-0.44 s contra 0.560 ± 0.015 s de paso temporal (55 % menos hasta 0.5 m, 21 % menos con
 %      3 m) y el caudal es 2.68-2.70 1/s contra 2.68 ± 0.04 1/s. Con 5 m empatan (0.56 ± 0.02 s).
@@ -902,8 +905,8 @@
 \begin{frame}{Conclusiones}
   \begin{itemize}\setlength{\itemsep}{1.2em}
     \item Eventos no es un buen esquema para este tipo de simulaciones.
-    \item A mismo número de agentes, el esquema híbrido mejora sus resultados con mayor espacio.
-    \item A densidad constante, híbrido y paso temporal tienen tiempos de ejecución similares.
+    \item El híbrido tiende a mejorar el tiempo computacional del paso temporal para densidades
+      bajas, aunque la mejora depende del número de agentes.
     \item Con densidad $0.0056\uni{m^{-2}}$, el híbrido con $R_h$ entre 0.2 y $3\uni{m}$ es más
       eficiente que paso temporal y conserva su caudal.
   \end{itemize}

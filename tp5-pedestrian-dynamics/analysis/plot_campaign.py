@@ -57,7 +57,7 @@ N_TICKS = (10, 25, 50, 100, 200, 500, 1000)  # rótulos del eje N: los 10 valore
 GRID_N = (10, 25, 50, 100, 200, 500, 1000)  # estudio grid de la campaña
 GRID_L500 = (300, 150, 50)  # lado (m) con N = 500 de cada densidad de la grilla, de menor a mayor densidad
 RH_PANEL_TICKS = (0.1, 0.2, 0.5, 1, 2, 5, 10)  # rótulos del eje R_h en los paneles angostos
-HOLLOW_LABEL = "alguna realización no evacuó"
+HOLLOW_LABEL = "alguna realización no terminó"
 RH_BEST = 0.5  # híbrido de la comparación entre esquemas
 N_BASE = 500  # sistema base del enunciado
 

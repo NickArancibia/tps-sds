@@ -902,8 +902,10 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   tiempo de evacuación vs `R_h`. **Riesgo declarado al grupo**: el enunciado pide "describir
   matemáticamente" el criterio, la convivencia y la colisión por eventos, y en Implementación quedó
   una sola condición (la del criterio de pasaje) además de la fórmula de los radios.
-- El cuerpo impenetrable (agregado propio) no tiene diapositiva (se sacó por pedido del grupo):
-  queda como recuadro en el diagrama de paso temporal y hay que declararlo en vivo ahí. La de
+- El cuerpo impenetrable (agregado propio) no aparece en ninguna diapositiva: su diapositiva se
+  sacó el 2026-11-10 y su recuadro en el diagrama de paso temporal, el 2026-11-16 (pedidos del
+  grupo). **Hay que declararlo en vivo** al explicar ese diagrama (texto sugerido en el comentario
+  del `.tex`); **riesgo declarado al grupo**: es una regla que no está en el paper. La de
   estados de eventos lleva solo el diagrama; la lista de eventos se dice en vivo.
 - Todas las figuras son del sistema base, N = 500 (pedido del grupo, 2026-11-10). La campaña también
   midió N = 200 (alternativa opcional de la cátedra): da las mismas conclusiones y
@@ -941,7 +943,8 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   `n_r` = 0 el punto va vacío también en `t_90` y caudal, que tienen dato en las 10. Puntos vacíos
   en la presentación: `n_r` = 0 (3 de 10; ejecución, `t_90` y caudal vs `n_r`), paso temporal con
   N = 1000 y L = 50 m (1 de 10) e híbrido con N = 1000 y L = 70.71 m (2 de 10). El significado va
-  en la leyenda, como una entrada más con el símbolo vacío: "alguna realización no evacuó" (pedido
+  en la leyenda, como una entrada más con el símbolo vacío: "alguna realización no terminó" (pedido
+  del 2026-11-16; antes "alguna realización no evacuó", en la leyenda por pedido
   del grupo, 2026-11-13; reemplazó a la nota al costado). **Riesgo declarado al grupo**: la guía
   pide leyendas sin aclaraciones (`../AGENTS.md` §3). Las configuraciones de `output/campaign`
   tienen 10 seeds distintas; las demás evacuaron las 10.
@@ -975,11 +978,14 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   3.90 s contra 3.72 ± 0.05 s de paso temporal; L = 70.71 m: 3.62, 3.52, 3.62 y 3.90 s contra
   3.63 ± 0.04 s. Ningún `R_h` mejora a 0.5 m fuera del error; hubo corridas con atascos (sin evacuar
   o con evacuación hasta 100 s más larga) en casi todas las configuraciones.
-- Conclusiones: redacción del grupo (2026-11-12), tal cual y sin números en la diapositiva (pedido
-  explícito; una versión cuantificada se descartó): "Eventos no es un buen esquema para este tipo
-  de simulaciones"; "A mismo número de agentes, el esquema híbrido mejora sus resultados con mayor
-  espacio"; "A densidad constante, híbrido y paso temporal tienen tiempos de ejecución similares".
-  Cuarta, agregada el 2026-11-13 (esta sí con números, pedido del grupo): "Con densidad
+- Conclusiones: redacción del grupo, tal cual y sin números en la diapositiva (pedido explícito;
+  una versión cuantificada se descartó). Primera (2026-11-12): "Eventos no es un buen esquema para
+  este tipo de simulaciones". Segunda (2026-11-15; reemplazó a "A mismo número de agentes, el
+  esquema híbrido mejora sus resultados con mayor espacio" y "A densidad constante, híbrido y paso
+  temporal tienen tiempos de ejecución similares"): "El híbrido tiende a mejorar el tiempo
+  computacional del paso temporal para densidades bajas, aunque la mejora depende del número de
+  agentes"; respaldo en 6.10 (mapa) y 6.9.
+  Tercera, agregada el 2026-11-13 (esta sí con números, pedido del grupo): "Con densidad
   0.0056 m⁻², el híbrido con `R_h` entre 0.2 y 3 m es más eficiente que paso temporal y conserva
   su caudal". Respaldo (N = 500, L = 300 m, sección 6.9): 0.25–0.44 s contra 0.560 ± 0.015 s
   (55 % menos hasta 0.5 m, 21 % menos con 3 m; con 5 m empatan) y caudal 2.68–2.70 contra
