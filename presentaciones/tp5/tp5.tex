@@ -277,8 +277,7 @@
       caja/.style={draw, rounded corners, align=center, inner sep=5pt, minimum height=1.35cm},
       clave/.style={caja, fill=red!10}]
     \node[caja]  (ini)  at (0, 0)      {Estado inicial\\ $r_i = \rmin$};
-    \node[clave] (con)  at (4.4, 0)    {Contactos\\ {\footnotesize agentes vecinos y paredes}\\
-                                        {\footnotesize $\sum_j \hat{\vect{e}}_{ij}$}};
+    \node[clave] (con)  at (4.4, 0)    {Contactos\\ {\footnotesize agentes vecinos y paredes}};
     \node[caja]  (rad)  at (9.6, 0)    {Radios $r_i$\\ Velocidades $\vect{v}^{e}_i$ o $\vect{v}^{d}_i$};
     \node[caja]  (mov)  at (9.6, -3.0) {$\vect{x}_i \leftarrow \vect{x}_i + \vect{v}_i\,\Delta t$};
     \node[caja]  (fas)  at (4.4, -3.0) {Cruce de la puerta\\ Retiro};
