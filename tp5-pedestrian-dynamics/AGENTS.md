@@ -932,6 +932,11 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
   | `hibrido_L300.mp4` (sin usar) | `hybrid --rh 0.5 --L 300 --save-every 19` | habitación | 3–230 s | 0.375 s |
 
   Todas con `--N 500 --seed 1 --save-t0 1` y `animate_evacuation.py <corrida> [vista] --fps 30`.
+  **Videos en 16:9 (2026-11-15)**: el lienzo es casi cuadrado (1056 × 1078 y 990 × 1034 px) y
+  YouTube publicaba los videos como Shorts (todo video cuadrado o vertical corto), que la cátedra
+  pide evitar (`../AGENTS.md` §8.4). `animate_evacuation.py` ahora agrega franjas blancas a los
+  costados al codificar (filtro `pad` de ffmpeg, 1918 × 1078 y 1840 × 1034 px); los cuadros y los
+  fotogramas PNG no cambian. Los cinco videos se regeneraron así; hay que subir esos.
   A los 60 s quedan sin retirarse 485 agentes con eventos y `n_r` = 0, 384 con `n_r` = 8, 323 con
   paso temporal y 322 con el híbrido. En la presentación (pedido del grupo, 2026-11-13): paso
   temporal sola al comienzo de Resultados, porque las figuras siguientes la usan de referencia
@@ -942,5 +947,9 @@ números para decir están en los comentarios del `.tex`, arriba de cada diaposi
 - Diapositiva "Uso de agentes de IA" al final, como en el TP4: agentes y modelos copiados del TP4
   (verificar), usos (motor, scripts, LaTeX, discusión de conceptos y alternativas) y las decisiones
   de la IA que el grupo corrigió (lista del grupo, 2026-11-12).
-- Pendiente (`grep -n TODO tp5.tex`): subir las cuatro animaciones y poner los enlaces; justificar
-  la ventana del caudal; ensayar los 13 minutos y recortar Implementación si no entra.
+- Enlaces de las animaciones puestos el 2026-11-15 (videos en 16:9; verificado que el texto se
+  copia bien desde el PDF y que cada enlace lleva al video que corresponde): paso temporal
+  `youtu.be/ms124ULcM-c`, eventos `n_r` = 0 `youtu.be/6vpeOdmzKRY`, eventos `n_r` = 8
+  `youtu.be/cM35gYPQboI`, híbrido `youtu.be/LkrcTiw4gUw`.
+- Pendiente (`grep -n TODO tp5.tex`): justificar la ventana del caudal; ensayar los 13 minutos y
+  recortar Implementación si no entra.

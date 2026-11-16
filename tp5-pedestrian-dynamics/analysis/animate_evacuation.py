@@ -48,6 +48,9 @@ DOT_SIZE = 30  # pt², puntos de la vista completa
 ARROW_LENGTH_AT_VD = 0.35  # m de flecha para la rapidez deseada máxima
 DESIRED_LENGTH = 0.25  # m
 MAX_INFO_AGENTS = 6
+# El lienzo es casi cuadrado y YouTube publica como Short todo video cuadrado o vertical: al
+# codificar se agregan franjas blancas a los costados hasta 16:9 (los cuadros no cambian).
+LANDSCAPE = ["-vf", r"pad=max(iw\,ceil(ih*16/9/2)*2):ih:(ow-iw)/2:0:white"]
 
 
 def main() -> None:
@@ -197,7 +200,7 @@ def main() -> None:
     if frames.size == 0:
         raise SystemExit("No hay estados guardados en el rango pedido")
     out = args.out or args.run_dir / "animation.mp4"
-    writer = FFMpegWriter(fps=args.fps, bitrate=6000)
+    writer = FFMpegWriter(fps=args.fps, bitrate=6000, extra_args=LANDSCAPE)
     with writer.saving(fig, out, dpi=110):
         for f in frames:
             render(f, frames[0])

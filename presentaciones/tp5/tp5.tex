@@ -27,8 +27,9 @@
 %%   - curvas que coinciden: la que tapa va detras (D2).
 %%
 %% Pendientes marcados con "% TODO:" (grep -n "TODO" tp5.tex).
-% TODO: subir las cuatro animaciones (tp5-pedestrian-dynamics/output/animaciones/*.mp4) y
-%   reemplazar cada "enlace pendiente" por \yt{<id>}. Los fotogramas ya estan en figuras/.
+% Animaciones subidas el 2026-11-15 (videos en 16:9 de tp5-pedestrian-dynamics/output/animaciones):
+%   paso temporal ms124ULcM-c, eventos n_r = 0 6vpeOdmzKRY, eventos n_r = 8 cM35gYPQboI,
+%   híbrido LkrcTiw4gUw.
 % TODO: ensayar: son 7 diapositivas de Implementacion; recortar segun el tiempo.
 % Todas las figuras son del sistema base, N = 500 (pedido 2026-11-10; la campaña tambien tiene
 %   N = 200, que da las mismas conclusiones y no se grafica).
@@ -662,9 +663,8 @@
 % estado que las dos de eventos (azul libre, negro recuperando, rojo en contacto); un cuadro cada 3
 % pasos (0.1 s), t entre 1 y 60 s, unos 600 cuadros (20 s de video). Fotograma: t = 30 s.
 % Dicho en vivo: a los 60 s salieron 177 agentes.
-% TODO: subir y poner el enlace.
 \begin{frame}{Paso temporal: animación}
-  \animuna{anim_paso_temporal.png}{enlace pendiente}
+  \animuna{anim_paso_temporal.png}{\yt{ms124ULcM-c}}
 \end{frame}
 
 % --- Radios intermedios de eventos (estudio propio) ------------------------------------------
@@ -676,10 +676,9 @@
 % en promedio 0.094 s simulados por cuadro en las dos (devolución TP4, D19). Colores por estado:
 % azul libre, negro recuperando, rojo en contacto. Fotogramas: t = 30 s.
 % Dicho en vivo: a los 60 s salieron 15 agentes con n_r = 0 y 116 con n_r = 8.
-% TODO: subir y poner los enlaces.
 \begin{frame}{Radios intermedios: animaciones con $n_r = 0$ y $n_r = 8$}
-  \animdos{anim_eventos_nr0.png}{$n_r = 0$}{enlace pendiente}
-          {anim_eventos_nr8.png}{$n_r = 8$}{enlace pendiente}
+  \animdos{anim_eventos_nr0.png}{$n_r = 0$}{\yt{6vpeOdmzKRY}}
+          {anim_eventos_nr8.png}{$n_r = 8$}{\yt{cM35gYPQboI}}
 \end{frame}
 
 % Las tres figuras de n_r en una sola diapositiva (pedido 2026-11-13; antes una por diapositiva):
@@ -708,9 +707,8 @@
 % 2026-11-13).
 % Dicho en vivo: a los 60 s salieron 178 agentes (177 con paso temporal).
 % Sin usar: output/animaciones/hibrido_L300.mp4 (híbrido con L = 300 m, evacuación completa).
-% TODO: subir y poner el enlace.
 \begin{frame}{Híbrido: animación con $R_h = 0.5\uni{m}$}
-  \animuna{anim_hibrido_L50.png}{enlace pendiente}
+  \animuna{anim_hibrido_L50.png}{\yt{LkrcTiw4gUw}}
 \end{frame}
 
 % Punto a: fracción de los N agentes en cada esquema vs t. Una corrida (seed 1), N = 500, L = 50 m.
