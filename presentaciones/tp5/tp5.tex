@@ -318,8 +318,7 @@
       caja/.style={draw, rounded corners, align=center, inner sep=5pt, minimum height=1.35cm},
       clave/.style={caja, fill=blue!10}]
     \node[caja]  (ini)  at (0, 0)       {Estado inicial\\ $r_i = \rmin$};
-    \node[clave] (pre)  at (4.6, 0)     {Predecir eventos\\ {\footnotesize contacto, fin de escape, fin de}\\
-                                         {\footnotesize tramo, cambio de target, retiro}};
+    \node[clave] (pre)  at (4.6, 0)     {Predecir eventos};
     \node[caja]  (nxt)  at (10.2, 0)    {Próximo evento vigente: $t_c$\\
                                          {\footnotesize descarta los que ya no valen}};
     \node[caja]  (mov)  at (10.2, -3.4) {$\vect{x}_i \leftarrow \vect{x}_i + \vect{v}_i\,t_c$};
